@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MentionsTable } from "./MentionsTable";
+import { MonitoringControls } from "./MonitoringControls";
 import { MentionModal } from "./MentionModal";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, AlertTriangle, MessageSquare, BarChart3 } from "lucide-react";
@@ -152,6 +153,9 @@ export function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Monitoring Controls */}
+        <MonitoringControls onMentionsUpdated={fetchMentions} />
 
         {/* Mentions Table */}
         <Card>

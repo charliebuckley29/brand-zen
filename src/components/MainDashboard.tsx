@@ -5,6 +5,8 @@ import { ReportsPage } from "@/components/ReportsPage";
 import { BrandSetup } from "@/components/BrandSetup";
 import { Navigation } from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
+import { startMonitoring } from "@/lib/monitoring";
+import { useToast } from "@/hooks/use-toast";
 
 interface MainDashboardProps {
   onSignOut: () => void;

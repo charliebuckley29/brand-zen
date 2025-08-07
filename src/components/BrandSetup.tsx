@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { X, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { startMonitoring } from "@/lib/monitoring";
 
 interface BrandSetupProps {
   onComplete: () => void;
@@ -39,19 +40,26 @@ export function BrandSetup({ onComplete }: BrandSetupProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase
+      const { data: keyword, error } = await supabase
         .from("keywords")
         .insert({
           user_id: user.id,
           brand_name: brandName.trim(),
           variants: variants
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
+      // Start monitoring automatically
+      if (keyword) {
+        await startMonitoring(keyword.id);
+      }
+
       toast({
         title: "Brand setup complete!",
-        description: "Your brand is now being monitored.",
+        description: "Your brand is now being monitored and sample data has been generated.",
       });
 
       onComplete();
