@@ -74,19 +74,11 @@ const Index = () => {
 
   // Show dashboard (MainDashboard handles brand setup if no keywords)
   return (
-    <div>
-      <div className="fixed top-3 right-3 z-50">
-        <Button variant="outline" size="sm" onClick={handleSignOut} className="text-xs">
-          <span className="hidden sm:inline">Sign Out</span>
-          <span className="sm:hidden">Exit</span>
-        </Button>
-      </div>
-      <MainDashboard 
-        onSignOut={handleSignOut}
-        hasKeywords={hasKeywords || false}
-        onKeywordsUpdated={() => setHasKeywords(true)}
-      />
-    </div>
+    <MainDashboard 
+      onSignOut={handleSignOut}
+      hasKeywords={hasKeywords || false}
+      onKeywordsUpdated={() => setHasKeywords(true)}
+    />
   );
 
 };

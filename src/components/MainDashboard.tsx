@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Dashboard } from "@/components/Dashboard";
 import { AnalyticsChart } from "@/components/AnalyticsChart";
 import { ReportsPage } from "@/components/ReportsPage";
+import { SettingsPage } from "@/components/SettingsPage";
 import { BrandSetup } from "@/components/BrandSetup";
 import { Navigation } from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +55,8 @@ export function MainDashboard({ onSignOut, hasKeywords, onKeywordsUpdated }: Mai
       case "reports":
         return <ReportsPage />;
       case "settings":
+        return <SettingsPage onSignOut={onSignOut} />;
+      case "brand-setup":
         return <BrandSetup onComplete={onKeywordsUpdated} />;
       default:
         return <Dashboard />;
