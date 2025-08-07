@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { MentionsTable } from "./MentionsTable";
 import { MentionModal } from "./MentionModal";
 import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
+import { DemoLoading } from "./DemoLoading";
 
 // Demo data for the dashboard
 const demoMentions = [
@@ -79,6 +81,21 @@ const demoMentions = [
 export function DemoData() {
   const [mentions, setMentions] = useState(demoMentions);
   const [selectedMention, setSelectedMention] = useState<typeof demoMentions[0] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate loading time for demo
+  useEffect(() => {
+    const loadingTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000); // 2 second loading simulation
+
+    return () => clearTimeout(loadingTimer);
+  }, []);
+
+  // Show loading screen while demo is being prepared
+  if (isLoading) {
+    return <DemoLoading />;
+  }
   
   const stats = {
     total: mentions.length,
@@ -115,14 +132,16 @@ export function DemoData() {
               Demo Mode
             </Badge>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={refreshData}>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="outline" onClick={refreshData} className="w-full sm:w-auto">
               <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh Data
+              <span className="hidden sm:inline">Refresh Data</span>
+              <span className="sm:hidden">Refresh</span>
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" className="w-full sm:w-auto">
               <BarChart3 className="w-4 h-4 mr-2" />
-              View Reports
+              <span className="hidden sm:inline">View Reports</span>
+              <span className="sm:hidden">Reports</span>
             </Button>
             <ThemeToggle />
           </div>
