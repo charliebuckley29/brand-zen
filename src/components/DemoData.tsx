@@ -81,21 +81,6 @@ const demoMentions = [
 export function DemoData() {
   const [mentions, setMentions] = useState(demoMentions);
   const [selectedMention, setSelectedMention] = useState<typeof demoMentions[0] | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Simulate loading time for demo
-  useEffect(() => {
-    const loadingTimer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000); // 2 second loading simulation
-
-    return () => clearTimeout(loadingTimer);
-  }, []);
-
-  // Show loading screen while demo is being prepared
-  if (isLoading) {
-    return <DemoLoading />;
-  }
   
   const stats = {
     total: mentions.length,
