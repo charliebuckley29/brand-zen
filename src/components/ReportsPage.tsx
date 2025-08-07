@@ -146,14 +146,14 @@ export function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Reports</h1>
-          <p className="text-muted-foreground">View and download monthly brand monitoring reports</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Reports</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">View and download monthly brand monitoring reports</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
@@ -163,9 +163,10 @@ export function ReportsPage() {
               <SelectItem value="12">Last 12 Months</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={generateReport}>
+          <Button onClick={generateReport} className="w-full sm:w-auto">
             <FileText className="h-4 w-4 mr-2" />
-            Generate Report
+            <span className="hidden sm:inline">Generate Report</span>
+            <span className="sm:hidden">Generate</span>
           </Button>
         </div>
       </div>

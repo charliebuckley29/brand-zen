@@ -86,16 +86,18 @@ export function Dashboard() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center sm:gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Brand Monitoring Dashboard</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Track and analyze brand mentions across the web</p>
         </div>
-        <Button variant="outline" className="sm:self-start">
-          <BarChart3 className="w-4 h-4 mr-2" />
-          <span className="hidden sm:inline">View Reports</span>
-          <span className="sm:hidden">Reports</span>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+          <Button variant="outline" className="w-full sm:w-auto">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">View Reports</span>
+            <span className="sm:hidden">Reports</span>
+          </Button>
+        </div>
       </div>
 
         {/* Stats Cards */}

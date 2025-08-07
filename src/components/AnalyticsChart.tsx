@@ -119,14 +119,14 @@ export function AnalyticsChart() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Analytics Overview</h2>
-          <p className="text-muted-foreground">Detailed insights into your brand mentions</p>
+          <h2 className="text-xl sm:text-2xl font-bold">Analytics Overview</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">Detailed insights into your brand mentions</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-full sm:w-[140px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -137,7 +137,7 @@ export function AnalyticsChart() {
             </SelectContent>
           </Select>
           <Select value={chartType} onValueChange={setChartType}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-full sm:w-[140px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -148,7 +148,7 @@ export function AnalyticsChart() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">{totalMentions}</div>
