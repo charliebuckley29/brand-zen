@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { LogOut, User, Settings as SettingsIcon, Mail, Lock } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -20,6 +21,8 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleEmailUpdate = async (e: React.FormEvent) => {
@@ -40,6 +43,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       });
 
       setNewEmail("");
+      setEmailDialogOpen(false);
     } catch (error: any) {
       toast({
         title: "Error updating email",
@@ -97,6 +101,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setPasswordDialogOpen(false);
     } catch (error: any) {
       toast({
         title: "Error updating password",
@@ -154,85 +159,141 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Email Update */}
-            <div className="space-y-4">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                <h4 className="text-sm font-medium">Change Email</h4>
-              </div>
-              <form onSubmit={handleEmailUpdate} className="space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="newEmail">New Email Address</Label>
-                  <Input
-                    id="newEmail"
-                    type="email"
-                    placeholder="Enter new email address"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    required
-                  />
+                <div>
+                  <h4 className="text-sm font-medium">Email Address</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Update your account email address
+                  </p>
                 </div>
-                <Button 
-                  type="submit" 
-                  disabled={isUpdatingEmail || !newEmail}
-                  className="w-full sm:w-auto"
-                >
-                  {isUpdatingEmail ? "Updating..." : "Update Email"}
-                </Button>
-              </form>
+              </div>
+              <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Change Email
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Change Email Address</DialogTitle>
+                    <DialogDescription>
+                      Enter your new email address. You'll need to confirm the change from both your old and new email addresses.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleEmailUpdate} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="newEmail">New Email Address</Label>
+                      <Input
+                        id="newEmail"
+                        type="email"
+                        placeholder="Enter new email address"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setEmailDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={isUpdatingEmail || !newEmail}
+                      >
+                        {isUpdatingEmail ? "Updating..." : "Update Email"}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <Separator />
 
             {/* Password Update */}
-            <div className="space-y-4">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Lock className="h-4 w-4" />
-                <h4 className="text-sm font-medium">Change Password</h4>
-              </div>
-              <form onSubmit={handlePasswordUpdate} className="space-y-3">
-                <div className="grid gap-3 sm:grid-cols-1">
-                  <div className="space-y-2">
-                    <Label htmlFor="currentPassword">Current Password</Label>
-                    <Input
-                      id="currentPassword"
-                      type="password"
-                      placeholder="Enter current password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <Input
-                      id="newPassword"
-                      type="password"
-                      placeholder="Enter new password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="Confirm new password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                    />
-                  </div>
+                <div>
+                  <h4 className="text-sm font-medium">Password</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Change your account password
+                  </p>
                 </div>
-                <Button 
-                  type="submit" 
-                  disabled={isUpdatingPassword || !currentPassword || !newPassword || !confirmPassword}
-                  className="w-full sm:w-auto"
-                >
-                  {isUpdatingPassword ? "Updating..." : "Update Password"}
-                </Button>
-              </form>
+              </div>
+              <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Change Password
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Change Password</DialogTitle>
+                    <DialogDescription>
+                      Enter your current password and choose a new one. Your new password must be at least 6 characters long.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="currentPassword">Current Password</Label>
+                        <Input
+                          id="currentPassword"
+                          type="password"
+                          placeholder="Enter current password"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">New Password</Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          placeholder="Enter new password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          placeholder="Confirm new password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setPasswordDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={isUpdatingPassword || !currentPassword || !newPassword || !confirmPassword}
+                      >
+                        {isUpdatingPassword ? "Updating..." : "Update Password"}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <Separator />
