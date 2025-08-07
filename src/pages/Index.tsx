@@ -1,25 +1,44 @@
 import { useState, useEffect } from "react";
 import { BrandSetup } from "@/components/BrandSetup";
 import { Dashboard } from "@/components/Dashboard";
+import { Auth } from "@/components/Auth";
+import { DemoData } from "@/components/DemoData";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
+  const [user, setUser] = useState<any>(null);
   const [hasKeywords, setHasKeywords] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDemo, setShowDemo] = useState(false);
 
   useEffect(() => {
-    checkKeywords();
+    // Check authentication status
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
+      if (session?.user) {
+        checkKeywords();
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+      if (session?.user) {
+        checkKeywords();
+      } else {
+        setHasKeywords(null);
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const checkKeywords = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setHasKeywords(false);
-        setIsLoading(false);
-        return;
-      }
-
       const { data, error } = await supabase
         .from("keywords")
         .select("id")
@@ -36,6 +55,10 @@ const Index = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -47,11 +70,65 @@ const Index = () => {
     );
   }
 
-  if (!hasKeywords) {
-    return <BrandSetup onComplete={() => setHasKeywords(true)} />;
+  // Show demo if requested
+  if (showDemo) {
+    return (
+      <div>
+        <div className="fixed top-4 right-4 z-50">
+          <Button variant="outline" onClick={() => setShowDemo(false)}>
+            Exit Demo
+          </Button>
+        </div>
+        <DemoData />
+      </div>
+    );
   }
 
-  return <Dashboard />;
+  // Show authentication if not logged in
+  if (!user) {
+    return (
+      <div>
+        <div className="fixed top-4 right-4 z-50">
+          <Button variant="outline" onClick={() => setShowDemo(true)}>
+            View Demo
+          </Button>
+        </div>
+        <Auth />
+      </div>
+    );
+  }
+
+  // Show brand setup if no keywords
+  if (!hasKeywords) {
+    return (
+      <div>
+        <div className="fixed top-4 right-4 z-50 flex gap-2">
+          <Button variant="outline" onClick={() => setShowDemo(true)}>
+            View Demo
+          </Button>
+          <Button variant="outline" onClick={handleSignOut}>
+            Sign Out
+          </Button>
+        </div>
+        <BrandSetup onComplete={() => setHasKeywords(true)} />
+      </div>
+    );
+  }
+
+  // Show dashboard
+  return (
+    <div>
+      <div className="fixed top-4 right-4 z-50 flex gap-2">
+        <Button variant="outline" onClick={() => setShowDemo(true)}>
+          View Demo
+        </Button>
+        <Button variant="outline" onClick={handleSignOut}>
+          Sign Out
+        </Button>
+      </div>
+      <Dashboard />
+    </div>
+  );
 };
 
 export default Index;
