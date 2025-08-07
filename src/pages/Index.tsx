@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { BrandSetup } from "@/components/BrandSetup";
-import { Dashboard } from "@/components/Dashboard";
+import { MainDashboard } from "@/components/MainDashboard";
 import { Auth } from "@/components/Auth";
 import { DemoData } from "@/components/DemoData";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,8 +97,9 @@ const Index = () => {
     );
   }
 
-  // Show brand setup if no keywords
-  if (!hasKeywords) {
+  // Show dashboard (MainDashboard handles brand setup if no keywords)
+  if (user) {
+
     return (
       <div>
         <div className="fixed top-4 right-4 z-50 flex gap-2">
@@ -110,25 +110,16 @@ const Index = () => {
             Sign Out
           </Button>
         </div>
-        <BrandSetup onComplete={() => setHasKeywords(true)} />
+        <MainDashboard 
+          onSignOut={handleSignOut}
+          hasKeywords={hasKeywords || false}
+          onKeywordsUpdated={() => setHasKeywords(true)}
+        />
       </div>
     );
   }
 
-  // Show dashboard
-  return (
-    <div>
-      <div className="fixed top-4 right-4 z-50 flex gap-2">
-        <Button variant="outline" onClick={() => setShowDemo(true)}>
-          View Demo
-        </Button>
-        <Button variant="outline" onClick={handleSignOut}>
-          Sign Out
-        </Button>
-      </div>
-      <Dashboard />
-    </div>
-  );
+  return null;
 };
 
 export default Index;
