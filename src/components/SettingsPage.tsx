@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { LogOut, User, Settings as SettingsIcon, Mail, Lock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +24,119 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  
+  // Brand management state
+  const [brandData, setBrandData] = useState<{ id: string; brand_name: string; variants: string[] } | null>(null);
+  const [newBrandName, setNewBrandName] = useState("");
+  const [newVariants, setNewVariants] = useState<string[]>([]);
+  const [currentVariant, setCurrentVariant] = useState("");
+  const [isUpdatingBrand, setIsUpdatingBrand] = useState(false);
+  const [brandDialogOpen, setBrandDialogOpen] = useState(false);
+  const [variantsDialogOpen, setVariantsDialogOpen] = useState(false);
+  
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchBrandData();
+  }, []);
+
+  const fetchBrandData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("keywords")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setBrandData(data);
+        setNewBrandName(data.brand_name);
+        setNewVariants(data.variants || []);
+      }
+    } catch (error: any) {
+      console.error("Error fetching brand data:", error);
+    }
+  };
+
+  const handleBrandNameUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBrandName.trim() || !brandData) return;
+
+    setIsUpdatingBrand(true);
+    try {
+      const { error } = await supabase
+        .from("keywords")
+        .update({ brand_name: newBrandName.trim() })
+        .eq("id", brandData.id);
+
+      if (error) throw error;
+
+      setBrandData({ ...brandData, brand_name: newBrandName.trim() });
+      setBrandDialogOpen(false);
+      
+      toast({
+        title: "Brand name updated",
+        description: "Your brand name has been successfully updated.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating brand name",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingBrand(false);
+    }
+  };
+
+  const handleVariantsUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!brandData) return;
+
+    setIsUpdatingBrand(true);
+    try {
+      const { error } = await supabase
+        .from("keywords")
+        .update({ variants: newVariants })
+        .eq("id", brandData.id);
+
+      if (error) throw error;
+
+      setBrandData({ ...brandData, variants: newVariants });
+      setVariantsDialogOpen(false);
+      
+      toast({
+        title: "Brand variants updated",
+        description: "Your brand variants have been successfully updated.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating variants",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingBrand(false);
+    }
+  };
+
+  const addVariant = () => {
+    if (currentVariant.trim() && !newVariants.includes(currentVariant.trim())) {
+      setNewVariants([...newVariants, currentVariant.trim()]);
+      setCurrentVariant("");
+    }
+  };
+
+  const removeVariant = (index: number) => {
+    setNewVariants(newVariants.filter((_, i) => i !== index));
+  };
 
   const handleEmailUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,6 +258,159 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
             </div>
           </CardContent>
         </Card>
+
+        {/* Brand Management */}
+        {brandData && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Brand Management
+              </CardTitle>
+              <CardDescription>
+                Manage your brand name and monitoring variants
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Brand Name */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium">Brand Name</h4>
+                  <p className="text-sm text-muted-foreground">{brandData.brand_name}</p>
+                </div>
+                <Dialog open={brandDialogOpen} onOpenChange={setBrandDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      Edit Brand
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Edit Brand Name</DialogTitle>
+                      <DialogDescription>
+                        Update your brand name for monitoring and reports.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleBrandNameUpdate} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="brandName">Brand Name</Label>
+                        <Input
+                          id="brandName"
+                          type="text"
+                          placeholder="Enter brand name"
+                          value={newBrandName}
+                          onChange={(e) => setNewBrandName(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setBrandDialogOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          type="submit" 
+                          disabled={isUpdatingBrand || !newBrandName.trim()}
+                        >
+                          {isUpdatingBrand ? "Updating..." : "Update Brand"}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              <Separator />
+
+              {/* Brand Variants */}
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium">Brand Variants</h4>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {brandData.variants && brandData.variants.length > 0 ? (
+                      brandData.variants.map((variant, index) => (
+                        <Badge key={index} variant="secondary">
+                          {variant}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No variants added</p>
+                    )}
+                  </div>
+                </div>
+                <Dialog open={variantsDialogOpen} onOpenChange={setVariantsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      Edit Variants
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Edit Brand Variants</DialogTitle>
+                      <DialogDescription>
+                        Add alternative names or keywords for your brand monitoring.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleVariantsUpdate} className="space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Add variant"
+                            value={currentVariant}
+                            onChange={(e) => setCurrentVariant(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addVariant())}
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={addVariant}
+                            disabled={!currentVariant.trim()}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          {newVariants.map((variant, index) => (
+                            <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                              {variant}
+                              <button
+                                type="button"
+                                onClick={() => removeVariant(index)}
+                                className="ml-1 hover:text-destructive"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setVariantsDialogOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          type="submit" 
+                          disabled={isUpdatingBrand}
+                        >
+                          {isUpdatingBrand ? "Updating..." : "Update Variants"}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Account Settings */}
         <Card>
