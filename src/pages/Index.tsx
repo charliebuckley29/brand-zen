@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { MainDashboard } from "@/components/MainDashboard";
 import { Auth } from "@/components/Auth";
-import { DemoData } from "@/components/DemoData";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -9,15 +8,6 @@ const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [hasKeywords, setHasKeywords] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showDemo, setShowDemo] = useState(false);
-
-  // Check for demo mode from URL parameter
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('demo') === 'true') {
-      setShowDemo(true);
-    }
-  }, []);
 
   useEffect(() => {
     // Check authentication status
@@ -77,66 +67,28 @@ const Index = () => {
     );
   }
 
-  // Show demo if requested
-  if (showDemo) {
-    return (
-      <div>
-        <div className="fixed top-3 right-3 z-50">
-          <Button variant="outline" size="sm" onClick={() => {
-            setShowDemo(false);
-            // Remove demo parameter from URL
-            const url = new URL(window.location.href);
-            url.searchParams.delete('demo');
-            window.history.replaceState({}, '', url.toString());
-          }} className="text-xs">
-            Exit Demo
-          </Button>
-        </div>
-        <DemoData />
-      </div>
-    );
-  }
-
   // Show authentication if not logged in
   if (!user) {
-    return (
-      <div>
-        <div className="fixed top-3 right-3 z-50">
-          <Button variant="outline" size="sm" onClick={() => setShowDemo(true)} className="text-xs">
-            <span className="hidden sm:inline">View Demo</span>
-            <span className="sm:hidden">Demo</span>
-          </Button>
-        </div>
-        <Auth />
-      </div>
-    );
+    return <Auth />;
   }
 
   // Show dashboard (MainDashboard handles brand setup if no keywords)
-  if (user) {
-
-    return (
-      <div>
-        <div className="fixed top-3 right-3 z-50 flex flex-col gap-2 sm:flex-row">
-          <Button variant="outline" size="sm" onClick={() => setShowDemo(true)} className="text-xs">
-            <span className="hidden sm:inline">View Demo</span>
-            <span className="sm:hidden">Demo</span>
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleSignOut} className="text-xs">
-            <span className="hidden sm:inline">Sign Out</span>
-            <span className="sm:hidden">Exit</span>
-          </Button>
-        </div>
-        <MainDashboard 
-          onSignOut={handleSignOut}
-          hasKeywords={hasKeywords || false}
-          onKeywordsUpdated={() => setHasKeywords(true)}
-        />
+  return (
+    <div>
+      <div className="fixed top-3 right-3 z-50">
+        <Button variant="outline" size="sm" onClick={handleSignOut} className="text-xs">
+          <span className="hidden sm:inline">Sign Out</span>
+          <span className="sm:hidden">Exit</span>
+        </Button>
       </div>
-    );
-  }
+      <MainDashboard 
+        onSignOut={handleSignOut}
+        hasKeywords={hasKeywords || false}
+        onKeywordsUpdated={() => setHasKeywords(true)}
+      />
+    </div>
+  );
 
-  return null;
 };
 
 export default Index;

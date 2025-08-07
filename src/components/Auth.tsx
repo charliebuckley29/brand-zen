@@ -67,17 +67,6 @@ export function Auth() {
     }
   };
 
-  const handleDemoAccess = () => {
-    // For demo purposes, we'll simulate authentication
-    toast({
-      title: "Demo Access",
-      description: "Entering demo mode...",
-    });
-    // Trigger demo mode by setting a URL parameter
-    const url = new URL(window.location.href);
-    url.searchParams.set('demo', 'true');
-    window.location.href = url.toString();
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -155,16 +144,6 @@ export function Auth() {
               </form>
             </TabsContent>
           </Tabs>
-          
-          <div className="mt-6 pt-4 border-t">
-            <Button 
-              variant="outline" 
-              className="w-full" 
-              onClick={handleDemoAccess}
-            >
-              View Demo Dashboard
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>
