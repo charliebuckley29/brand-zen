@@ -73,8 +73,10 @@ export function Auth() {
       title: "Demo Access",
       description: "Entering demo mode...",
     });
-    // This would typically set some demo state
-    window.location.reload();
+    // Trigger demo mode by setting a URL parameter
+    const url = new URL(window.location.href);
+    url.searchParams.set('demo', 'true');
+    window.location.href = url.toString();
   };
 
   return (

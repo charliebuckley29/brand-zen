@@ -11,6 +11,14 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showDemo, setShowDemo] = useState(false);
 
+  // Check for demo mode from URL parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('demo') === 'true') {
+      setShowDemo(true);
+    }
+  }, []);
+
   useEffect(() => {
     // Check authentication status
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -73,8 +81,14 @@ const Index = () => {
   if (showDemo) {
     return (
       <div>
-        <div className="fixed top-4 right-4 z-50">
-          <Button variant="outline" onClick={() => setShowDemo(false)}>
+        <div className="fixed top-3 right-3 z-50">
+          <Button variant="outline" size="sm" onClick={() => {
+            setShowDemo(false);
+            // Remove demo parameter from URL
+            const url = new URL(window.location.href);
+            url.searchParams.delete('demo');
+            window.history.replaceState({}, '', url.toString());
+          }} className="text-xs">
             Exit Demo
           </Button>
         </div>
