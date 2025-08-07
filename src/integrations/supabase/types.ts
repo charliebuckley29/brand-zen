@@ -14,7 +14,134 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      keywords: {
+        Row: {
+          brand_name: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+          variants: string[] | null
+        }
+        Insert: {
+          brand_name: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          variants?: string[] | null
+        }
+        Update: {
+          brand_name?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          variants?: string[] | null
+        }
+        Relationships: []
+      }
+      mentions: {
+        Row: {
+          content_snippet: string
+          created_at: string
+          escalation_type: string | null
+          flagged: boolean | null
+          full_text: string | null
+          id: string
+          internal_notes: string | null
+          keyword_id: string
+          published_at: string
+          sentiment: string | null
+          source_name: string
+          source_url: string
+          topics: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content_snippet: string
+          created_at?: string
+          escalation_type?: string | null
+          flagged?: boolean | null
+          full_text?: string | null
+          id?: string
+          internal_notes?: string | null
+          keyword_id: string
+          published_at: string
+          sentiment?: string | null
+          source_name: string
+          source_url: string
+          topics?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content_snippet?: string
+          created_at?: string
+          escalation_type?: string | null
+          flagged?: boolean | null
+          full_text?: string | null
+          id?: string
+          internal_notes?: string | null
+          keyword_id?: string
+          published_at?: string
+          sentiment?: string | null
+          source_name?: string
+          source_url?: string
+          topics?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentions_keyword_id_fkey"
+            columns: ["keyword_id"]
+            isOneToOne: false
+            referencedRelation: "keywords"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          negatives: number | null
+          neutrals: number | null
+          positives: number | null
+          report_month: string
+          top_sources: string[] | null
+          total_mentions: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          negatives?: number | null
+          neutrals?: number | null
+          positives?: number | null
+          report_month: string
+          top_sources?: string[] | null
+          total_mentions?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          negatives?: number | null
+          neutrals?: number | null
+          positives?: number | null
+          report_month?: string
+          top_sources?: string[] | null
+          total_mentions?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
