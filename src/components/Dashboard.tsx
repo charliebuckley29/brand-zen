@@ -84,82 +84,82 @@ export function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Brand Monitoring Dashboard</h1>
-            <p className="text-muted-foreground">Track and analyze brand mentions across the web</p>
-          </div>
-          <Button variant="outline">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            View Reports
-          </Button>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Brand Monitoring Dashboard</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Track and analyze brand mentions across the web</p>
         </div>
+        <Button variant="outline" className="sm:self-start">
+          <BarChart3 className="w-4 h-4 mr-2" />
+          <span className="hidden sm:inline">View Reports</span>
+          <span className="sm:hidden">Reports</span>
+        </Button>
+      </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Mentions</CardTitle>
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Total Mentions</CardTitle>
+              <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-lg sm:text-2xl font-bold">{stats.total}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Positive</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-600" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Positive</CardTitle>
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.positive}</div>
+              <div className="text-lg sm:text-2xl font-bold text-success">{stats.positive}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Neutral</CardTitle>
-              <div className="h-4 w-4 bg-yellow-500 rounded-full" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Neutral</CardTitle>
+              <div className="h-3 w-3 sm:h-4 sm:w-4 bg-warning rounded-full" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{stats.neutral}</div>
+              <div className="text-lg sm:text-2xl font-bold text-warning">{stats.neutral}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="sm:col-span-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Negative</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Negative</CardTitle>
+              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats.negative}</div>
+              <div className="text-lg sm:text-2xl font-bold text-destructive">{stats.negative}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="sm:col-span-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Flagged</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <CardTitle className="text-xs sm:text-sm font-medium">Flagged</CardTitle>
+              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-warning" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{stats.flagged}</div>
+              <div className="text-lg sm:text-2xl font-bold text-warning">{stats.flagged}</div>
             </CardContent>
           </Card>
         </div>
 
         {/* Mentions Table */}
         <Card>
-          <CardHeader>
-            <CardTitle>Recent Mentions</CardTitle>
-            <CardDescription>
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="text-lg sm:text-xl">Recent Mentions</CardTitle>
+            <CardDescription className="text-sm">
               Click on any mention to view details and take action
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-6 sm:pt-0">
             <MentionsTable 
               mentions={mentions} 
               onMentionClick={setSelectedMention}
@@ -178,6 +178,5 @@ export function Dashboard() {
           />
         )}
       </div>
-    </div>
-  );
-}
+    );
+  }

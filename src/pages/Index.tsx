@@ -87,9 +87,10 @@ const Index = () => {
   if (!user) {
     return (
       <div>
-        <div className="fixed top-4 right-4 z-50">
-          <Button variant="outline" onClick={() => setShowDemo(true)}>
-            View Demo
+        <div className="fixed top-3 right-3 z-50">
+          <Button variant="outline" size="sm" onClick={() => setShowDemo(true)}>
+            <span className="hidden sm:inline">View Demo</span>
+            <span className="sm:hidden">Demo</span>
           </Button>
         </div>
         <Auth />
@@ -102,12 +103,14 @@ const Index = () => {
 
     return (
       <div>
-        <div className="fixed top-4 right-4 z-50 flex gap-2">
-          <Button variant="outline" onClick={() => setShowDemo(true)}>
-            View Demo
+        <div className="fixed top-3 right-3 z-50 flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowDemo(true)}>
+            <span className="hidden sm:inline">View Demo</span>
+            <span className="sm:hidden">Demo</span>
           </Button>
-          <Button variant="outline" onClick={handleSignOut}>
-            Sign Out
+          <Button variant="outline" size="sm" onClick={handleSignOut}>
+            <span className="hidden sm:inline">Sign Out</span>
+            <span className="sm:hidden">Exit</span>
           </Button>
         </div>
         <MainDashboard 

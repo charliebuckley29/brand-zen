@@ -69,11 +69,12 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
   return (
     <>
       {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="lg:hidden fixed top-3 left-3 z-50">
         <Button
           variant="outline"
-          size="icon"
+          size="sm"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="h-10 w-10 p-0"
         >
           {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
         </Button>
@@ -81,17 +82,31 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-background/80 backdrop-blur-sm">
-          <div className="fixed left-0 top-0 h-full w-64 bg-card border-r p-4">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold">Brand Monitor</h2>
-              <ThemeToggle />
+        <div className="lg:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm">
+          <div className="fixed left-0 top-0 h-full w-72 bg-card border-r shadow-lg">
+            <div className="p-4 pt-16">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold">Brand Monitor</h2>
+                <ThemeToggle />
+              </div>
+              <nav className="space-y-2">
+                {navItems.map((item) => (
+                  <NavButton key={item.id} item={item} className="w-full text-left justify-start h-12" />
+                ))}
+              </nav>
+              
+              {/* Mobile Alerts */}
+              {unreadCount > 0 && (
+                <div className="mt-6 bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-destructive">
+                    <Bell className="h-4 w-4" />
+                    <span className="text-sm font-medium">
+                      {unreadCount} new mention{unreadCount !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
-            <nav className="space-y-2">
-              {navItems.map((item) => (
-                <NavButton key={item.id} item={item} className="w-full" />
-              ))}
-            </nav>
           </div>
         </div>
       )}
@@ -110,7 +125,7 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
           </nav>
         </div>
         
-        {/* Alerts Section */}
+        {/* Desktop Alerts Section */}
         {unreadCount > 0 && (
           <div className="absolute bottom-4 left-4 right-4">
             <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
