@@ -82,8 +82,36 @@ function extractMainText(html: string): string | null {
 }
 
 async function fetchArticleDetails(url: string): Promise<{ title: string | null; text: string | null }> {
-  const html = await fetchHtml(url);
+  async function fetchHtmlWithFinalUrl(target: string): Promise<{ html: string | null; finalUrl: string }> {
+    try {
+      const res = await fetch(target, { redirect: 'follow' });
+      if (!res.ok) return { html: null, finalUrl: target };
+      const text = await res.text();
+      return { html: text, finalUrl: res.url || target };
+    } catch {
+      return { html: null, finalUrl: target };
+    }
+  }
+
+  let { html, finalUrl } = await fetchHtmlWithFinalUrl(url);
   if (!html) return { title: null, text: null };
+
+  try {
+    const hostname = new URL(finalUrl).hostname;
+    const isGoogleNews = /(^|\\.)news\\.google\\.com$/i.test(hostname) || html.includes('Comprehensive, up-to-date news coverage');
+    if (isGoogleNews) {
+      const canonicalMatch = html.match(/<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/i);
+      const canonical = canonicalMatch ? canonicalMatch[1] : extractMetaContent(html, 'property', 'og:url');
+      if (canonical && !/news\\.google\\.com/i.test(canonical)) {
+        const refetched = await fetchHtmlWithFinalUrl(canonical);
+        if (refetched.html) {
+          html = refetched.html;
+          finalUrl = refetched.finalUrl;
+        }
+      }
+    }
+  } catch {}
+
   const title = extractTitle(html);
   const text = extractMainText(html);
   return { title, text };
