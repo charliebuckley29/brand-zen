@@ -4,25 +4,23 @@ Purpose: Give a clear, non-technical view of what we have today, where we’re g
 
 —
 
-1) What this is
-- A tool that watches the internet for mentions of our brand, products, and competitors.
+1) What this should be
+- A tool that watches the internet for mentions of brand, products, and competitors.
 - It summarizes what people are saying (positive/negative/neutral) and alerts us quickly when something important happens.
 
 —
 
 2) Where we are today (Current MVP)
-What it does now
-- Tracks brand mentions mainly from online news sources.
-- Uses AI to classify the tone (sentiment) of each mention.
-- Shows mentions and trends in a simple dashboard.
-- Can send alerts for negative mentions.
 
-What’s working well
-- We can monitor core news coverage.
-- We have basic sentiment and simple charts.
-- The system is live and can be extended.
+What it does now
+- Front end UI and back end database set up
+- User authorization implemented
+- Tracks brand mentions mainly from online news sources (GNews)
+- Shows mentions and trends in a simple dashboard.
 
 What’s missing
+- Uses AI to classify the tone (sentiment) of each mention.
+- Can send alerts for negative mentions.
 - Broader coverage beyond news (web pages, blogs, communities, video, reviews).
 - Smarter filtering (less noise, fewer duplicates).
 - Easier sharing (simple reports, Slack/email digests).
@@ -42,26 +40,26 @@ What leaders will get
 
 —
 
-4) How we’ll get there (Phased plan)
-Phase 1: Broaden sources (2–3 weeks)
+4) How we’ll get there
+Phase 1: Broaden sources
 - Add more sources using proven APIs (web search, news, Reddit, YouTube, and RSS/blogs).
 - Normalize all mentions into one consistent format.
 - Improve the dashboard to show new sources and simple filters.
 - Keep existing alerts, extend to new sources.
 
-Phase 2: Improve quality and scale (3–4 weeks)
+Phase 2: Improve quality and scale (outside of scope)
 - Reduce duplicates; down-rank spammy sites.
 - Better language handling and topic tags.
 - Stronger error handling and logging so it’s reliable day-to-day.
 
-Phase 3: Insights and workflow (4–6 weeks)
+Phase 3: Insights and workflow
 - Highlights of what changed week-over-week; top risks and wins.
 - Shareable reports; Slack/email digests; CSV/Sheets export.
 - Light “assign/resolve” workflow for handling mentions.
 
 —
 
-5) Data sources we’ll use (in simple terms)
+5) Data sources we can use (in simple terms)
 - Web search: Bing Web Search (broad coverage of websites).
 - News: GNews (reliable news headlines and articles).
 - Communities: Reddit (posts and comments where people discuss brands).
@@ -87,48 +85,3 @@ Controls
 - Terms of service: Stick to official APIs and permitted use.
 - Content quality: Extract clean text and filter low-value pages.
 - Privacy and security: Don’t store sensitive personal data; follow best practices.
-
-—
-
-8) Success metrics (how we’ll measure value)
-Coverage
-- % of relevant mentions we capture vs. manual spot checks.
-Timeliness
-- How fast we alert after a mention appears.
-Quality
-- Useful-alert rate (alerts that lead to action) and noise rate.
-Engagement
-- Dashboard usage, report opens, Slack/email click-through.
-Outcomes
-- Time saved vs. manual monitoring; faster response to risks.
-
-—
-
-9) Timeline at a glance
-- Weeks 1–3: Add sources, unify data, extend dashboard and alerts.
-- Weeks 4–7: Quality improvements (dedupe, scoring), resilience.
-- Weeks 8–13: Insights, reports, integrations, light workflow.
-
-—
-
-10) Roles and responsibilities
-- Product/Comms: Define keywords, competitors, alert rules, recipients.
-- Engineering: Build source connectors, quality filters, dashboard updates.
-- Data/AI: Tune sentiment and topic tagging; measure accuracy.
-- Leadership: Approve budget, prioritize use cases, ensure adoption.
-
-—
-
-11) What we need from leadership now
-- Green light on the plan and a starter budget for API usage.
-- Brand/competitor keyword list and alert recipients (emails/Slack).
-- Agreement on the initial KPIs (coverage, timeliness, useful-alert rate).
-
-—
-
-Appendix: Plain-English definitions
-- Mention: Any article, post, or page that references our brand or products.
-- Sentiment: Whether the mention is positive, negative, or neutral.
-- Source: Where a mention comes from (news site, blog, Reddit, YouTube, etc.).
-- Alert: A notification we send when something important happens.
-- Topic/Tag: A simple label (e.g., pricing, product quality, customer support) assigned to a mention.
