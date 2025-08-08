@@ -1,24 +1,43 @@
-Brand Monitoring MVP
+# Brand Monitoring MVP
+
 This is a low-code MVP dashboard for real-time brand monitoring, built in Lovable.
 
-🔍 Features
+🔍 # Features
+
 ✅ Brand keyword tracking across news, blogs, and web
+
 🧠 AI-powered sentiment analysis & topic classification (OpenAI)
+
 🚨 Real-time alerts for negative or high-risk mentions
+
 📊 Dashboard with filters, search, and detailed view
+
 ⚠️ Flag/escalate mentions to Legal or PR workflows
+
 📈 Monthly brand health reports with sentiment trends and top sources
-🛠️ Stack
+
+🛠️#  Stack
+
 💜 Built with Lovable
+
 🌐 Mention APIs: GNews / NewsCatcher / Brand24
+
 🤖 AI: OpenAI GPT for sentiment & topic tagging
+
 📬 Notifications: SendGrid / Slack Webhooks
+
 📁 Optional: Google Sheets, CSV Exports
-📦 Project Structure
+
+# 📦 Project Structure
+
 keywords — brand names and variants to track
+
 mentions — enriched mentions from APIs
+
 reports — monthly summaries and trend data
-🚀 Getting Started
+
+# 🚀 Getting Started
+
 This project is designed to be built and deployed via Lovable. Import it directly, connect APIs, and run your monitoring dashboard in minutes.
 
 # Welcome to your Lovable project
