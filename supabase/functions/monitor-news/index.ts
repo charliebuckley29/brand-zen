@@ -13,18 +13,23 @@ interface KeywordRow {
 }
 
 function extractBetween(str: string, tag: string): string | null {
-  const regex = new RegExp(`<${tag}[^>]*>([\s\S]*?)<\\/${tag}>`, "i");
+  const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
   const match = str.match(regex);
   return match ? match[1].trim() : null;
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
 }
 
 function resolveArticleUrl(link: string): string {
   try {
-    // Google News sometimes wraps publisher URL as a url= param
     const u = new URL(link);
     const urlParam = u.searchParams.get("url");
     if (urlParam) return decodeURIComponent(urlParam);
@@ -71,18 +76,29 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!supabaseUrl || !serviceKey) {
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!supabaseUrl || !serviceKey || !anonKey) {
     return new Response(JSON.stringify({ error: "Missing Supabase env vars" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
-  const supabase = createClient(supabaseUrl, serviceKey);
+  const authHeader = req.headers.get("Authorization") || "";
+  const hasJwt = authHeader.startsWith("Bearer ");
+
+  // User-scoped client (respects RLS) when JWT is provided – used for button-triggered refresh
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+
+  // Admin client (bypasses RLS) – used by cron without JWT to process all keywords
+  const adminClient = createClient(supabaseUrl, serviceKey);
+
+  const db = hasJwt ? userClient : adminClient;
 
   try {
-    // Optional body: { keywordId?: string }
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const { keywordId } = body || {};
 
-    let keywordQuery = supabase.from('keywords').select('id, user_id, brand_name, variants');
+    let keywordQuery = db.from('keywords').select('id, user_id, brand_name, variants');
     if (keywordId) keywordQuery = keywordQuery.eq('id', keywordId);
 
     const { data: keywords, error: kwErr } = await keywordQuery;
@@ -122,11 +138,10 @@ Deno.serve(async (req) => {
     });
 
     let inserted = 0;
-    // Batch upserts in chunks to avoid payload limits
     const chunkSize = 500;
     for (let i = 0; i < deduped.length; i += chunkSize) {
       const chunk = deduped.slice(i, i + chunkSize);
-      const { error: upErr, count } = await supabase
+      const { error: upErr, count } = await db
         .from('mentions')
         .upsert(chunk, { onConflict: 'user_id,source_url', ignoreDuplicates: true, count: 'exact' });
       if (upErr) {
@@ -136,7 +151,7 @@ Deno.serve(async (req) => {
       inserted += count || 0;
     }
 
-    console.log(`monitor-news: processed keywords=${keywords?.length || 0}, mentions_upserted=${inserted}`);
+    console.log(`monitor-news: jwt=${hasJwt} keywords=${keywords?.length || 0} mentions_upserted=${inserted}`);
 
     return new Response(JSON.stringify({ success: true, processed: keywords?.length || 0, mentions_upserted: inserted }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
