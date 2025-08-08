@@ -39,6 +39,56 @@ function resolveArticleUrl(link: string): string {
   }
 }
 
+async function fetchHtml(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, { redirect: "follow" });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch {
+    return null;
+  }
+}
+
+function extractMetaContent(html: string, attr: 'property' | 'name', key: string): string | null {
+  const regex = new RegExp(`<meta[^>]+${attr}=["']${key}["'][^>]*content=["']([^"']+)["'][^>]*>`, 'i');
+  const match = html.match(regex);
+  return match ? match[1].trim() : null;
+}
+
+function extractTitle(html: string): string | null {
+  // Prefer og:title, then <title>
+  const og = extractMetaContent(html, 'property', 'og:title') || extractMetaContent(html, 'name', 'twitter:title');
+  if (og) return stripHtml(og);
+  const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  return m ? stripHtml(m[1]).trim() : null;
+}
+
+function extractMainText(html: string): string | null {
+  // Try <article> first
+  const articleMatch = html.match(/<article[\s\S]*?<\/article>/i);
+  const container = articleMatch ? articleMatch[0] : html;
+
+  // Gather paragraphs
+  const pMatches = Array.from(container.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi));
+  const paragraphs = pMatches.map(m => stripHtml(m[1]).trim()).filter(Boolean);
+
+  // Fallback to meta description if no paragraphs
+  const metaDesc = extractMetaContent(html, 'property', 'og:description')
+    || extractMetaContent(html, 'name', 'description')
+    || extractMetaContent(html, 'name', 'twitter:description');
+
+  const text = paragraphs.length ? paragraphs.join('\n\n') : (metaDesc ? stripHtml(metaDesc) : null);
+  return text ? text.replace(/\s+\n/g, '\n').trim() : null;
+}
+
+async function fetchArticleDetails(url: string): Promise<{ title: string | null; text: string | null }> {
+  const html = await fetchHtml(url);
+  if (!html) return { title: null, text: null };
+  const title = extractTitle(html);
+  const text = extractMainText(html);
+  return { title, text };
+}
+
 async function fetchRss(query: string): Promise<Array<{
   link: string;
   source: string;
@@ -111,16 +161,25 @@ Deno.serve(async (req) => {
       for (const q of queries) {
         try {
           const rssItems = await fetchRss(q);
-          for (const it of rssItems) {
-            allMentions.push({
-              user_id: kw.user_id,
-              keyword_id: kw.id,
-              source_url: it.link,
-              source_name: it.source || 'Unknown',
-              published_at: it.published,
-              content_snippet: it.description.substring(0, 500),
-              full_text: it.description,
-            });
+          const limited = rssItems.slice(0, 8);
+          for (const it of limited) {
+            try {
+              const { title, text } = await fetchArticleDetails(it.link);
+              const content_snippet = (title || it.description || '').slice(0, 200);
+              const full_text = text || it.description;
+
+              allMentions.push({
+                user_id: kw.user_id,
+                keyword_id: kw.id,
+                source_url: it.link,
+                source_name: it.source || 'Unknown',
+                published_at: it.published,
+                content_snippet,
+                full_text,
+              });
+            } catch (innerErr) {
+              console.log('Article parse failed', { url: it.link, error: String(innerErr) });
+            }
           }
         } catch (e) {
           console.log('Query fetch failed', { query: q, error: String(e) });
