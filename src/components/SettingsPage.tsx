@@ -169,7 +169,14 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data: keyword, error } = await supabase
+      // Remove any previous brand for this user before creating a new one
+      const { error: deleteError } = await supabase
+        .from("keywords")
+        .delete()
+        .eq("user_id", user.id);
+      if (deleteError) throw deleteError;
+
+      const { data: keyword, error: insertError } = await supabase
         .from("keywords")
         .insert({
           user_id: user.id,
@@ -179,7 +186,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
         .select()
         .maybeSingle();
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       if (keyword) {
         setBrandData(keyword as any);
@@ -206,7 +213,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       setIsCreatingBrand(false);
     }
   };
-
   const handleEmailUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEmail) return;
