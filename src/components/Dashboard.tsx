@@ -6,7 +6,8 @@ import { MentionsTable } from "./MentionsTable";
 import { MonitoringControls } from "./MonitoringControls";
 import { MentionModal } from "./MentionModal";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, AlertTriangle, MessageSquare, BarChart3 } from "lucide-react";
+import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Mention {
   id: string;
@@ -33,6 +34,8 @@ export function Dashboard() {
     negative: 0,
     flagged: 0
   });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchMentions();
@@ -61,6 +64,21 @@ export function Dashboard() {
       console.error("Error fetching mentions:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRefreshMentions = async () => {
+    try {
+      setIsRefreshing(true);
+      const { data, error } = await supabase.functions.invoke('monitor-news', { body: {} });
+      if (error) throw error;
+      await fetchMentions();
+      toast({ title: "Mentions refreshed", description: "Fetched latest mentions." });
+    } catch (err) {
+      console.error("Error refreshing mentions:", err);
+      toast({ title: "Refresh failed", description: "Could not fetch new mentions.", variant: "destructive" });
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -93,6 +111,19 @@ export function Dashboard() {
           <p className="text-sm sm:text-base text-muted-foreground">Track and analyze brand mentions across the web</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+          <Button onClick={handleRefreshMentions} disabled={isRefreshing} className="w-full sm:w-auto">
+            {isRefreshing ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Refreshing...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh Mentions
+              </>
+            )}
+          </Button>
           <Button variant="outline" className="w-full sm:w-auto">
             <BarChart3 className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">View Reports</span>
