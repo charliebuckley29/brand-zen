@@ -2,7 +2,7 @@
 
 This is a low-code MVP dashboard for real-time brand monitoring, built in Lovable.
 
-🔍 # Features
+# 🔍 Features
 
 ✅ Brand keyword tracking across news, blogs, and web
 
