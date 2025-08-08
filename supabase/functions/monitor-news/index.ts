@@ -94,27 +94,30 @@ async function fetchRss(query: string): Promise<Array<{
   source: string;
   published: string;
   description: string;
+  title: string;
 }>> {
   const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`RSS fetch failed (${res.status}) for ${query}`);
   const xml = await res.text();
 
-  const items: Array<{ link: string; source: string; published: string; description: string; }> = [];
+  const items: Array<{ link: string; source: string; published: string; description: string; title: string; }> = [];
   const itemRegex = /<item>[\s\S]*?<\/item>/gi;
   const blocks = xml.match(itemRegex) || [];
   for (const block of blocks) {
     const linkRaw = extractBetween(block, "link") || "";
-    const sourceRaw = extractBetween(block, "source") || extractBetween(block, "title") || "Unknown";
+    const titleRaw = extractBetween(block, "title") || "";
+    const sourceRaw = extractBetween(block, "source") || "Unknown";
     const pubRaw = extractBetween(block, "pubDate") || new Date().toUTCString();
     const descRaw = extractBetween(block, "description") || "";
 
     const link = resolveArticleUrl(stripHtml(linkRaw));
+    const title = stripHtml(titleRaw).replace(/\s*-\s*Google News$/i, "");
     const source = stripHtml(sourceRaw).replace(/\s*-\s*Google News$/i, "");
     const description = stripHtml(descRaw);
     const published = new Date(pubRaw).toISOString();
 
-    if (link) items.push({ link, source, published, description });
+    if (link) items.push({ link, source, published, description, title });
   }
   return items;
 }
@@ -165,7 +168,9 @@ Deno.serve(async (req) => {
           for (const it of limited) {
             try {
               const { title, text } = await fetchArticleDetails(it.link);
-              const content_snippet = (title || it.description || '').slice(0, 200);
+              const rawSnippet = title || it.title || it.description || '';
+              const cleanedSnippet = stripHtml(rawSnippet).replace(/\bhttps?:\/\/\S+/gi, '').trim();
+              const content_snippet = cleanedSnippet.slice(0, 200);
               const full_text = text || it.description;
 
               allMentions.push({
