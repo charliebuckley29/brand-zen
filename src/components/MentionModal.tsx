@@ -199,15 +199,16 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
             </div>
           </div>
 
-          {/* Content */}
           <div>
             <Label className="text-sm font-medium">Content</Label>
             <div className="mt-2 p-4 bg-muted rounded-lg">
-              <p className="text-sm leading-relaxed">
-                {mention.full_text && mention.full_text.trim() !== 'Comprehensive, up-to-date news coverage, aggregated from sources all over the world by Google News.'
-                  ? mention.full_text
-                  : mention.content_snippet}
-              </p>
+              {mention.full_text && mention.full_text.trim().length > 0 ? (
+                <p className="text-sm leading-relaxed whitespace-pre-line">
+                  {mention.full_text}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">No article body available for this mention.</p>
+              )}
             </div>
           </div>
 
