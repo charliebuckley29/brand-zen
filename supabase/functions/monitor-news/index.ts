@@ -89,6 +89,29 @@ async function fetchArticleDetails(url: string): Promise<{ title: string | null;
   return { title, text };
 }
 
+function escapeRegex(str: string) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function stripSourceSuffix(title: string | null, source: string | null): string {
+  if (!title) return '';
+  let t = title.trim();
+  if (source) {
+    const pat = new RegExp(`\\s*[–-]\\s*${escapeRegex(source.trim())}$`, 'i');
+    t = t.replace(pat, '');
+  }
+  // Also remove trailing "- Google News" if present
+  t = t.replace(/\\s*[–-]\\s*Google News$/i, '');
+  return t.trim();
+}
+
+function cleanSnippet(s: string): string {
+  return stripHtml(s)
+    .replace(/\\bhttps?:\\/\\/\\S+/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 async function fetchRss(query: string): Promise<Array<{
   link: string;
   source: string;
@@ -102,7 +125,7 @@ async function fetchRss(query: string): Promise<Array<{
   const xml = await res.text();
 
   const items: Array<{ link: string; source: string; published: string; description: string; title: string; }> = [];
-  const itemRegex = /<item>[\s\S]*?<\/item>/gi;
+  const itemRegex = /<item>[\\s\\S]*?<\\/item>/gi;
   const blocks = xml.match(itemRegex) || [];
   for (const block of blocks) {
     const linkRaw = extractBetween(block, "link") || "";
@@ -112,8 +135,8 @@ async function fetchRss(query: string): Promise<Array<{
     const descRaw = extractBetween(block, "description") || "";
 
     const link = resolveArticleUrl(stripHtml(linkRaw));
-    const title = stripHtml(titleRaw).replace(/\s*-\s*Google News$/i, "");
-    const source = stripHtml(sourceRaw).replace(/\s*-\s*Google News$/i, "");
+    const title = stripHtml(titleRaw).replace(/\\s*-\\s*Google News$/i, "");
+    const source = stripHtml(sourceRaw).replace(/\\s*-\\s*Google News$/i, "");
     const description = stripHtml(descRaw);
     const published = new Date(pubRaw).toISOString();
 
@@ -167,10 +190,9 @@ Deno.serve(async (req) => {
           const limited = rssItems.slice(0, 8);
           for (const it of limited) {
             try {
-              const { title, text } = await fetchArticleDetails(it.link);
-              const rawSnippet = title || it.title || it.description || '';
-              const cleanedSnippet = stripHtml(rawSnippet).replace(/\bhttps?:\/\/\S+/gi, '').trim();
-              const content_snippet = cleanedSnippet.slice(0, 200);
+              const { title: fetchedTitle, text } = await fetchArticleDetails(it.link);
+              const chosenTitle = stripSourceSuffix(it.title, it.source) || fetchedTitle || '';
+              const content_snippet = cleanSnippet(chosenTitle).slice(0, 200);
               const full_text = text || it.description;
 
               allMentions.push({
