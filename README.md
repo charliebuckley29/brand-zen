@@ -16,7 +16,7 @@ This is a low-code MVP dashboard for real-time brand monitoring, built in Lovabl
 
 📈 Monthly brand health reports with sentiment trends and top sources
 
-🛠️#  Stack
+# 🛠️ Stack
 
 💜 Built with Lovable
 
