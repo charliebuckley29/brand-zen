@@ -75,7 +75,7 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji }: M
                   className="h-8 w-8 p-0"
                   onClick={(e) => {
                     e.stopPropagation();
-                    window.open(mention.source_url, '_blank');
+                    window.open(mention.source_url, '_blank', 'noopener,noreferrer');
                   }}
                 >
                   <ExternalLink className="h-3 w-3" />
@@ -187,7 +187,7 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji }: M
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        window.open(mention.source_url, '_blank');
+                        window.open(mention.source_url, '_blank', 'noopener,noreferrer');
                       }}
                     >
                       <ExternalLink className="h-4 w-4" />

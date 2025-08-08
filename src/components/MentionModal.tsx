@@ -213,7 +213,7 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
               <h3 className="font-semibold">{mention.source_name}</h3>
               <p className="text-sm text-muted-foreground">{formatDate(mention.published_at)}</p>
             </div>
-            <Button variant="outline" onClick={() => window.open(mention.source_url, '_blank')}>
+            <Button variant="outline" onClick={() => window.open(mention.source_url, '_blank', 'noopener,noreferrer')}>
               <ExternalLink className="w-4 h-4 mr-2" />
               View Source
             </Button>

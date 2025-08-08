@@ -40,12 +40,28 @@ function extractMainText(html: string): string | null {
   return text ? text.replace(/\s+\n/g, '\n').trim() : null;
 }
 
-async function fetchHtmlWithFinalUrl(target: string): Promise<{ html: string | null; finalUrl: string }> {
+async function fetchHtmlWithFinalUrl(target: string, maxRedirects = 3, timeoutMs = 8000, maxContentLength = 2_000_000): Promise<{ html: string | null; finalUrl: string }> {
   try {
-    const res = await fetch(target, { redirect: 'follow' });
-    if (!res.ok) return { html: null, finalUrl: target };
-    const text = await res.text();
-    return { html: text, finalUrl: res.url || target };
+    let url = target;
+    for (let i = 0; i <= maxRedirects; i++) {
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(url, { redirect: 'manual', signal: controller.signal });
+      clearTimeout(t);
+      // Handle redirects manually to cap hops
+      if (res.status >= 300 && res.status < 400) {
+        const loc = res.headers.get('location');
+        if (!loc) return { html: null, finalUrl: url }; 
+        url = new URL(loc, url).toString();
+        continue;
+      }
+      if (!res.ok) return { html: null, finalUrl: url };
+      const cl = res.headers.get('content-length');
+      if (cl && Number(cl) > maxContentLength) return { html: null, finalUrl: url };
+      const text = await res.text();
+      return { html: text, finalUrl: res.url || url };
+    }
+    return { html: null, finalUrl: url };
   } catch {
     return { html: null, finalUrl: target };
   }
@@ -72,28 +88,55 @@ function firstExternalLink(html: string): string | null {
   return null;
 }
 
+// Basic SSRF protections
+function isPrivateHostname(host: string): boolean {
+  return (
+    host === 'localhost' || host === '127.0.0.1' || host === '::1' ||
+    /^10\./.test(host) || /^192\.168\./.test(host) || /^169\.254\./.test(host) ||
+    /^(172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(host)
+  );
+}
+
+function isSafeUrl(u: string): boolean {
+  try {
+    const url = new URL(u);
+    if (!/^https?:$/i.test(url.protocol)) return false;
+    if (isPrivateHostname(url.hostname)) return false;
+    const port = url.port ? Number(url.port) : (url.protocol === 'https:' ? 443 : 80);
+    if (![80, 443].includes(port)) return false;
+    return true;
+  } catch { return false; }
+}
+
 Deno.serve(async (req) => {
+  const origin = req.headers.get('Origin');
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  };
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { url, mentionId } = await req.json();
-    if (!url || typeof url !== 'string') {
-      return new Response(JSON.stringify({ error: 'Missing url' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (!url || typeof url !== 'string' || !isSafeUrl(url)) {
+      return new Response(JSON.stringify({ error: 'Invalid or unsafe url' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Step 1: fetch initial and follow redirects
+    // Step 1: fetch initial and follow redirects (capped)
     let { html, finalUrl } = await fetchHtmlWithFinalUrl(url);
     if (!html) {
       return new Response(JSON.stringify({ title: null, text: null }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Step 2: if finalUrl contains ?url= param (Google redirect), use it
+    // Step 2: if finalUrl contains ?url= param (Google redirect), use it if safe
     try {
       const u = new URL(finalUrl);
       const urlParam = u.searchParams.get('url');
-      if (urlParam) {
+      if (urlParam && isSafeUrl(urlParam)) {
         const ref = await fetchHtmlWithFinalUrl(decodeURIComponent(urlParam));
         if (ref.html) { html = ref.html; finalUrl = ref.finalUrl; }
       }
@@ -104,12 +147,12 @@ Deno.serve(async (req) => {
     if (isGoogleNewsUrl(finalUrl) || html.includes(genericTagline)) {
       const canonicalMatch = html.match(/<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/i);
       const canonical = canonicalMatch ? canonicalMatch[1] : (extractMetaContent(html, 'property', 'og:url') || extractMetaContent(html, 'name', 'twitter:url'));
-      if (canonical && !isGoogleNewsUrl(canonical)) {
+      if (canonical && !isGoogleNewsUrl(canonical) && isSafeUrl(canonical)) {
         const ref = await fetchHtmlWithFinalUrl(canonical);
         if (ref.html) { html = ref.html; finalUrl = ref.finalUrl; }
       } else {
         const ext = firstExternalLink(html);
-        if (ext) {
+        if (ext && isSafeUrl(ext)) {
           const ref = await fetchHtmlWithFinalUrl(ext);
           if (ref.html) { html = ref.html; finalUrl = ref.finalUrl; }
         }
