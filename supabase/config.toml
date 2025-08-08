@@ -54,3 +54,6 @@ enable_confirmations = false
 
 [functions.brand-monitor]
 verify_jwt = true
+
+[functions.monitor-news]
+verify_jwt = false
