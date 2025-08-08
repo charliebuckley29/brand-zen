@@ -101,13 +101,13 @@ function stripSourceSuffix(title: string | null, source: string | null): string 
     t = t.replace(pat, '');
   }
   // Also remove trailing "- Google News" if present
-  t = t.replace(/\\s*[–-]\\s*Google News$/i, '');
+  t = t.replace(/\s*[–-]\s*Google News$/i, '');
   return t.trim();
 }
 
 function cleanSnippet(s: string): string {
   return stripHtml(s)
-    .replace(/\\bhttps?:\\/\\/\\S+/gi, '')
+    .replace(/\bhttps?:\/\/\S+/gi, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
 }
@@ -125,7 +125,7 @@ async function fetchRss(query: string): Promise<Array<{
   const xml = await res.text();
 
   const items: Array<{ link: string; source: string; published: string; description: string; title: string; }> = [];
-  const itemRegex = /<item>[\\s\\S]*?<\\/item>/gi;
+  const itemRegex = /<item>[\s\S]*?<\/item>/gi;
   const blocks = xml.match(itemRegex) || [];
   for (const block of blocks) {
     const linkRaw = extractBetween(block, "link") || "";
@@ -135,8 +135,8 @@ async function fetchRss(query: string): Promise<Array<{
     const descRaw = extractBetween(block, "description") || "";
 
     const link = resolveArticleUrl(stripHtml(linkRaw));
-    const title = stripHtml(titleRaw).replace(/\\s*-\\s*Google News$/i, "");
-    const source = stripHtml(sourceRaw).replace(/\\s*-\\s*Google News$/i, "");
+    const title = stripHtml(titleRaw).replace(/\s*-\s*Google News$/i, "");
+    const source = stripHtml(sourceRaw).replace(/\s*-\s*Google News$/i, "");
     const description = stripHtml(descRaw);
     const published = new Date(pubRaw).toISOString();
 
