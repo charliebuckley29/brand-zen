@@ -6,7 +6,7 @@ import { MentionsTable } from "./MentionsTable";
 import { MonitoringControls } from "./MonitoringControls";
 import { MentionModal } from "./MentionModal";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw } from "lucide-react";
+import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Mention {
@@ -35,6 +35,7 @@ export function Dashboard() {
     flagged: 0
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -82,6 +83,29 @@ export function Dashboard() {
     }
   };
 
+  const handleClearMentions = async () => {
+    try {
+      setIsClearing(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: "Not signed in", description: "Please sign in to clear mentions.", variant: "destructive" });
+        return;
+      }
+      const { error } = await supabase
+        .from('mentions')
+        .delete()
+        .eq('user_id', user.id);
+      if (error) throw error;
+      await fetchMentions();
+      toast({ title: "Mentions cleared", description: "All your mentions were removed." });
+    } catch (err) {
+      console.error("Error clearing mentions:", err);
+      toast({ title: "Clear failed", description: "Could not delete mentions.", variant: "destructive" });
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
   const getSentimentEmoji = (sentiment: string | null) => {
     switch (sentiment) {
       case 'positive': return '✅';
@@ -121,6 +145,19 @@ export function Dashboard() {
               <>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh Mentions
+              </>
+            )}
+          </Button>
+          <Button variant="destructive" onClick={handleClearMentions} disabled={isClearing} className="w-full sm:w-auto">
+            {isClearing ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Clearing...
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear Mentions
               </>
             )}
           </Button>
