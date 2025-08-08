@@ -2,6 +2,8 @@
 
 Purpose: Give a clear, non-technical view of what we have today, where we’re going, and what we need to get there.
 
+Preview build: https://preview--brand-zen.lovable.app/
+
 —
 
 1) What this should be
