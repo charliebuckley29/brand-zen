@@ -156,6 +156,43 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
   };
 
   const genericTagline = 'Comprehensive, up-to-date news coverage, aggregated from sources all over the world by Google News.';
+
+  useEffect(() => {
+    const needsResolve = !mention.full_text || !mention.full_text.trim() || mention.full_text.trim() === genericTagline;
+    if (!needsResolve) return;
+
+    let cancelled = false;
+    const resolve = async () => {
+      try {
+        setIsResolving(true);
+        const { data, error } = await supabase.functions.invoke('resolve-article', {
+          body: { url: mention.source_url },
+        });
+        if (error) throw error;
+
+        const resolved: string | null = data?.full_text || data?.content || data?.text || null;
+        if (!cancelled && resolved && resolved.trim() && resolved.trim() !== genericTagline) {
+          setResolvedText(resolved);
+          // Persist improved body
+          await supabase
+            .from('mentions')
+            .update({ full_text: resolved })
+            .eq('id', mention.id);
+          onUpdate();
+        }
+      } catch (err) {
+        console.error('Failed to resolve article body', err);
+        toast({ title: 'Could not fetch article body', variant: 'destructive' });
+      } finally {
+        if (!cancelled) setIsResolving(false);
+      }
+    };
+
+    resolve();
+    return () => {
+      cancelled = true;
+    };
+  }, [mention.id, mention.source_url]);
     return (
       <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
