@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,8 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
   const [escalationType, setEscalationType] = useState(mention.escalation_type);
   const [internalNotes, setInternalNotes] = useState(mention.internal_notes || '');
   const [isLoading, setIsLoading] = useState(false);
+  const [resolvedText, setResolvedText] = useState<string | null>(null);
+  const [isResolving, setIsResolving] = useState(false);
   const { toast } = useToast();
 
   const formatDate = (dateString: string) => {
@@ -153,8 +155,7 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
     }
   };
 
-  return (
-    <Dialog open={true} onOpenChange={onClose}>
+  const genericTagline = 'Comprehensive, up-to-date news coverage, aggregated from sources all over the world by Google News.';
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -202,9 +203,12 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
           <div>
             <Label className="text-sm font-medium">Content</Label>
             <div className="mt-2 p-4 bg-muted rounded-lg">
-              {mention.full_text && mention.full_text.trim().length > 0 ? (
+              {isResolving && !(resolvedText || mention.full_text) && (
+                <p className="text-sm text-muted-foreground">Fetching article body…</p>
+              )}
+              {(resolvedText || mention.full_text) ? (
                 <p className="text-sm leading-relaxed whitespace-pre-line">
-                  {mention.full_text}
+                  {resolvedText || mention.full_text}
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground">No article body available for this mention.</p>
