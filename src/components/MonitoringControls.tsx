@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { RefreshCw, Play, Pause } from "lucide-react";
-import { startMonitoring, getUserKeywords } from "@/lib/monitoring";
+import { RefreshCw, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface MonitoringControlsProps {
@@ -10,47 +10,45 @@ interface MonitoringControlsProps {
 }
 
 export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProps) {
-  const [isMonitoring, setIsMonitoring] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const { toast } = useToast();
 
-  const handleStartMonitoring = async () => {
+  const handleRefreshMentions = async () => {
     try {
-      setIsMonitoring(true);
-      
-      // Get user's keywords
-      const keywords = await getUserKeywords();
-      
-      if (keywords.length === 0) {
-        toast({
-          title: "No brands to monitor",
-          description: "Please set up a brand first.",
-          variant: "destructive"
-        });
+      setIsRefreshing(true);
+      const { error } = await supabase.functions.invoke('monitor-news', { body: {} });
+      if (error) throw error;
+      await onMentionsUpdated();
+      toast({ title: 'Mentions refreshed', description: 'Fetched latest mentions.' });
+    } catch (err) {
+      console.error('Error refreshing mentions:', err);
+      toast({ title: 'Refresh failed', description: 'Could not fetch new mentions.', variant: 'destructive' });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleClearMentions = async () => {
+    try {
+      setIsClearing(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: 'Not signed in', description: 'Please sign in to clear mentions.', variant: 'destructive' });
         return;
       }
-
-      // Start monitoring for each keyword
-      for (const keyword of keywords) {
-        await startMonitoring(keyword.id);
-      }
-
-      toast({
-        title: "Monitoring started!",
-        description: `Now monitoring ${keywords.length} brand(s) for new mentions.`,
-      });
-
-      // Refresh mentions
-      onMentionsUpdated();
-      
-    } catch (error) {
-      console.error("Error starting monitoring:", error);
-      toast({
-        title: "Error",
-        description: "Failed to start monitoring. Please try again.",
-        variant: "destructive"
-      });
+      const { error } = await supabase
+        .from('mentions')
+        .delete()
+        .eq('user_id', user.id);
+      if (error) throw error;
+      await onMentionsUpdated();
+      toast({ title: 'Mentions cleared', description: 'All your mentions were removed.' });
+    } catch (err) {
+      console.error('Error clearing mentions:', err);
+      toast({ title: 'Clear failed', description: 'Could not delete mentions.', variant: 'destructive' });
     } finally {
-      setIsMonitoring(false);
+      setIsClearing(false);
     }
   };
 
@@ -62,32 +60,50 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
           Monitoring Controls
         </CardTitle>
         <CardDescription>
-          Generate new mentions and monitor your brand across the web
+          Refresh and manage your mentions
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button 
-            onClick={handleStartMonitoring}
-            disabled={isMonitoring}
+            onClick={handleRefreshMentions}
+            disabled={isRefreshing}
             className="w-full sm:w-auto"
           >
-            {isMonitoring ? (
+            {isRefreshing ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Scanning...
+                Refreshing...
               </>
             ) : (
               <>
-                <Play className="w-4 h-4 mr-2" />
-                Generate New Mentions
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh Mentions
+              </>
+            )}
+          </Button>
+          <Button 
+            variant="destructive"
+            onClick={handleClearMentions}
+            disabled={isClearing}
+            className="w-full sm:w-auto"
+          >
+            {isClearing ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Clearing...
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear Mentions
               </>
             )}
           </Button>
         </div>
         
         <div className="text-sm text-muted-foreground">
-          <p>Click "Generate New Mentions" to simulate finding new brand mentions across various sources.</p>
+          <p>Use the controls to fetch the latest mentions or clear all current mentions.</p>
         </div>
       </CardContent>
     </Card>
