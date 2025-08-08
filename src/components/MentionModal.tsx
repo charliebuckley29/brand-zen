@@ -158,7 +158,7 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Mention Details
+            {mention.content_snippet}
             {flagged && <Flag className="h-4 w-4 text-orange-500" />}
           </DialogTitle>
           <DialogDescription>
@@ -204,7 +204,9 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
             <Label className="text-sm font-medium">Content</Label>
             <div className="mt-2 p-4 bg-muted rounded-lg">
               <p className="text-sm leading-relaxed">
-                {mention.full_text || mention.content_snippet}
+                {mention.full_text && mention.full_text.trim() !== 'Comprehensive, up-to-date news coverage, aggregated from sources all over the world by Google News.'
+                  ? mention.full_text
+                  : mention.content_snippet}
               </p>
             </div>
           </div>
