@@ -156,7 +156,9 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
   };
 
   const genericTagline = 'Comprehensive, up-to-date news coverage, aggregated from sources all over the world by Google News.';
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    return (
+      <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {mention.content_snippet}
