@@ -35,17 +35,19 @@ function unique<T>(arr: T[]): T[] {
   return Array.from(new Set(arr));
 }
 
-async function fetchBingWeb(query: string, limit = 5): Promise<{ name: string; url: string; snippet: string; datePublished?: string; hostPageUrl?: string }[]> {
-  const key = Deno.env.get("BING_SEARCH_API_KEY");
-  if (!key) return [];
-  const url = new URL("https://api.bing.microsoft.com/v7.0/search");
+async function fetchGoogleCSE(query: string, limit = 5): Promise<{ title: string; link: string; snippet: string; pagemap?: any }[]> {
+  const key = Deno.env.get("GOOGLE_CSE_API_KEY");
+  const cx = Deno.env.get("GOOGLE_CSE_CX");
+  if (!key || !cx) return [];
+  const url = new URL("https://www.googleapis.com/customsearch/v1");
   url.searchParams.set("q", query);
-  url.searchParams.set("count", String(limit));
-  const res = await fetch(url.toString(), { headers: { "Ocp-Apim-Subscription-Key": key } });
+  url.searchParams.set("num", String(Math.min(limit, 10)));
+  url.searchParams.set("key", key);
+  url.searchParams.set("cx", cx);
+  const res = await fetch(url.toString());
   if (!res.ok) return [];
   const data = await res.json();
-  const web = data.webPages?.value || [];
-  return web.map((w: any) => ({ name: w.name, url: w.url, snippet: w.snippet, datePublished: w.dateLastCrawled }));
+  return data.items || [];
 }
 
 async function fetchGNews(query: string, limit = 5): Promise<{ title: string; url: string; description: string; publishedAt?: string; source?: { name?: string } }[]> {
@@ -172,10 +174,10 @@ Deno.serve(async (req) => {
       const terms = unique([kw.brand_name, ...(kw.variants || [])]).filter(Boolean).slice(0, 5);
 
       for (const term of terms) {
-        // Bing Web
-        const web = await fetchBingWeb(term, perSourceLimit);
+        // Google CSE Web
+        const web = await fetchGoogleCSE(term, perSourceLimit);
         for (const w of web) {
-          const url = w.url || w.hostPageUrl;
+          const url = w.link;
           if (!url) continue;
           const key = `${kw.user_id}|${url}`;
           if (createdUrls.has(key)) continue;
@@ -185,7 +187,7 @@ Deno.serve(async (req) => {
             user_id: kw.user_id,
             source_name: new URL(url).hostname.replace(/^www\./, ""),
             source_url: url,
-            published_at: iso(w.datePublished),
+            published_at: iso(),
             content_snippet: w.snippet || term,
             source_type: "web",
             flagged: false,
