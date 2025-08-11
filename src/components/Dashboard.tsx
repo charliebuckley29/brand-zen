@@ -8,6 +8,7 @@ import { MentionModal } from "./MentionModal";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { excludeMention } from "@/lib/monitoring";
 
 interface Mention {
   id: string;
@@ -115,6 +116,17 @@ export function Dashboard() {
     }
   };
 
+  const handleNotMe = async (mentionId: string) => {
+    try {
+      await excludeMention(mentionId);
+      setMentions(prev => prev.filter(m => m.id !== mentionId));
+      setStats(s => ({ ...s, total: Math.max(0, s.total - 1) }));
+      toast({ title: "Removed", description: "We’ll ignore this source for this brand going forward." });
+    } catch (err) {
+      console.error("Exclude failed", err);
+      toast({ title: "Action failed", description: "Couldn’t exclude this mention.", variant: "destructive" });
+    }
+  };
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -212,6 +224,7 @@ export function Dashboard() {
               mentions={mentions} 
               onMentionClick={setSelectedMention}
               getSentimentEmoji={getSentimentEmoji}
+              onNotMe={(id) => handleNotMe(id)}
             />
           </CardContent>
         </Card>

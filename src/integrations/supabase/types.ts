@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      mention_exclusions: {
+        Row: {
+          created_at: string
+          id: string
+          keyword_id: string
+          reason: string
+          source_domain: string | null
+          source_url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          keyword_id: string
+          reason?: string
+          source_domain?: string | null
+          source_url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          keyword_id?: string
+          reason?: string
+          source_domain?: string | null
+          source_url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mentions: {
         Row: {
           content_snippet: string

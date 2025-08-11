@@ -100,3 +100,45 @@ export async function flagMention(mentionId: string, escalationType: string, not
   if (error) throw error;
   return data;
 }
+
+export async function excludeMention(mentionId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Fetch mention to get keyword and URL
+  const { data: mention, error: fetchErr } = await supabase
+    .from("mentions")
+    .select("id, keyword_id, source_url")
+    .eq("id", mentionId)
+    .maybeSingle();
+  if (fetchErr) throw fetchErr;
+  if (!mention) throw new Error("Mention not found");
+
+  // Insert exclusion
+  const sourceDomain = (() => {
+    try { return new URL(mention.source_url).hostname.replace(/^www\./, ""); } catch { return null; }
+  })();
+
+  const { error: insertErr } = await supabase
+    .from("mention_exclusions")
+    .insert({
+      user_id: user.id,
+      keyword_id: mention.keyword_id,
+      source_url: mention.source_url,
+      source_domain: sourceDomain,
+      reason: "not_me",
+    });
+  if (insertErr && insertErr.code !== '23505') { // ignore unique violation
+    throw insertErr;
+  }
+
+  // Delete the mention from the user's list
+  const { error: delErr } = await supabase
+    .from("mentions")
+    .delete()
+    .eq("id", mentionId)
+    .eq("user_id", user.id);
+  if (delErr) throw delErr;
+
+  return { success: true };
+}

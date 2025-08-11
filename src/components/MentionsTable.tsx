@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ExternalLink, Flag, Clock, MessageCircle } from "lucide-react";
+import { ExternalLink, Flag, Clock, MessageCircle, UserX } from "lucide-react";
 
 interface Mention {
   id: string;
@@ -22,9 +22,10 @@ interface MentionsTableProps {
   mentions: Mention[];
   onMentionClick: (mention: Mention) => void;
   getSentimentEmoji: (sentiment: string | null) => string;
+  onNotMe: (mentionId: string) => void;
 }
 
-export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji }: MentionsTableProps) {
+export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji, onNotMe }: MentionsTableProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -69,17 +70,32 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji }: M
                   <span className="font-medium text-sm">{mention.source_name}</span>
                   {mention.flagged && <Flag className="h-3 w-3 text-warning" />}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.open(mention.source_url, '_blank', 'noopener,noreferrer');
-                  }}
-                >
-                  <ExternalLink className="h-3 w-3" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(mention.source_url, '_blank', 'noopener,noreferrer');
+                    }}
+                    aria-label="Open source"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onNotMe(mention.id);
+                    }}
+                  >
+                    <UserX className="h-3 w-3 mr-1" />
+                    <span className="text-xs">Not me</span>
+                  </Button>
+                </div>
               </div>
               
               <p className="text-sm text-foreground mb-3 line-clamp-2">
@@ -182,16 +198,30 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji }: M
                     {formatDate(mention.published_at)}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(mention.source_url, '_blank', 'noopener,noreferrer');
-                      }}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(mention.source_url, '_blank', 'noopener,noreferrer');
+                        }}
+                        aria-label="Open source"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onNotMe(mention.id);
+                        }}
+                        aria-label="Not me"
+                      >
+                        <UserX className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

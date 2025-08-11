@@ -165,6 +165,20 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ message: "No keywords configured" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Fetch user-specific exclusions to avoid inserting "not me" items again
+    const { data: exclusionsData, error: exclErr } = await supabase
+      .from("mention_exclusions")
+      .select("keyword_id, source_url")
+      .eq("user_id", user.id);
+    if (exclErr) throw exclErr;
+
+    const exclusionsByKeyword = new Map<string, Set<string>>();
+    for (const ex of exclusionsData || []) {
+      const set = exclusionsByKeyword.get(ex.keyword_id) || new Set<string>();
+      set.add(ex.source_url);
+      exclusionsByKeyword.set(ex.keyword_id, set);
+    }
+
     const perSourceLimit = 5;
     const createdUrls = new Set<string>();
     const mentionsToUpsert: MentionInput[] = [];
@@ -187,6 +201,7 @@ Deno.serve(async (req) => {
         for (const w of web) {
           const url = w.link;
           if (!url) continue;
+          if (exclusionsByKeyword.get(kw.id)?.has(url)) continue;
           const key = `${kw.user_id}|${url}`;
           if (createdUrls.has(key)) continue;
           createdUrls.add(key);
