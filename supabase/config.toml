@@ -57,3 +57,6 @@ verify_jwt = true
 
 [functions.monitor-news]
 verify_jwt = true
+
+[functions.aggregate-sources]
+verify_jwt = true

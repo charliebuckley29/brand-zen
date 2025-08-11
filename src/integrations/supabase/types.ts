@@ -54,6 +54,7 @@ export type Database = {
           published_at: string
           sentiment: string | null
           source_name: string
+          source_type: string | null
           source_url: string
           topics: string[] | null
           updated_at: string
@@ -71,6 +72,7 @@ export type Database = {
           published_at: string
           sentiment?: string | null
           source_name: string
+          source_type?: string | null
           source_url: string
           topics?: string[] | null
           updated_at?: string
@@ -88,6 +90,7 @@ export type Database = {
           published_at?: string
           sentiment?: string | null
           source_name?: string
+          source_type?: string | null
           source_url?: string
           topics?: string[] | null
           updated_at?: string

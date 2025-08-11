@@ -63,7 +63,7 @@ export async function getUserMentions(limit = 50) {
 }
 
 export async function startMonitoring(keywordId: string) {
-  const { data, error } = await supabase.functions.invoke('brand-monitor', {
+  const { data, error } = await supabase.functions.invoke('aggregate-sources', {
     body: { keywordId }
   });
 

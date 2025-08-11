@@ -71,7 +71,7 @@ export function Dashboard() {
   const handleRefreshMentions = async () => {
     try {
       setIsRefreshing(true);
-      const { data, error } = await supabase.functions.invoke('monitor-news', { body: {} });
+      const { data, error } = await supabase.functions.invoke('aggregate-sources', { body: {} });
       if (error) throw error;
       await fetchMentions();
       toast({ title: "Mentions refreshed", description: "Fetched latest mentions." });
