@@ -170,6 +170,14 @@ Deno.serve(async (req) => {
     const mentionsToUpsert: MentionInput[] = [];
     const perSourceCounts: Record<string, number> = { web: 0, news: 0, reddit: 0, youtube: 0 };
 
+    const enabled = {
+      cse: Boolean(Deno.env.get("GOOGLE_CSE_API_KEY") && Deno.env.get("GOOGLE_CSE_CX")),
+      gnews: Boolean(Deno.env.get("GNEWS_API_KEY")),
+      reddit: Boolean(Deno.env.get("REDDIT_CLIENT_ID") && Deno.env.get("REDDIT_CLIENT_SECRET")),
+      youtube: Boolean(Deno.env.get("YOUTUBE_API_KEY")),
+    };
+    console.log("aggregate-sources config:", { enabled, keywordCount: keywords.length });
+
     for (const kw of keywords) {
       const terms = unique([kw.brand_name, ...(kw.variants || [])]).filter(Boolean).slice(0, 5);
 
