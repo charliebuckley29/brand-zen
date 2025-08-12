@@ -224,67 +224,76 @@ export async function downloadReportPdf(report: ReportPdfData, filterSources?: s
   doc.text('Mentions Over Time', margin, y);
   y += 12;
 
-  // Fetch detailed mentions for charts
-  const { start, end } = getRangeFromKey(report.report_month);
-  let query = supabase
-    .from('mentions')
-    .select('published_at, sentiment, source_name, source_type')
-    .gte('published_at', start.toISOString())
-    .lte('published_at', end.toISOString())
-    .order('published_at');
-  if (filterSources && filterSources.length && filterSources.length < 4) {
-    query = (query as any).in('source_type', filterSources as any);
-  }
-  const { data: details } = await query as any;
+  try {
+    // Fetch detailed mentions for charts
+    const { start, end } = getRangeFromKey(report.report_month);
+    let query = supabase
+      .from('mentions')
+      .select('published_at, sentiment, source_name, source_type')
+      .gte('published_at', start.toISOString())
+      .lte('published_at', end.toISOString())
+      .order('published_at');
+    if (filterSources && filterSources.length && filterSources.length < 4) {
+      query = (query as any).in('source_type', filterSources as any);
+    }
+    const { data: details } = await query as any;
 
-  const daily = new Map<string, { positive: number; neutral: number; negative: number }>();
-  const sources = new Map<string, number>();
-  (details || []).forEach((m: any) => {
-    const d = new Date(m.published_at).toLocaleDateString();
-    if (!daily.has(d)) daily.set(d, { positive: 0, neutral: 0, negative: 0 });
-    const bucket = daily.get(d)!;
-    if (m.sentiment === 'positive') bucket.positive += 1;
-    else if (m.sentiment === 'negative') bucket.negative += 1;
-    else bucket.neutral += 1;
-    if (m.source_name) sources.set(m.source_name, (sources.get(m.source_name) || 0) + 1);
-  });
-  const lineData = Array.from(daily.entries()).map(([date, vals]) => ({ date, ...vals }));
-  lineData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const daily = new Map<string, { positive: number; neutral: number; negative: number }>();
+    const sources = new Map<string, number>();
+    (details || []).forEach((m: any) => {
+      const d = new Date(m.published_at).toLocaleDateString();
+      if (!daily.has(d)) daily.set(d, { positive: 0, neutral: 0, negative: 0 });
+      const bucket = daily.get(d)!;
+      if (m.sentiment === 'positive') bucket.positive += 1;
+      else if (m.sentiment === 'negative') bucket.negative += 1;
+      else bucket.neutral += 1;
+      if (m.source_name) sources.set(m.source_name, (sources.get(m.source_name) || 0) + 1);
+    });
+    const lineData = Array.from(daily.entries()).map(([date, vals]) => ({ date, ...vals }));
+    lineData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  drawLineChart(doc, { x: margin, y, width: 500, height: 170, data: lineData });
-  y += 190;
+    drawLineChart(doc, { x: margin, y, width: 500, height: 170, data: lineData });
+    y += 190;
 
-  // Top Sources (pie chart)
-  doc.setFont('helvetica', 'bold');
-  doc.text('Top Sources', margin, y);
-  y += 12;
+    // Top Sources (pie chart)
+    doc.setFont('helvetica', 'bold');
+    doc.text('Top Sources', margin, y);
+    y += 12;
 
-  const COLORS: [number, number, number][] = [
-    [66, 133, 244], // blue
-    [52, 168, 83],  // green
-    [251, 188, 5],  // yellow
-    [234, 67, 53],  // red
-    [156, 39, 176], // purple
-  ];
-  const sourceArr = Array.from(sources.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([name, value], i) => ({ name, value, color: COLORS[i % COLORS.length] }));
+    const COLORS: [number, number, number][] = [
+      [66, 133, 244], // blue
+      [52, 168, 83],  // green
+      [251, 188, 5],  // yellow
+      [234, 67, 53],  // red
+      [156, 39, 176], // purple
+    ];
+    const sourceArr = Array.from(sources.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, value], i) => ({ name, value, color: COLORS[i % COLORS.length] }));
 
-  drawPieChart(doc, { x: margin + 90, y: y + 80, r: 60, data: sourceArr });
+    drawPieChart(doc, { x: margin + 90, y: y + 80, r: 60, data: sourceArr });
 
-  // Legend
-  let ly = y + 10;
-  doc.setFont('helvetica', 'normal');
-  sourceArr.forEach((s) => {
-    doc.setFillColor(...s.color);
-    doc.rect(margin + 200, ly - 8, 10, 10, 'F');
-    doc.setTextColor(60);
-    doc.text(`${s.name} (${s.value})`, margin + 220, ly);
+    // Legend
+    let ly = y + 10;
+    doc.setFont('helvetica', 'normal');
+    sourceArr.forEach((s) => {
+      doc.setFillColor(...s.color);
+      doc.rect(margin + 200, ly - 8, 10, 10, 'F');
+      doc.setTextColor(60);
+      doc.text(`${s.name} (${s.value})`, margin + 220, ly);
+      doc.setTextColor(0);
+      ly += 16;
+    });
+    y += 170;
+  } catch (e) {
+    // If chart drawing fails for any reason, continue with PDF generation
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(120);
+    doc.text('Charts unavailable for this report.', margin, y);
     doc.setTextColor(0);
-    ly += 16;
-  });
-  y += 170;
+    y += 24;
+  }
 
   // Footer
   const pageHeight = doc.internal.pageSize.getHeight();

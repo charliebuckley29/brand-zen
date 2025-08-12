@@ -150,6 +150,7 @@ export function ReportsPage() {
   const { toast } = useToast();
   const { enabledReports } = useSourcePreferences();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchReports();
@@ -412,7 +413,23 @@ export function ReportsPage() {
                     <div className="flex items-center gap-2">
                       <TrendIcon className={`h-5 w-5 ${color}`} />
                       <Badge variant="outline">{trend}</Badge>
-                      <Button variant="outline" size="sm" onClick={() => downloadReportPdf(report, enabledReports)} aria-label={`Download report ${getMonthLabel(report.report_month)}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            setDownloadingId(report.id);
+                            await downloadReportPdf(report, enabledReports);
+                            toast({ title: 'Download started', description: `${getMonthLabel(report.report_month)} PDF is downloading.` });
+                          } catch (e: any) {
+                            toast({ title: 'Failed to download', description: e?.message || 'Unexpected error', variant: 'destructive' });
+                          } finally {
+                            setDownloadingId(null);
+                          }
+                        }}
+                        disabled={downloadingId === report.id}
+                        aria-label={`Download report ${getMonthLabel(report.report_month)}`}
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         Download
                       </Button>
