@@ -231,6 +231,7 @@ Deno.serve(async (req) => {
                 published_at: it.published,
                 content_snippet,
                 full_text,
+                source_type: 'news',
               });
             } catch (innerErr) {
               console.log('Article parse failed', { url: it.link, error: String(innerErr) });

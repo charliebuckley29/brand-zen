@@ -20,8 +20,10 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
   const handleRefreshMentions = async () => {
     try {
       setIsRefreshing(true);
-      const { error } = await supabase.functions.invoke('aggregate-sources', { body: {} });
-      if (error) throw error;
+      await Promise.allSettled([
+        supabase.functions.invoke('aggregate-sources', { body: {} }),
+        supabase.functions.invoke('monitor-news', { body: {} }),
+      ]);
       await onMentionsUpdated();
       toast({ title: 'Mentions refreshed', description: 'Fetched latest mentions.' });
     } catch (err) {

@@ -63,12 +63,13 @@ export async function getUserMentions(limit = 50) {
 }
 
 export async function startMonitoring(keywordId: string) {
-  const { data, error } = await supabase.functions.invoke('aggregate-sources', {
-    body: { keywordId }
-  });
+  const [agg, news] = await Promise.all([
+    supabase.functions.invoke('aggregate-sources', { body: { keywordId } }),
+    supabase.functions.invoke('monitor-news', { body: { keywordId } }),
+  ]);
 
-  if (error) throw error;
-  return data;
+  if (agg.error && news.error) throw agg.error || news.error;
+  return agg.data || news.data;
 }
 
 export async function analyzeSentiment(text: string): Promise<'positive' | 'negative' | 'neutral'> {
