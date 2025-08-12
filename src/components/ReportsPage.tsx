@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, TrendingUp, TrendingDown, BarChart3, FileText, Download } from "lucide-react";
+import { startOfMonth, endOfMonth, format, parse } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -71,68 +72,83 @@ export function ReportsPage() {
     }
   };
 
+  const getMonthLabel = (ym: string) => {
+    try {
+      const d = parse(`${ym}-01`, 'yyyy-MM-dd', new Date());
+      return format(d, 'LLLL yyyy');
+    } catch {
+      return ym;
+    }
+  };
+
   const generateReport = async () => {
     toast({
-      title: "Generating Report",
-      description: "Creating a new monthly report...",
+      title: "Generating report",
+      description: "Calculating this month’s metrics…",
     });
-    
+
     try {
-      // In a real app, this would trigger report generation
-      // For now, we'll simulate it
-      const currentMonth = new Date().toISOString().slice(0, 7);
-      
-      // Get mentions for current month to generate stats
-      const { data: mentions, error } = await supabase
+      const now = new Date();
+      const monthStart = startOfMonth(now);
+      const monthEnd = endOfMonth(now);
+      const monthKey = format(monthStart, 'yyyy-MM');
+
+      // Fetch mentions within the month (RLS restricts to current user)
+      const { data: mentions, error: mentionsError } = await supabase
         .from("mentions")
         .select("sentiment, source_name")
-        .gte("published_at", `${currentMonth}-01`)
-        .lt("published_at", `${currentMonth}-31`);
+        .gte("published_at", monthStart.toISOString())
+        .lte("published_at", monthEnd.toISOString());
 
-      if (error) throw error;
+      if (mentionsError) throw mentionsError;
 
-      const stats = mentions?.reduce((acc: any, mention: any) => {
-        acc.total++;
-        if (mention.sentiment === "positive") acc.positives++;
-        else if (mention.sentiment === "negative") acc.negatives++;
-        else acc.neutrals++;
-        
-        acc.sources.add(mention.source_name);
-        return acc;
-      }, { total: 0, positives: 0, negatives: 0, neutrals: 0, sources: new Set() });
+      // Aggregate stats
+      const sourceCounts = new Map<string, number>();
+      let total = 0, pos = 0, neg = 0, neu = 0;
+      (mentions || []).forEach((m) => {
+        total += 1;
+        if (m.sentiment === 'positive') pos += 1;
+        else if (m.sentiment === 'negative') neg += 1;
+        else neu += 1;
+        if (m.source_name) {
+          sourceCounts.set(m.source_name, (sourceCounts.get(m.source_name) || 0) + 1);
+        }
+      });
+      const topSources = Array.from(sourceCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name]) => name);
 
-      // Get current user
+      // Ensure authenticated to write report
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // Replace existing month report for this user
+      await supabase
+        .from('reports')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('report_month', monthKey);
+
       const newReport = {
         user_id: user.id,
-        report_month: currentMonth,
-        total_mentions: stats?.total || 0,
-        positives: stats?.positives || 0,
-        negatives: stats?.negatives || 0,
-        neutrals: stats?.neutrals || 0,
-        top_sources: Array.from(stats?.sources || []).slice(0, 5) as string[],
+        report_month: monthKey,
+        total_mentions: total,
+        positives: pos,
+        negatives: neg,
+        neutrals: neu,
+        top_sources: topSources as string[],
       };
 
       const { error: insertError } = await supabase
-        .from("reports")
+        .from('reports')
         .insert(newReport);
-
       if (insertError) throw insertError;
 
-      toast({
-        title: "Report Generated",
-        description: "Monthly report has been created successfully!",
-      });
-      
+      toast({ title: 'Report generated', description: 'Monthly report created successfully.' });
       fetchReports();
     } catch (error: any) {
-      toast({
-        title: "Error generating report",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: 'Error generating report', description: error.message, variant: 'destructive' });
     }
   };
 
@@ -197,10 +213,7 @@ export function ReportsPage() {
                     <div>
                       <CardTitle className="flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
-                        {new Date(report.report_month).toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long' 
-                        })}
+                        {getMonthLabel(report.report_month)}
                       </CardTitle>
                       <CardDescription>
                         Generated on {new Date(report.created_at).toLocaleDateString()}
