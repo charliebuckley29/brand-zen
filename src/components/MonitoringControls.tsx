@@ -80,7 +80,7 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
             ) : (
               <>
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh Mentions
+                Refresh mentions
               </>
             )}
           </Button>
@@ -98,7 +98,7 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
             ) : (
               <>
                 <Trash2 className="w-4 h-4 mr-2" />
-                Clear Mentions
+                Clear mentions
               </>
             )}
           </Button>
@@ -108,7 +108,7 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
             className="w-full sm:w-auto"
           >
             <History className="w-4 h-4 mr-2" />
-            Review removed
+            See removed mentions
           </Button>
         </div>
         
