@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { downloadReportPdf } from "@/lib/reportPdf";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSourcePreferences } from "@/hooks/useSourcePreferences";
 
 interface Report {
   id: string;
@@ -30,6 +31,7 @@ export function ReportsPage() {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const { toast } = useToast();
+  const { enabledReports } = useSourcePreferences();
 
   useEffect(() => {
     fetchReports();
@@ -113,11 +115,15 @@ export function ReportsPage() {
         : format(defaultStart, 'yyyy-MM');
 
       // Fetch mentions within range (RLS restricts to current user)
-      const { data: mentions, error: mentionsError } = await supabase
+      let query = supabase
         .from("mentions")
         .select("sentiment, source_name")
         .gte("published_at", rangeStart.toISOString())
         .lte("published_at", rangeEnd.toISOString());
+      if (enabledReports.length && enabledReports.length < 4) {
+        query = (query as any).in("source_type", enabledReports as any);
+      }
+      const { data: mentions, error: mentionsError } = await query;
       if (mentionsError) throw mentionsError;
 
       const sourceCounts = new Map<string, number>();

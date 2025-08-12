@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { excludeMention } from "@/lib/monitoring";
+import { useSourcePreferences } from "@/hooks/useSourcePreferences";
 
 interface Mention {
   id: string;
@@ -38,17 +39,22 @@ export function Dashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const { toast } = useToast();
+  const { enabledMentions } = useSourcePreferences();
 
   useEffect(() => {
     fetchMentions();
-  }, []);
-
+  }, [enabledMentions]);
   const fetchMentions = async () => {
     try {
-      const { data, error } = await supabase
+      const types = enabledMentions;
+      let query = supabase
         .from("mentions")
         .select("*")
         .order("published_at", { ascending: false });
+      if (types.length && types.length < 4) {
+        query = (query as any).in("source_type", types as any);
+      }
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -68,7 +74,6 @@ export function Dashboard() {
       setIsLoading(false);
     }
   };
-
   const handleRefreshMentions = async () => {
     try {
       setIsRefreshing(true);

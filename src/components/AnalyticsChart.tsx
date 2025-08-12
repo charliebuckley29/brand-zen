@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSourcePreferences } from "@/hooks/useSourcePreferences";
 
 interface ChartData {
   date: string;
@@ -27,12 +28,13 @@ export function AnalyticsChart() {
   const [chartType, setChartType] = useState("bar");
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { enabledAnalytics } = useSourcePreferences();
 
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, [period]);
+  }, [period, enabledAnalytics]);
 
   const fetchAnalyticsData = async () => {
     setIsLoading(true);
@@ -41,11 +43,15 @@ export function AnalyticsChart() {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("mentions")
         .select("published_at, sentiment, source_name")
         .gte("published_at", startDate.toISOString())
         .order("published_at");
+      if (enabledAnalytics.length && enabledAnalytics.length < 4) {
+        query = (query as any).in("source_type", enabledAnalytics as any);
+      }
+      const { data, error } = await query;
 
       if (error) throw error;
 

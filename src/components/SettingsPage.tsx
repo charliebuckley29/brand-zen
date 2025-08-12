@@ -6,12 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X } from "lucide-react";
+import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X, Globe, Newspaper, Youtube, MessageSquare } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { startMonitoring } from "@/lib/monitoring";
-
+import { Switch } from "@/components/ui/switch";
+import { useSourcePreferences } from "@/hooks/useSourcePreferences";
 interface SettingsPageProps {
   onSignOut: () => void;
 }
@@ -43,10 +44,11 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   
   const { toast } = useToast();
 
+  const { loading: prefsLoading, prefs, setPref } = useSourcePreferences();
+
   useEffect(() => {
     fetchBrandData();
   }, []);
-
   const fetchBrandData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -564,6 +566,180 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                 </Dialog>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Sources Preferences */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <SettingsIcon className="h-5 w-5" />
+              Sources
+            </CardTitle>
+            <CardDescription>
+              Choose which sources appear in your Mentions, Analytics and Reports. Data collection is unaffected.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Web */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                <div>
+                  <h4 className="text-sm font-medium">Web</h4>
+                  <p className="text-xs text-muted-foreground">General web results</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Mentions</span>
+                  <Switch
+                    checked={prefs.web?.show_in_mentions !== false}
+                    onCheckedChange={async (v) => {
+                      try { await setPref("web", "show_in_mentions", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Analytics</span>
+                  <Switch
+                    checked={prefs.web?.show_in_analytics !== false}
+                    onCheckedChange={async (v) => {
+                      try { await setPref("web", "show_in_analytics", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Reports</span>
+                  <Switch
+                    checked={prefs.web?.show_in_reports !== false}
+                    onCheckedChange={async (v) => {
+                      try { await setPref("web", "show_in_reports", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* News */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Newspaper className="h-4 w-4" />
+                <div>
+                  <h4 className="text-sm font-medium">News</h4>
+                  <p className="text-xs text-muted-foreground">News articles</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Mentions</span>
+                  <Switch
+                    checked={prefs.news?.show_in_mentions !== false}
+                    onCheckedChange={async (v) => {
+                      try { await setPref("news", "show_in_mentions", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Analytics</span>
+                  <Switch
+                    checked={prefs.news?.show_in_analytics !== false}
+                    onCheckedChange={async (v) => {
+                      try { await setPref("news", "show_in_analytics", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Reports</span>
+                  <Switch
+                    checked={prefs.news?.show_in_reports !== false}
+                    onCheckedChange={async (v) => {
+                      try { await setPref("news", "show_in_reports", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Reddit */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                <div>
+                  <h4 className="text-sm font-medium">Reddit</h4>
+                  <p className="text-xs text-muted-foreground">Reddit posts</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Mentions</span>
+                  <Switch
+                    checked={prefs.reddit?.show_in_mentions !== false}
+                    onCheckedChange={async (v) => {
+                      try { await setPref("reddit", "show_in_mentions", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Analytics</span>
+                  <Switch
+                    checked={prefs.reddit?.show_in_analytics !== false}
+                    onCheckedChange={async (v) => {
+                      try { await setPref("reddit", "show_in_analytics", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Reports</span>
+                  <Switch
+                    checked={prefs.reddit?.show_in_reports !== false}
+                    onCheckedChange={async (v) => {
+                      try { await setPref("reddit", "show_in_reports", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* YouTube */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Youtube className="h-4 w-4" />
+                <div>
+                  <h4 className="text-sm font-medium">YouTube</h4>
+                  <p className="text-xs text-muted-foreground">YouTube videos</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Mentions</span>
+                  <Switch
+                    checked={prefs.youtube?.show_in_mentions !== false}
+                    onCheckedChange={async (v) => {
+                      try { await setPref("youtube", "show_in_mentions", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Analytics</span>
+                  <Switch
+                    checked={prefs.youtube?.show_in_analytics !== false}
+                    onCheckedChange={async (v) => {
+                      try { await setPref("youtube", "show_in_analytics", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Reports</span>
+                  <Switch
+                    checked={prefs.youtube?.show_in_reports !== false}
+                    onCheckedChange={async (v) => {
+                      try { await setPref("youtube", "show_in_reports", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
