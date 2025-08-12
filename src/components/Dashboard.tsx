@@ -6,10 +6,9 @@ import { MentionsTable } from "./MentionsTable";
 import { MonitoringControls } from "./MonitoringControls";
 import { MentionModal } from "./MentionModal";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw, Trash2, History } from "lucide-react";
+import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { excludeMention } from "@/lib/monitoring";
-import { ExclusionsModal } from "./ExclusionsModal";
 
 interface Mention {
   id: string;
@@ -38,7 +37,6 @@ export function Dashboard() {
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
-  const [exclusionsOpen, setExclusionsOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -149,11 +147,6 @@ export function Dashboard() {
           <p className="text-sm sm:text-base text-muted-foreground">Track and analyze brand mentions across the web</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
-          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setExclusionsOpen(true)}>
-            <History className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Review removed</span>
-            <span className="sm:hidden">Removed</span>
-          </Button>
           <Button variant="outline" className="w-full sm:w-auto">
             <BarChart3 className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">View Reports</span>
@@ -245,9 +238,6 @@ export function Dashboard() {
             getSentimentEmoji={getSentimentEmoji}
           />
         )}
-
-        {/* Review Removed Mentions */}
-        <ExclusionsModal open={exclusionsOpen} onOpenChange={setExclusionsOpen} />
       </div>
     );
   }

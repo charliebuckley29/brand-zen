@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { RefreshCw, Trash2 } from "lucide-react";
+import { RefreshCw, Trash2, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ExclusionsModal } from "./ExclusionsModal";
 
 interface MonitoringControlsProps {
   onMentionsUpdated: () => void;
@@ -12,6 +13,7 @@ interface MonitoringControlsProps {
 export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [exclusionsOpen, setExclusionsOpen] = useState(false);
   const { toast } = useToast();
 
   const handleRefreshMentions = async () => {
@@ -100,11 +102,20 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
               </>
             )}
           </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setExclusionsOpen(true)}
+            className="w-full sm:w-auto"
+          >
+            <History className="w-4 h-4 mr-2" />
+            Review removed
+          </Button>
         </div>
         
         <div className="text-sm text-muted-foreground">
           <p>Use the controls to fetch the latest mentions or clear all current mentions.</p>
         </div>
+        <ExclusionsModal open={exclusionsOpen} onOpenChange={setExclusionsOpen} />
       </CardContent>
     </Card>
   );
