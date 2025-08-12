@@ -72,6 +72,7 @@ async function fetchReddit(query: string, limit = 5) {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       Authorization: "Basic " + btoa(`${clientId}:${clientSecret}`),
+      "User-Agent": "brand-protected/1.0 by lovable",
     },
     body: new URLSearchParams({ grant_type: "client_credentials" }),
   });
@@ -83,7 +84,7 @@ async function fetchReddit(query: string, limit = 5) {
   searchUrl.searchParams.set("limit", String(limit));
   searchUrl.searchParams.set("sort", "new");
   const res = await fetch(searchUrl.toString(), {
-    headers: { Authorization: `Bearer ${token.access_token}` },
+    headers: { Authorization: `Bearer ${token.access_token}`, "User-Agent": "brand-protected/1.0 by lovable" },
   });
   if (!res.ok) return [] as any[];
   const data = await res.json();
