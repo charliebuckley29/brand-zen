@@ -6,6 +6,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSourcePreferences } from "@/hooks/useSourcePreferences";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { startOfDay, endOfDay, format } from "date-fns";
+// removed duplicate useSourcePreferences import
 
 interface ChartData {
   date: string;
@@ -29,24 +36,28 @@ export function AnalyticsChart() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { enabledAnalytics } = useSourcePreferences();
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
 
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, [period, enabledAnalytics]);
+  }, [period, enabledAnalytics, startDate, endDate]);
 
   const fetchAnalyticsData = async () => {
     setIsLoading(true);
     try {
       const days = parseInt(period);
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
+      const isCustom = Boolean(startDate && endDate);
+      const rangeStart = isCustom ? startOfDay(startDate as Date) : (() => { const d = new Date(); d.setDate(d.getDate() - days); return d; })();
+      const rangeEnd = isCustom ? endOfDay(endDate as Date) : new Date();
 
       let query = supabase
         .from("mentions")
         .select("published_at, sentiment, source_name")
-        .gte("published_at", startDate.toISOString())
+        .gte("published_at", rangeStart.toISOString())
+        .lte("published_at", rangeEnd.toISOString())
         .order("published_at");
       if (enabledAnalytics.length && enabledAnalytics.length < 4) {
         query = (query as any).in("source_type", enabledAnalytics as any);
@@ -106,6 +117,62 @@ export function AnalyticsChart() {
     }
   };
 
+  const generateReportFromAnalytics = async () => {
+    toast({ title: "Generating report", description: "Using current analytics filters…" });
+    try {
+      const days = parseInt(period);
+      const isCustom = Boolean(startDate && endDate);
+      const rangeStart = isCustom ? startOfDay(startDate as Date) : (() => { const d = new Date(); d.setDate(d.getDate() - days); return d; })();
+      const rangeEnd = isCustom ? endOfDay(endDate as Date) : new Date();
+
+      let query = supabase
+        .from('mentions')
+        .select('sentiment, source_name')
+        .gte('published_at', rangeStart.toISOString())
+        .lte('published_at', rangeEnd.toISOString());
+      if (enabledAnalytics.length && enabledAnalytics.length < 4) {
+        query = (query as any).in('source_type', enabledAnalytics as any);
+      }
+      const { data: mentions, error } = await query;
+      if (error) throw error;
+
+      const sourceCounts = new Map<string, number>();
+      let total = 0, pos = 0, neg = 0, neu = 0;
+      (mentions || []).forEach((m) => {
+        total += 1;
+        if (m.sentiment === 'positive') pos += 1;
+        else if (m.sentiment === 'negative') neg += 1;
+        else neu += 1;
+        if (m.source_name) sourceCounts.set(m.source_name, (sourceCounts.get(m.source_name) || 0) + 1);
+      });
+      const topSources = Array.from(sourceCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name]) => name);
+
+      const periodKey = `${format(rangeStart, 'yyyy-MM-dd')}..${format(rangeEnd, 'yyyy-MM-dd')}`;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const newReport = {
+        user_id: user.id,
+        report_month: periodKey,
+        total_mentions: total,
+        positives: pos,
+        negatives: neg,
+        neutrals: neu,
+        top_sources: topSources as string[],
+      };
+
+      const { error: insertError } = await supabase.from('reports').insert(newReport);
+      if (insertError) throw insertError;
+      toast({ title: 'Report generated', description: 'A report matching this analytics view has been created.' });
+    } catch (error: any) {
+      toast({ title: 'Error generating report', description: error.message, variant: 'destructive' });
+    }
+  };
+
   const totalMentions = chartData.reduce((sum, day) => sum + day.total, 0);
   const avgDaily = totalMentions / (parseInt(period) || 1);
 
@@ -130,7 +197,7 @@ export function AnalyticsChart() {
           <h2 className="text-xl sm:text-2xl font-bold">Analytics Overview</h2>
           <p className="text-sm sm:text-base text-muted-foreground">Detailed insights into your brand mentions</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-2 items-stretch sm:items-center">
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-full sm:w-[140px]">
               <SelectValue />
@@ -151,6 +218,48 @@ export function AnalyticsChart() {
               <SelectItem value="line">Line Chart</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Start Date */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("w-full sm:w-[200px] justify-start", !startDate && "text-muted-foreground")}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {startDate ? format(startDate, "PPP") : <span>Start date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={setStartDate}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+
+          {/* End Date */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("w-full sm:w-[200px] justify-start", !endDate && "text-muted-foreground")}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {endDate ? format(endDate, "PPP") : <span>End date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={endDate}
+                onSelect={setEndDate}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+
+          <Button onClick={async () => { await generateReportFromAnalytics(); }} className="w-full sm:w-auto">
+            Export as Report
+          </Button>
         </div>
       </div>
 
@@ -160,7 +269,7 @@ export function AnalyticsChart() {
             <div className="text-2xl font-bold">{totalMentions}</div>
             <p className="text-sm text-muted-foreground">Total Mentions</p>
             <Badge variant="secondary" className="mt-2">
-              {period} days
+              {startDate && endDate ? `${format(startDate, "PPP")} – ${format(endDate, "PPP")}` : `${period} days`}
             </Badge>
           </CardContent>
         </Card>
