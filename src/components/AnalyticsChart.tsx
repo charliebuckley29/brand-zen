@@ -209,15 +209,6 @@ export function AnalyticsChart() {
               <SelectItem value="90">Last 90 days</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={chartType} onValueChange={setChartType}>
-            <SelectTrigger className="w-full sm:w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="bar">Bar Chart</SelectItem>
-              <SelectItem value="line">Line Chart</SelectItem>
-            </SelectContent>
-          </Select>
 
           {/* Start Date */}
           <Popover>
@@ -325,6 +316,17 @@ export function AnalyticsChart() {
                 </LineChart>
               )}
             </ResponsiveContainer>
+            <div className="mt-4 flex justify-end">
+              <Select value={chartType} onValueChange={setChartType}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bar">Bar Chart</SelectItem>
+                  <SelectItem value="line">Line Chart</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
 
