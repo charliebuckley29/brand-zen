@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ExternalLink, Flag, Clock, MessageCircle, UserX } from "lucide-react";
 
 interface Mention {
@@ -148,7 +149,7 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji, onN
                 <TableHead className="w-[120px]">Sentiment</TableHead>
                 <TableHead className="w-[150px]">Topics</TableHead>
                 <TableHead className="w-[100px]">Status</TableHead>
-                <TableHead className="w-[120px]">Published</TableHead>
+                <TableHead className="w-[120px]">Date Found</TableHead>
                 <TableHead className="w-[80px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -199,28 +200,38 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji, onN
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(mention.source_url, '_blank', 'noopener,noreferrer');
-                        }}
-                        aria-label="Open source"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNotMe(mention.id);
-                        }}
-                        aria-label="Not me"
-                      >
-                        <UserX className="h-4 w-4" />
-                      </Button>
+                      <Tooltip delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(mention.source_url, '_blank', 'noopener,noreferrer');
+                            }}
+                            aria-label="Open source"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Open the source in a new tab</TooltipContent>
+                      </Tooltip>
+                      <Tooltip delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onNotMe(mention.id);
+                            }}
+                            aria-label="Not me"
+                          >
+                            <UserX className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>This mention isn't me - stop monitoring it</TooltipContent>
+                      </Tooltip>
                     </div>
                   </TableCell>
                 </TableRow>
