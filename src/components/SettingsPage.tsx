@@ -44,7 +44,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   
   const { toast } = useToast();
 
-  const { loading: prefsLoading, prefs, setPref } = useSourcePreferences();
+  const { loading: prefsLoading, prefs, setPref, setAllForSource } = useSourcePreferences();
 
   useEffect(() => {
     fetchBrandData();
@@ -590,34 +590,14 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   <p className="text-xs text-muted-foreground">General web results</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Mentions</span>
-                  <Switch
-                    checked={prefs.web?.show_in_mentions !== false}
-                    onCheckedChange={async (v) => {
-                      try { await setPref("web", "show_in_mentions", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                    }}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Analytics</span>
-                  <Switch
-                    checked={prefs.web?.show_in_analytics !== false}
-                    onCheckedChange={async (v) => {
-                      try { await setPref("web", "show_in_analytics", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                    }}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Reports</span>
-                  <Switch
-                    checked={prefs.web?.show_in_reports !== false}
-                    onCheckedChange={async (v) => {
-                      try { await setPref("web", "show_in_reports", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                    }}
-                  />
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Enabled</span>
+                <Switch
+                  checked={(prefs.web?.show_in_mentions !== false) && (prefs.web?.show_in_analytics !== false) && (prefs.web?.show_in_reports !== false)}
+                  onCheckedChange={async (v) => {
+                    try { await setAllForSource("web", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                  }}
+                />
               </div>
             </div>
 
@@ -630,34 +610,14 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   <p className="text-xs text-muted-foreground">News articles</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Mentions</span>
-                  <Switch
-                    checked={prefs.news?.show_in_mentions !== false}
-                    onCheckedChange={async (v) => {
-                      try { await setPref("news", "show_in_mentions", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                    }}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Analytics</span>
-                  <Switch
-                    checked={prefs.news?.show_in_analytics !== false}
-                    onCheckedChange={async (v) => {
-                      try { await setPref("news", "show_in_analytics", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                    }}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Reports</span>
-                  <Switch
-                    checked={prefs.news?.show_in_reports !== false}
-                    onCheckedChange={async (v) => {
-                      try { await setPref("news", "show_in_reports", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                    }}
-                  />
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Enabled</span>
+                <Switch
+                  checked={(prefs.news?.show_in_mentions !== false) && (prefs.news?.show_in_analytics !== false) && (prefs.news?.show_in_reports !== false)}
+                  onCheckedChange={async (v) => {
+                    try { await setAllForSource("news", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                  }}
+                />
               </div>
             </div>
 
@@ -670,34 +630,14 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   <p className="text-xs text-muted-foreground">Reddit posts</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Mentions</span>
-                  <Switch
-                    checked={prefs.reddit?.show_in_mentions !== false}
-                    onCheckedChange={async (v) => {
-                      try { await setPref("reddit", "show_in_mentions", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                    }}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Analytics</span>
-                  <Switch
-                    checked={prefs.reddit?.show_in_analytics !== false}
-                    onCheckedChange={async (v) => {
-                      try { await setPref("reddit", "show_in_analytics", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                    }}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Reports</span>
-                  <Switch
-                    checked={prefs.reddit?.show_in_reports !== false}
-                    onCheckedChange={async (v) => {
-                      try { await setPref("reddit", "show_in_reports", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                    }}
-                  />
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Enabled</span>
+                <Switch
+                  checked={(prefs.reddit?.show_in_mentions !== false) && (prefs.reddit?.show_in_analytics !== false) && (prefs.reddit?.show_in_reports !== false)}
+                  onCheckedChange={async (v) => {
+                    try { await setAllForSource("reddit", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                  }}
+                />
               </div>
             </div>
 
@@ -710,34 +650,14 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   <p className="text-xs text-muted-foreground">YouTube videos</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Mentions</span>
-                  <Switch
-                    checked={prefs.youtube?.show_in_mentions !== false}
-                    onCheckedChange={async (v) => {
-                      try { await setPref("youtube", "show_in_mentions", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                    }}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Analytics</span>
-                  <Switch
-                    checked={prefs.youtube?.show_in_analytics !== false}
-                    onCheckedChange={async (v) => {
-                      try { await setPref("youtube", "show_in_analytics", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                    }}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Reports</span>
-                  <Switch
-                    checked={prefs.youtube?.show_in_reports !== false}
-                    onCheckedChange={async (v) => {
-                      try { await setPref("youtube", "show_in_reports", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                    }}
-                  />
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Enabled</span>
+                <Switch
+                  checked={(prefs.youtube?.show_in_mentions !== false) && (prefs.youtube?.show_in_analytics !== false) && (prefs.youtube?.show_in_reports !== false)}
+                  onCheckedChange={async (v) => {
+                    try { await setAllForSource("youtube", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                  }}
+                />
               </div>
             </div>
           </CardContent>

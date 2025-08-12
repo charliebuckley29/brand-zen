@@ -93,6 +93,32 @@ export function useSourcePreferences() {
     }
   }, [userId, prefs]);
 
+  const setAllForSource = useCallback(async (source: SourceType, value: boolean) => {
+    if (!userId) return;
+    // optimistic update
+    setPrefs((prev) => {
+      const current = prev[source] || { user_id: userId, source_type: source, show_in_mentions: true, show_in_analytics: true, show_in_reports: true };
+      const updated: PrefRecord = { ...current, show_in_mentions: value, show_in_analytics: value, show_in_reports: value };
+      return { ...prev, [source]: updated } as typeof prev;
+    });
+
+    const payload: PrefRecord = {
+      user_id: userId,
+      source_type: source,
+      show_in_mentions: value,
+      show_in_analytics: value,
+      show_in_reports: value,
+    };
+
+    const { error } = await (supabase as any)
+      .from("source_preferences")
+      .upsert(payload as any, { onConflict: "user_id,source_type" });
+    if (error) {
+      setPrefs((prev) => ({ ...prev }));
+      throw error;
+    }
+  }, [userId]);
+
   return {
     loading,
     prefs,
@@ -100,5 +126,6 @@ export function useSourcePreferences() {
     enabledAnalytics,
     enabledReports,
     setPref,
+    setAllForSource,
   } as const;
 }
