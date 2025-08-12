@@ -165,7 +165,7 @@ export function AnalyticsChart() {
         top_sources: topSources as string[],
       };
 
-      const { error: insertError } = await supabase.from('reports').insert(newReport);
+      const { error: insertError } = await supabase.from('reports').upsert(newReport as any, { onConflict: 'user_id,report_month' });
       if (insertError) throw insertError;
       toast({ title: 'Report generated', description: 'A report matching this analytics view has been created.' });
     } catch (error: any) {
