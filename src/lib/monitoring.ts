@@ -63,13 +63,14 @@ export async function getUserMentions(limit = 50) {
 }
 
 export async function startMonitoring(keywordId: string) {
-  const [agg, news] = await Promise.all([
-    supabase.functions.invoke('aggregate-sources', { body: { keywordId } }),
-    supabase.functions.invoke('monitor-news', { body: { keywordId } }),
-  ]);
-
-  if (agg.error && news.error) throw agg.error || news.error;
-  return agg.data || news.data;
+  const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
+  const calls: any[] = [supabase.functions.invoke('aggregate-sources', { body: { keywordId } })];
+  if (rssEnabled) calls.push(supabase.functions.invoke('monitor-news', { body: { keywordId } }));
+  const results = await Promise.allSettled(calls);
+  const agg = results[0] as any;
+  const news = results[1] as any;
+  if (agg?.value?.error && news?.value?.error) throw agg.value.error || news.value.error;
+  return (agg?.value?.data) || (news?.value?.data);
 }
 
 export async function analyzeSentiment(text: string): Promise<'positive' | 'negative' | 'neutral'> {

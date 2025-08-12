@@ -13,7 +13,7 @@ interface KeywordRow {
 }
 
 function extractBetween(str: string, tag: string): string | null {
-  const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
+  const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\/${tag}>`, "i");
   const match = str.match(regex);
   return match ? match[1].trim() : null;
 }
@@ -64,57 +64,15 @@ function extractTitle(html: string): string | null {
 }
 
 function extractMainText(html: string): string | null {
-  // Try <article> first
   const articleMatch = html.match(/<article[\s\S]*?<\/article>/i);
   const container = articleMatch ? articleMatch[0] : html;
-
-  // Gather paragraphs
   const pMatches = Array.from(container.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi));
   const paragraphs = pMatches.map(m => stripHtml(m[1]).trim()).filter(Boolean);
-
-  // Fallback to meta description if no paragraphs
   const metaDesc = extractMetaContent(html, 'property', 'og:description')
     || extractMetaContent(html, 'name', 'description')
     || extractMetaContent(html, 'name', 'twitter:description');
-
   const text = paragraphs.length ? paragraphs.join('\n\n') : (metaDesc ? stripHtml(metaDesc) : null);
   return text ? text.replace(/\s+\n/g, '\n').trim() : null;
-}
-
-async function fetchArticleDetails(url: string): Promise<{ title: string | null; text: string | null }> {
-  async function fetchHtmlWithFinalUrl(target: string): Promise<{ html: string | null; finalUrl: string }> {
-    try {
-      const res = await fetch(target, { redirect: 'follow' });
-      if (!res.ok) return { html: null, finalUrl: target };
-      const text = await res.text();
-      return { html: text, finalUrl: res.url || target };
-    } catch {
-      return { html: null, finalUrl: target };
-    }
-  }
-
-  let { html, finalUrl } = await fetchHtmlWithFinalUrl(url);
-  if (!html) return { title: null, text: null };
-
-  try {
-    const hostname = new URL(finalUrl).hostname;
-    const isGoogleNews = /(^|\\.)news\\.google\\.com$/i.test(hostname) || html.includes('Comprehensive, up-to-date news coverage');
-    if (isGoogleNews) {
-      const canonicalMatch = html.match(/<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/i);
-      const canonical = canonicalMatch ? canonicalMatch[1] : extractMetaContent(html, 'property', 'og:url');
-      if (canonical && !/news\\.google\\.com/i.test(canonical)) {
-        const refetched = await fetchHtmlWithFinalUrl(canonical);
-        if (refetched.html) {
-          html = refetched.html;
-          finalUrl = refetched.finalUrl;
-        }
-      }
-    }
-  } catch {}
-
-  const title = extractTitle(html);
-  const text = extractMainText(html);
-  return { title, text };
 }
 
 function escapeRegex(str: string) {
@@ -128,8 +86,7 @@ function stripSourceSuffix(title: string | null, source: string | null): string 
     const pat = new RegExp(`\\s*[–-]\\s*${escapeRegex(source.trim())}$`, 'i');
     t = t.replace(pat, '');
   }
-  // Also remove trailing "- Google News" if present
-  t = t.replace(/\s*[–-]\s*Google News$/i, '');
+  t = t.replace(/\\s*[–-]\\s*Google News$/i, '');
   return t.trim();
 }
 
@@ -138,39 +95,6 @@ function cleanSnippet(s: string): string {
     .replace(/\bhttps?:\/\/\S+/gi, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
-}
-
-async function fetchRss(query: string): Promise<Array<{
-  link: string;
-  source: string;
-  published: string;
-  description: string;
-  title: string;
-}>> {
-  const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`RSS fetch failed (${res.status}) for ${query}`);
-  const xml = await res.text();
-
-  const items: Array<{ link: string; source: string; published: string; description: string; title: string; }> = [];
-  const itemRegex = /<item>[\s\S]*?<\/item>/gi;
-  const blocks = xml.match(itemRegex) || [];
-  for (const block of blocks) {
-    const linkRaw = extractBetween(block, "link") || "";
-    const titleRaw = extractBetween(block, "title") || "";
-    const sourceRaw = extractBetween(block, "source") || "Unknown";
-    const pubRaw = extractBetween(block, "pubDate") || new Date().toUTCString();
-    const descRaw = extractBetween(block, "description") || "";
-
-    const link = resolveArticleUrl(stripHtml(linkRaw));
-    const title = stripHtml(titleRaw).replace(/\s*-\s*Google News$/i, "");
-    const source = stripHtml(sourceRaw).replace(/\s*-\s*Google News$/i, "");
-    const description = stripHtml(descRaw);
-    const published = new Date(pubRaw).toISOString();
-
-    if (link) items.push({ link, source, published, description, title });
-  }
-  return items;
 }
 
 Deno.serve(async (req) => {
@@ -188,14 +112,10 @@ Deno.serve(async (req) => {
   const authHeader = req.headers.get("Authorization") || "";
   const hasJwt = authHeader.startsWith("Bearer ");
 
-  // User-scoped client (respects RLS) when JWT is provided – used for button-triggered refresh
   const userClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
   });
-
-  // Admin client (bypasses RLS) – used by cron without JWT to process all keywords
   const adminClient = createClient(supabaseUrl, serviceKey);
-
   const db = hasJwt ? userClient : adminClient;
 
   try {
@@ -208,21 +128,88 @@ Deno.serve(async (req) => {
     const { data: keywords, error: kwErr } = await keywordQuery;
     if (kwErr) throw kwErr;
 
+    // Build map of news preference per user
+    const userIds = Array.from(new Set((keywords || []).map((k: any) => k.user_id)));
+    const newsPref = new Map<string, boolean>();
+    if (userIds.length) {
+      const { data: prefs } = await db
+        .from('source_preferences')
+        .select('user_id, source_type, show_in_mentions')
+        .in('user_id', userIds);
+      for (const u of userIds) newsPref.set(u, true); // default true
+      for (const p of (prefs || []) as any[]) {
+        if (p.source_type === 'news') newsPref.set(p.user_id, p.show_in_mentions !== false);
+      }
+    }
+
     const allMentions: any[] = [];
 
     for (const kw of (keywords || []) as KeywordRow[]) {
+      if (newsPref.get(kw.user_id) === false) continue; // respect preference
       const queries = [kw.brand_name, ...(kw.variants || [])].filter(Boolean);
       for (const q of queries) {
         try {
-          const rssItems = await fetchRss(q);
+          const rssItems = await (async () => {
+            const url = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`RSS fetch failed (${res.status}) for ${q}`);
+            const xml = await res.text();
+            const items: Array<{ link: string; source: string; published: string; description: string; title: string; }> = [];
+            const itemRegex = /<item>[\s\S]*?<\/item>/gi;
+            const blocks = xml.match(itemRegex) || [];
+            for (const block of blocks) {
+              const linkRaw = extractBetween(block, "link") || "";
+              const titleRaw = extractBetween(block, "title") || "";
+              const sourceRaw = extractBetween(block, "source") || "Unknown";
+              const pubRaw = extractBetween(block, "pubDate") || new Date().toUTCString();
+              const descRaw = extractBetween(block, "description") || "";
+              const link = resolveArticleUrl(stripHtml(linkRaw));
+              const title = stripHtml(titleRaw).replace(/\s*-\s*Google News$/i, "");
+              const source = stripHtml(sourceRaw).replace(/\s*-\s*Google News$/i, "");
+              const description = stripHtml(descRaw);
+              const published = new Date(pubRaw).toISOString();
+              if (link) items.push({ link, source, published, description, title });
+            }
+            return items;
+          })();
           const limited = rssItems.slice(0, 8);
           for (const it of limited) {
             try {
-              const { title: fetchedTitle, text } = await fetchArticleDetails(it.link);
+              const { title: fetchedTitle, text } = await (async () => {
+                async function fetchHtmlWithFinalUrl(target: string): Promise<{ html: string | null; finalUrl: string }> {
+                  try {
+                    const res = await fetch(target, { redirect: 'follow' });
+                    if (!res.ok) return { html: null, finalUrl: target };
+                    const text = await res.text();
+                    return { html: text, finalUrl: res.url || target };
+                  } catch {
+                    return { html: null, finalUrl: target };
+                  }
+                }
+                let { html, finalUrl } = await fetchHtmlWithFinalUrl(it.link);
+                if (!html) return { title: null, text: null };
+                try {
+                  const hostname = new URL(finalUrl).hostname;
+                  const isGoogleNews = /(^|\\.)news\\.google\\.com$/i.test(hostname) || html.includes('Comprehensive, up-to-date news coverage');
+                  if (isGoogleNews) {
+                    const canonicalMatch = html.match(/<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/i);
+                    const canonical = canonicalMatch ? canonicalMatch[1] : extractMetaContent(html, 'property', 'og:url');
+                    if (canonical && !/news\\.google\\.com/i.test(canonical)) {
+                      const refetched = await fetchHtmlWithFinalUrl(canonical);
+                      if (refetched.html) {
+                        html = refetched.html;
+                        finalUrl = refetched.finalUrl;
+                      }
+                    }
+                  }
+                } catch {}
+                const title = extractTitle(html);
+                const text = extractMainText(html);
+                return { title, text };
+              })();
               const chosenTitle = stripSourceSuffix(it.title, it.source) || fetchedTitle || '';
               const content_snippet = cleanSnippet(chosenTitle).slice(0, 200);
               const full_text = text || it.description;
-
               allMentions.push({
                 user_id: kw.user_id,
                 keyword_id: kw.id,

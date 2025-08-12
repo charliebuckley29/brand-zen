@@ -56,7 +56,7 @@ enable_confirmations = false
 verify_jwt = true
 
 [functions.monitor-news]
-verify_jwt = true
+verify_jwt = false
 
 [functions.aggregate-sources]
-verify_jwt = true
+verify_jwt = false

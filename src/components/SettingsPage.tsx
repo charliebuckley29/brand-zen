@@ -45,6 +45,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const { toast } = useToast();
 
   const { loading: prefsLoading, prefs, setPref, setAllForSource } = useSourcePreferences();
+  const [rssEnabled, setRssEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('rss_news_ingestion') !== 'false' : true));
 
   useEffect(() => {
     fetchBrandData();
@@ -656,6 +657,30 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   checked={(prefs.youtube?.show_in_mentions !== false) && (prefs.youtube?.show_in_analytics !== false) && (prefs.youtube?.show_in_reports !== false)}
                   onCheckedChange={async (v) => {
                     try { await setAllForSource("youtube", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* RSS News Ingestion */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Newspaper className="h-4 w-4" />
+                <div>
+                  <h4 className="text-sm font-medium">RSS News ingestion</h4>
+                  <p className="text-xs text-muted-foreground">Use Google News RSS (server-side)</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{rssEnabled ? 'On' : 'Off'}</span>
+                <Switch
+                  checked={rssEnabled}
+                  onCheckedChange={(v) => {
+                    setRssEnabled(v);
+                    try {
+                      localStorage.setItem('rss_news_ingestion', v ? 'true' : 'false');
+                      toast({ title: v ? 'RSS ingestion enabled' : 'RSS ingestion disabled' });
+                    } catch {}
                   }}
                 />
               </div>

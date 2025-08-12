@@ -77,10 +77,10 @@ export function Dashboard() {
   const handleRefreshMentions = async () => {
     try {
       setIsRefreshing(true);
-      await Promise.allSettled([
-        supabase.functions.invoke('aggregate-sources', { body: {} }),
-        supabase.functions.invoke('monitor-news', { body: {} }),
-      ]);
+      const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
+      const calls = [supabase.functions.invoke('aggregate-sources', { body: {} })];
+      if (rssEnabled) calls.push(supabase.functions.invoke('monitor-news', { body: {} }));
+      await Promise.allSettled(calls as any);
       await fetchMentions();
       toast({ title: "Mentions refreshed", description: "Fetched latest mentions." });
     } catch (err) {
