@@ -142,3 +142,47 @@ export async function excludeMention(mentionId: string) {
 
   return { success: true };
 }
+
+export interface MentionExclusion {
+  id: string;
+  source_url: string;
+  source_domain: string | null;
+  keyword_id: string;
+  reason: string;
+  created_at: string;
+}
+
+export async function getUserExclusions() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("mention_exclusions")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function reAllowExclusion(exclusionId: string, keywordId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { error } = await supabase
+    .from("mention_exclusions")
+    .delete()
+    .eq("id", exclusionId)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+
+  try {
+    await startMonitoring(keywordId);
+  } catch (e) {
+    // ignore background refresh errors
+  }
+
+  return { success: true };
+}
