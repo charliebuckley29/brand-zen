@@ -175,6 +175,39 @@ export type Database = {
         }
         Relationships: []
       }
+      source_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          show_in_analytics: boolean
+          show_in_mentions: boolean
+          show_in_reports: boolean
+          source_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          show_in_analytics?: boolean
+          show_in_mentions?: boolean
+          show_in_reports?: boolean
+          source_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          show_in_analytics?: boolean
+          show_in_mentions?: boolean
+          show_in_reports?: boolean
+          source_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
