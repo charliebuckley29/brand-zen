@@ -3,10 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, TrendingUp, TrendingDown, BarChart3, FileText, Download } from "lucide-react";
+import { Calendar as CalendarIcon, TrendingUp, TrendingDown, BarChart3, FileText, Download, Trash2 } from "lucide-react";
 import { startOfMonth, endOfMonth, startOfDay, endOfDay, format, parse } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { downloadReportPdf } from "@/lib/reportPdf";
 import { supabase } from "@/integrations/supabase/client";
@@ -148,6 +149,7 @@ export function ReportsPage() {
   const [endDate, setEndDate] = useState<Date | undefined>();
   const { toast } = useToast();
   const { enabledReports } = useSourcePreferences();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchReports();
@@ -214,6 +216,20 @@ export function ReportsPage() {
     }
     return ym;
   };
+  const handleDelete = async (reportId: string, label: string) => {
+    try {
+      setDeletingId(reportId);
+      const { error } = await supabase.from('reports').delete().eq('id', reportId);
+      if (error) throw error;
+      setReports((prev) => prev.filter((r) => r.id !== reportId));
+      toast({ title: 'Report deleted', description: `${label} has been removed.` });
+    } catch (error: any) {
+      toast({ title: 'Error deleting report', description: error.message, variant: 'destructive' });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const generateReport = async () => {
     toast({ title: "Generating report", description: "Calculating metrics…" });
 
@@ -400,6 +416,28 @@ export function ReportsPage() {
                         <Download className="h-4 w-4 mr-2" />
                         Download
                       </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm" aria-label={`Delete report ${getMonthLabel(report.report_month)}`} disabled={deletingId === report.id}>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete this report?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. The report for {getMonthLabel(report.report_month)} will be permanently removed.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(report.id, getMonthLabel(report.report_month))} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </CardHeader>
