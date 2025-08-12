@@ -86,7 +86,7 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
           <div className="fixed left-0 top-0 h-full w-72 bg-card border-r shadow-lg">
             <div className="p-4 pt-16">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold">Brand Monitor</h2>
+                <h2 className="text-xl font-bold">Brand Protected</h2>
                 <ThemeToggle />
               </div>
               <nav className="space-y-2">
@@ -115,7 +115,7 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
       <div className="hidden lg:block fixed left-0 top-0 h-full w-64 bg-card border-r">
         <div className="p-4">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold">Brand Monitor</h2>
+            <h2 className="text-lg font-semibold">Brand Protected</h2>
             <ThemeToggle />
           </div>
           <nav className="space-y-2">
