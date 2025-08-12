@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, TrendingUp, TrendingDown, BarChart3, FileText, Download } from "lucide-react";
 import { startOfMonth, endOfMonth, format, parse } from "date-fns";
+import { downloadReportPdf } from "@/lib/reportPdf";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -222,7 +223,7 @@ export function ReportsPage() {
                     <div className="flex items-center gap-2">
                       <TrendIcon className={`h-5 w-5 ${color}`} />
                       <Badge variant="outline">{trend}</Badge>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => downloadReportPdf(report)} aria-label={`Download report ${getMonthLabel(report.report_month)}`}>
                         <Download className="h-4 w-4 mr-2" />
                         Download
                       </Button>
