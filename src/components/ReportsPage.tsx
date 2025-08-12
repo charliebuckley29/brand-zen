@@ -12,6 +12,7 @@ import { downloadReportPdf } from "@/lib/reportPdf";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSourcePreferences } from "@/hooks/useSourcePreferences";
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 interface Report {
   id: string;
@@ -22,6 +23,121 @@ interface Report {
   neutrals: number;
   top_sources: string[];
   created_at: string;
+}
+
+function getRangeFromKey(key: string): { start: Date; end: Date } {
+  if (/^\d{4}-\d{2}$/.test(key)) {
+    const d = parse(`${key}-01`, 'yyyy-MM-dd', new Date());
+    return { start: startOfMonth(d), end: endOfMonth(d) };
+  }
+  if (/^\d{4}-\d{2}-\d{2}\.\.\d{4}-\d{2}-\d{2}$/.test(key)) {
+    const [s, e] = key.split('..');
+    return { start: startOfDay(parse(s, 'yyyy-MM-dd', new Date())), end: endOfDay(parse(e, 'yyyy-MM-dd', new Date())) };
+  }
+  const now = new Date();
+  return { start: startOfMonth(now), end: endOfMonth(now) };
+}
+
+function ReportCharts({ report, enabledReports }: { report: Report; enabledReports: string[] }) {
+  const [chartData, setChartData] = useState<{ date: string; positive: number; neutral: number; negative: number }[]>([]);
+  const [sourceData, setSourceData] = useState<{ name: string; value: number; color: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      const { start, end } = getRangeFromKey(report.report_month);
+      let query = supabase
+        .from('mentions')
+        .select('published_at, sentiment, source_name, source_type')
+        .gte('published_at', start.toISOString())
+        .lte('published_at', end.toISOString())
+        .order('published_at');
+      if (enabledReports.length && enabledReports.length < 4) {
+        query = (query as any).in('source_type', enabledReports as any);
+      }
+      const { data, error } = await query as any;
+      if (error) { setLoading(false); return; }
+
+      const daily = new Map<string, { positive: number; neutral: number; negative: number }>();
+      const sources = new Map<string, number>();
+      const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+
+      (data || []).forEach((m: any) => {
+        const d = new Date(m.published_at).toLocaleDateString();
+        if (!daily.has(d)) daily.set(d, { positive: 0, neutral: 0, negative: 0 });
+        const bucket = daily.get(d)!;
+        if (m.sentiment === 'positive') bucket.positive += 1;
+        else if (m.sentiment === 'negative') bucket.negative += 1;
+        else bucket.neutral += 1;
+        if (m.source_name) sources.set(m.source_name, (sources.get(m.source_name) || 0) + 1);
+      });
+
+      const chartArr = Array.from(daily.entries()).map(([date, vals]) => ({ date, ...vals }));
+      const sourceArr = Array.from(sources.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name, value], i) => ({ name, value, color: COLORS[i % COLORS.length] }));
+
+      setChartData(chartArr);
+      setSourceData(sourceArr);
+      setLoading(false);
+    };
+    load();
+  }, [report.report_month, enabledReports]);
+
+  if (loading) {
+    return (
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+        <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid lg:grid-cols-2 gap-6">
+      <div className="border rounded-md p-4">
+        <h4 className="font-semibold mb-2">Mentions Over Time</h4>
+        <ResponsiveContainer width="100%" height={260}>
+          <LineChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Line type="monotone" dataKey="positive" stroke="hsl(var(--success))" strokeWidth={2} />
+            <Line type="monotone" dataKey="neutral" stroke="hsl(var(--muted-foreground))" strokeWidth={2} />
+            <Line type="monotone" dataKey="negative" stroke="hsl(var(--destructive))" strokeWidth={2} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="border rounded-md p-4">
+        <h4 className="font-semibold mb-2">Top Sources</h4>
+        {sourceData.length > 0 ? (
+          <>
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie data={sourceData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} dataKey="value" paddingAngle={5}>
+                  {sourceData.map((s, i) => (<Cell key={s.name} fill={s.color} />))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="space-y-2 mt-4">
+              {sourceData.map((s) => (
+                <div key={s.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} /> <span className="text-sm">{s.name}</span></div>
+                  <Badge variant="outline">{s.value}</Badge>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">No source data</div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function ReportsPage() {
@@ -306,6 +422,8 @@ export function ReportsPage() {
                       <div className="text-sm text-muted-foreground">Negative</div>
                     </div>
                   </div>
+                  
+                  <ReportCharts report={report} enabledReports={enabledReports} />
                   
                   {report.top_sources.length > 0 && (
                     <div>
