@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { RefreshCw, Trash2, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -62,7 +63,7 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
           Monitoring Controls
         </CardTitle>
         <CardDescription>
-          Refresh and manage your mentions
+          Mentions make the world go round...
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -85,24 +86,6 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
             )}
           </Button>
           <Button 
-            variant="destructive"
-            onClick={handleClearMentions}
-            disabled={isClearing}
-            className="w-full sm:w-auto"
-          >
-            {isClearing ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Clearing...
-              </>
-            ) : (
-              <>
-                <Trash2 className="w-4 h-4 mr-2" />
-                Clear mentions
-              </>
-            )}
-          </Button>
-          <Button 
             variant="outline"
             onClick={() => setExclusionsOpen(true)}
             className="w-full sm:w-auto"
@@ -110,10 +93,45 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
             <History className="w-4 h-4 mr-2" />
             See removed mentions
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="destructive"
+                disabled={isClearing}
+                className="w-full sm:w-auto"
+              >
+                {isClearing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Clearing...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Clear mentions
+                  </>
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. All found mentions will be permanently deleted from our database.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleClearMentions}>
+                  Yes, clear all mentions
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
         
         <div className="text-sm text-muted-foreground">
-          <p>Use the controls to fetch the latest mentions or clear all current mentions.</p>
+          <p>Use the controls to fetch the latest mentions, clear all current mentions, or review any removed mentions that have been marked as not you.</p>
         </div>
         <ExclusionsModal open={exclusionsOpen} onOpenChange={setExclusionsOpen} />
       </CardContent>
