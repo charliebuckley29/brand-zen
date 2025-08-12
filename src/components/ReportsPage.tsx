@@ -396,7 +396,7 @@ export function ReportsPage() {
                     <div className="flex items-center gap-2">
                       <TrendIcon className={`h-5 w-5 ${color}`} />
                       <Badge variant="outline">{trend}</Badge>
-                      <Button variant="outline" size="sm" onClick={() => downloadReportPdf(report)} aria-label={`Download report ${getMonthLabel(report.report_month)}`}>
+                      <Button variant="outline" size="sm" onClick={() => downloadReportPdf(report, enabledReports)} aria-label={`Download report ${getMonthLabel(report.report_month)}`}>
                         <Download className="h-4 w-4 mr-2" />
                         Download
                       </Button>
