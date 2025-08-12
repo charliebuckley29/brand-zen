@@ -2,7 +2,7 @@ import { jsPDF } from "jspdf";
 import { format, parse } from "date-fns";
 
 export interface ReportPdfData {
-  report_month: string; // yyyy-MM
+  report_month: string; // yyyy-MM or yyyy-MM-dd..yyyy-MM-dd
   total_mentions: number;
   positives: number;
   negatives: number;
@@ -16,8 +16,16 @@ export async function downloadReportPdf(report: ReportPdfData) {
   const margin = 48;
   let y = margin;
 
-  const monthDate = parse(`${report.report_month}-01`, 'yyyy-MM-dd', new Date());
-  const monthLabel = format(monthDate, 'LLLL yyyy');
+  let periodText = report.report_month;
+  if (/^\d{4}-\d{2}$/.test(report.report_month)) {
+    const monthDate = parse(`${report.report_month}-01`, 'yyyy-MM-dd', new Date());
+    periodText = format(monthDate, 'LLLL yyyy');
+  } else if (/^\d{4}-\d{2}-\d{2}\.\.\d{4}-\d{2}-\d{2}$/.test(report.report_month)) {
+    const [s, e] = report.report_month.split('..');
+    const sd = parse(s, 'yyyy-MM-dd', new Date());
+    const ed = parse(e, 'yyyy-MM-dd', new Date());
+    periodText = `${format(sd, 'PPP')} – ${format(ed, 'PPP')}`;
+  }
 
   // Title
   doc.setFont('helvetica', 'bold');
@@ -26,7 +34,7 @@ export async function downloadReportPdf(report: ReportPdfData) {
   y += 24;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(12);
-  doc.text(`Period: ${monthLabel}`, margin, y);
+  doc.text(`Period: ${periodText}`, margin, y);
   y += 18;
   if (report.created_at) {
     const created = format(new Date(report.created_at), 'PPP');
@@ -98,3 +106,4 @@ export async function downloadReportPdf(report: ReportPdfData) {
 
   doc.save(`brand-report-${report.report_month}.pdf`);
 }
+

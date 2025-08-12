@@ -3,8 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, TrendingUp, TrendingDown, BarChart3, FileText, Download } from "lucide-react";
-import { startOfMonth, endOfMonth, format, parse } from "date-fns";
+import { Calendar as CalendarIcon, TrendingUp, TrendingDown, BarChart3, FileText, Download } from "lucide-react";
+import { startOfMonth, endOfMonth, startOfDay, endOfDay, format, parse } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { downloadReportPdf } from "@/lib/reportPdf";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +27,8 @@ export function ReportsPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -74,36 +79,47 @@ export function ReportsPage() {
   };
 
   const getMonthLabel = (ym: string) => {
-    try {
-      const d = parse(`${ym}-01`, 'yyyy-MM-dd', new Date());
-      return format(d, 'LLLL yyyy');
-    } catch {
-      return ym;
+    // Support formats: yyyy-MM or yyyy-MM-dd..yyyy-MM-dd
+    if (/^\d{4}-\d{2}$/.test(ym)) {
+      try {
+        const d = parse(`${ym}-01`, 'yyyy-MM-dd', new Date());
+        return format(d, 'LLLL yyyy');
+      } catch { return ym; }
     }
+    if (/^\d{4}-\d{2}-\d{2}\.\.\d{4}-\d{2}-\d{2}$/.test(ym)) {
+      const [s, e] = ym.split('..');
+      try {
+        const sd = parse(s, 'yyyy-MM-dd', new Date());
+        const ed = parse(e, 'yyyy-MM-dd', new Date());
+        return `${format(sd, 'PPP')} – ${format(ed, 'PPP')}`;
+      } catch { return ym; }
+    }
+    return ym;
   };
-
   const generateReport = async () => {
-    toast({
-      title: "Generating report",
-      description: "Calculating this month’s metrics…",
-    });
+    toast({ title: "Generating report", description: "Calculating metrics…" });
 
     try {
       const now = new Date();
-      const monthStart = startOfMonth(now);
-      const monthEnd = endOfMonth(now);
-      const monthKey = format(monthStart, 'yyyy-MM');
+      const defaultStart = startOfMonth(now);
+      const defaultEnd = endOfMonth(now);
 
-      // Fetch mentions within the month (RLS restricts to current user)
+      const isCustom = !!(startDate && endDate);
+      const rangeStart = isCustom ? startOfDay(startDate!) : defaultStart;
+      const rangeEnd = isCustom ? endOfDay(endDate!) : defaultEnd;
+
+      const periodKey = isCustom
+        ? `${format(rangeStart, 'yyyy-MM-dd')}..${format(rangeEnd, 'yyyy-MM-dd')}`
+        : format(defaultStart, 'yyyy-MM');
+
+      // Fetch mentions within range (RLS restricts to current user)
       const { data: mentions, error: mentionsError } = await supabase
         .from("mentions")
         .select("sentiment, source_name")
-        .gte("published_at", monthStart.toISOString())
-        .lte("published_at", monthEnd.toISOString());
-
+        .gte("published_at", rangeStart.toISOString())
+        .lte("published_at", rangeEnd.toISOString());
       if (mentionsError) throw mentionsError;
 
-      // Aggregate stats
       const sourceCounts = new Map<string, number>();
       let total = 0, pos = 0, neg = 0, neu = 0;
       (mentions || []).forEach((m) => {
@@ -111,29 +127,27 @@ export function ReportsPage() {
         if (m.sentiment === 'positive') pos += 1;
         else if (m.sentiment === 'negative') neg += 1;
         else neu += 1;
-        if (m.source_name) {
-          sourceCounts.set(m.source_name, (sourceCounts.get(m.source_name) || 0) + 1);
-        }
+        if (m.source_name) sourceCounts.set(m.source_name, (sourceCounts.get(m.source_name) || 0) + 1);
       });
       const topSources = Array.from(sourceCounts.entries())
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
         .map(([name]) => name);
 
-      // Ensure authenticated to write report
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Replace existing month report for this user
-      await supabase
-        .from('reports')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('report_month', monthKey);
+      if (!isCustom) {
+        await supabase
+          .from('reports')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('report_month', periodKey);
+      }
 
       const newReport = {
         user_id: user.id,
-        report_month: monthKey,
+        report_month: periodKey,
         total_mentions: total,
         positives: pos,
         negatives: neg,
@@ -141,12 +155,10 @@ export function ReportsPage() {
         top_sources: topSources as string[],
       };
 
-      const { error: insertError } = await supabase
-        .from('reports')
-        .insert(newReport);
+      const { error: insertError } = await supabase.from('reports').insert(newReport);
       if (insertError) throw insertError;
 
-      toast({ title: 'Report generated', description: 'Monthly report created successfully.' });
+      toast({ title: 'Report generated', description: isCustom ? 'Custom range report created.' : 'Monthly report created.' });
       fetchReports();
     } catch (error: any) {
       toast({ title: 'Error generating report', description: error.message, variant: 'destructive' });
@@ -166,11 +178,11 @@ export function ReportsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Reports</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">View and download monthly brand monitoring reports</p>
+          <p className="text-sm sm:text-base text-muted-foreground">View and download brand monitoring reports</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-2 items-stretch sm:items-center">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full sm:w-[160px]">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
@@ -180,6 +192,45 @@ export function ReportsPage() {
               <SelectItem value="12">Last 12 Months</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Start Date */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("w-full sm:w-[200px] justify-start", !startDate && "text-muted-foreground")}> 
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {startDate ? format(startDate, "PPP") : <span>Start date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={setStartDate}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+
+          {/* End Date */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("w-full sm:w-[200px] justify-start", !endDate && "text-muted-foreground")}> 
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {endDate ? format(endDate, "PPP") : <span>End date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={endDate}
+                onSelect={setEndDate}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+
           <Button onClick={generateReport} className="w-full sm:w-auto">
             <FileText className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Generate Report</span>
@@ -213,7 +264,7 @@ export function ReportsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5" />
+                        <CalendarIcon className="h-5 w-5" />
                         {getMonthLabel(report.report_month)}
                       </CardTitle>
                       <CardDescription>
