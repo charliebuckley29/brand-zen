@@ -117,6 +117,7 @@ function drawLineChart(doc: jsPDF, opts: { x: number; y: number; width: number; 
 function drawPieChart(doc: jsPDF, opts: { x: number; y: number; r: number; data: { name: string; value: number; color: [number, number, number] }[] }) {
   const { x, y, r, data } = opts;
   const total = data.reduce((s, d) => s + d.value, 0);
+  
   if (!total) {
     doc.setTextColor(120);
     doc.setFontSize(10);
@@ -124,25 +125,40 @@ function drawPieChart(doc: jsPDF, opts: { x: number; y: number; r: number; data:
     doc.setTextColor(0);
     return;
   }
+
   let startAngle = -Math.PI / 2;
   data.forEach((slice) => {
     const angle = (slice.value / total) * Math.PI * 2;
-    // approximate arc with polyline
-    const steps = Math.max(6, Math.floor(angle / (Math.PI / 24)));
-    const pts: [number, number][] = [];
+    const steps = Math.max(12, Math.floor(angle / (Math.PI / 36))); // More precise steps
+    
+    // Start from center
+    const points = [[x, y]];
+    
+    // Add arc points
     for (let i = 0; i <= steps; i++) {
-      const a = startAngle + (angle * i) / steps;
-      pts.push([x + Math.cos(a) * r, y + Math.sin(a) * r]);
+      const currentAngle = startAngle + (angle * i) / steps;
+      points.push([
+        x + Math.cos(currentAngle) * r,
+        y + Math.sin(currentAngle) * r
+      ]);
     }
-    // Build polygon from center -> arc points
-    const lines: number[][] = [];
-    lines.push([0, 0]);
-    for (let i = 0; i < pts.length; i++) {
-      const [px, py] = pts[i];
-      lines.push([px - x, py - y]);
-    }
+    
+    // Close back to center
+    points.push([x, y]);
+    
+    // Draw filled polygon
     doc.setFillColor(...slice.color);
-    doc.lines(lines, x, y, 1, 'F', true);
+    doc.setDrawColor(...slice.color);
+    
+    const lines = points.map((point, i) => {
+      if (i === 0) return null;
+      const [px, py] = point;
+      const [prevX, prevY] = points[i - 1];
+      return [px - prevX, py - prevY];
+    }).filter(Boolean) as number[][];
+    
+    doc.lines(lines, points[0][0], points[0][1], [1, 1], 'F', true);
+    
     startAngle += angle;
   });
 }
