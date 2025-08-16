@@ -1,0 +1,132 @@
+{
+  "name": "BrandAnalysisAgent",
+  "description": "Analyzes brand mentions for sentiment, relevance, and provides structured analysis",
+  "model": {
+    "provider": "anthropic",
+    "name": "claude-v2",
+    "temperature": 0.1
+  },
+  "prompt_configuration": {
+    "prompt_path": "./prompts/base-prompt.yaml",
+    "parameters": {
+      "brand_name": {
+        "type": "string",
+        "description": "Name of the brand being monitored",
+        "required": true
+      },
+      "industry": {
+        "type": "string",
+        "description": "Industry sector of the brand",
+        "required": true
+      },
+      "products_services": {
+        "type": "array",
+        "description": "List of brand's products and services",
+        "required": true
+      },
+      "known_issues": {
+        "type": "array",
+        "description": "Known brand issues or topics of interest",
+        "required": true
+      },
+      "flagged_keywords": {
+        "type": "array",
+        "description": "Keywords that require special attention",
+        "required": true
+      },
+      "mention_text": {
+        "type": "string",
+        "description": "The text content to analyze",
+        "required": true
+      },
+      "source_type": {
+        "type": "string",
+        "description": "Type of source (web, news, reddit, youtube)",
+        "required": true
+      },
+      "source_url": {
+        "type": "string",
+        "description": "URL of the mention source",
+        "required": true
+      },
+      "published_date": {
+        "type": "string",
+        "description": "Publication date of the mention",
+        "required": true
+      }
+    }
+  },
+  "schema_version": "1.0",
+  "response_format": {
+    "type": "json",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "analysis": {
+          "type": "object",
+          "properties": {
+            "sentiment_score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "confidence_score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "summary": {
+              "type": "string"
+            },
+            "key_points": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "flagged_topics": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "brand_mentions": {
+              "type": "object",
+              "properties": {
+                "direct": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "indirect": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": ["sentiment_score", "confidence_score", "summary", "key_points"]
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "analyzed_text_length": {
+              "type": "number"
+            },
+            "processing_timestamp": {
+              "type": "string"
+            },
+            "source_type": {
+              "type": "string"
+            }
+          },
+          "required": ["analyzed_text_length", "processing_timestamp", "source_type"]
+        }
+      },
+      "required": ["analysis", "metadata"]
+    }
+  }
+}

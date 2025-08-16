@@ -1,0 +1,48 @@
+{
+  "test_cases": [
+    {
+      "name": "Positive mention test",
+      "input": {
+        "brand_name": "TestBrand",
+        "industry": "Technology",
+        "products_services": ["Product A", "Service B"],
+        "known_issues": ["Price concerns", "Support response times"],
+        "flagged_keywords": ["lawsuit", "security", "breach"],
+        "mention_text": "TestBrand's Product A is amazing! The new features have really improved productivity. Great customer service too.",
+        "source_type": "web",
+        "source_url": "https://example.com/review",
+        "published_date": "2025-08-16T10:00:00Z"
+      },
+      "expected_sentiment_range": {
+        "min": 80,
+        "max": 100
+      },
+      "expected_confidence_range": {
+        "min": 90,
+        "max": 100
+      }
+    },
+    {
+      "name": "Ambiguous mention test",
+      "input": {
+        "brand_name": "TestBrand",
+        "industry": "Technology",
+        "products_services": ["Product A", "Service B"],
+        "known_issues": ["Price concerns", "Support response times"],
+        "flagged_keywords": ["lawsuit", "security", "breach"],
+        "mention_text": "I saw a test brand at the store today. Not sure if it was the same company, but it looked interesting.",
+        "source_type": "reddit",
+        "source_url": "https://reddit.com/r/tech/comments/abc123",
+        "published_date": "2025-08-16T11:00:00Z"
+      },
+      "expected_sentiment_range": {
+        "min": 50,
+        "max": 70
+      },
+      "expected_confidence_range": {
+        "min": 20,
+        "max": 40
+      }
+    }
+  ]
+}
