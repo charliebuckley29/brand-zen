@@ -53,24 +53,50 @@ export function AnalyticsChart() {
       const rangeStart = isCustom ? startOfDay(startDate as Date) : (() => { const d = new Date(); d.setDate(d.getDate() - days); return d; })();
       const rangeEnd = isCustom ? endOfDay(endDate as Date) : new Date();
 
-      let query = supabase
-        .from("mentions")
-        .select("published_at, sentiment, source_name")
-        .gte("published_at", rangeStart.toISOString())
-        .lte("published_at", rangeEnd.toISOString())
-        .order("published_at");
+      // Build base query for counting and fetching
+      let baseQuery = supabase
+        .from('mentions')
+        .select('published_at, sentiment, source_name', { count: 'exact' })
+        .gte('published_at', rangeStart.toISOString())
+        .lte('published_at', rangeEnd.toISOString())
+        .order('published_at');
+
       if (enabledAnalytics.length && enabledAnalytics.length < 4) {
-        query = (query as any).in("source_type", enabledAnalytics as any);
+        baseQuery = baseQuery.in('source_type', enabledAnalytics);
       }
-      const { data, error } = await query;
 
-      if (error) throw error;
+      // First, get the count
+      const { count, error: countError } = await baseQuery;
+      if (countError) throw countError;
 
-      // Process data for time series
+      if (!count) {
+        setChartData([]);
+        setSourceData([]);
+        return;
+      }
+
+      // Then fetch all data in chunks
+      const chunkSize = 1000;
+      const chunks = Math.ceil(count / chunkSize);
+      let stats: any[] = [];
+
+      for (let i = 0; i < chunks; i++) {
+        const { data: chunkData, error: fetchError } = await baseQuery
+          .range(i * chunkSize, (i + 1) * chunkSize - 1);
+        
+        if (fetchError) throw fetchError;
+        if (chunkData) {
+          stats = [...stats, ...chunkData];
+        }
+      }
+
+      // Process the combined stats from all chunks
+
+      // Process mentions for time series
       const dailyData = new Map<string, { positive: number; negative: number; neutral: number; total: number }>();
       const sourceCount = new Map<string, number>();
 
-      data?.forEach((mention) => {
+      (stats || []).forEach((mention) => {
         const date = new Date(mention.published_at).toLocaleDateString();
         
         if (!dailyData.has(date)) {
@@ -84,15 +110,19 @@ export function AnalyticsChart() {
         else if (mention.sentiment === "negative") dayData.negative++;
         else dayData.neutral++;
 
-        // Count sources
-        sourceCount.set(mention.source_name, (sourceCount.get(mention.source_name) || 0) + 1);
+        // Aggregate sources
+        if (mention.source_name) {
+          sourceCount.set(mention.source_name, (sourceCount.get(mention.source_name) || 0) + 1);
+        }
       });
 
       // Convert to chart format
-      const chartArray = Array.from(dailyData.entries()).map(([date, data]) => ({
-        date,
-        ...data
-      }));
+      const chartArray = Array.from(dailyData.entries())
+        .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
+        .map(([date, data]) => ({
+          date,
+          ...data
+        }));
 
       // Convert sources to pie chart format
       const sourceArray = Array.from(sourceCount.entries())
