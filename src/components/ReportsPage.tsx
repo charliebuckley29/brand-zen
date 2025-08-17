@@ -3,11 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Calendar as CalendarIcon, TrendingUp, TrendingDown, BarChart3, FileText, Download, Trash2 } from "lucide-react";
 import { startOfMonth, endOfMonth, startOfDay, endOfDay, format, parse } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { downloadReportPdf } from "@/lib/reportPdf";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +28,25 @@ interface Report {
   created_at: string;
 }
 
+function getMonthLabel(ym: string) {
+  // Support formats: yyyy-MM or yyyy-MM-dd..yyyy-MM-dd
+  if (/^\d{4}-\d{2}$/.test(ym)) {
+    try {
+      const d = parse(`${ym}-01`, 'yyyy-MM-dd', new Date());
+      return format(d, 'LLLL yyyy');
+    } catch { return ym; }
+  }
+  if (/^\d{4}-\d{2}-\d{2}\.\.\d{4}-\d{2}-\d{2}$/.test(ym)) {
+    const [s, e] = ym.split('..');
+    try {
+      const sd = parse(s, 'yyyy-MM-dd', new Date());
+      const ed = parse(e, 'yyyy-MM-dd', new Date());
+      return `${format(sd, 'PPP')} – ${format(ed, 'PPP')}`;
+    } catch { return ym; }
+  }
+  return ym;
+}
+
 function getRangeFromKey(key: string): { start: Date; end: Date } {
   if (/^\d{4}-\d{2}$/.test(key)) {
     const d = parse(`${key}-01`, 'yyyy-MM-dd', new Date());
@@ -37,6 +58,56 @@ function getRangeFromKey(key: string): { start: Date; end: Date } {
   }
   const now = new Date();
   return { start: startOfMonth(now), end: endOfMonth(now) };
+}
+
+function ReportDetailsDialog({ report, enabledReports }: { report: Report; enabledReports: string[] }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="secondary" size="sm">
+          <span className="sr-only">View details for {getMonthLabel(report.report_month)}</span>
+          View Details
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Report Details - {getMonthLabel(report.report_month)}</DialogTitle>
+        </DialogHeader>
+        
+        <div className="grid md:grid-cols-4 gap-4 mb-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold">{report.total_mentions}</div>
+            <div className="text-sm text-muted-foreground">Total</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-success">{report.positives}</div>
+            <div className="text-sm text-muted-foreground">Positive</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-muted-foreground">{report.neutrals}</div>
+            <div className="text-sm text-muted-foreground">Neutral</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-destructive">{report.negatives}</div>
+            <div className="text-sm text-muted-foreground">Negative</div>
+          </div>
+        </div>
+
+        <ReportCharts report={report} enabledReports={enabledReports} />
+
+        {report.top_sources.length > 0 && (
+          <div>
+            <h4 className="font-semibold mb-2">Top Sources</h4>
+            <div className="flex flex-wrap gap-2">
+              {report.top_sources.map((source) => (
+                <Badge key={source} variant="secondary">{source}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function ReportCharts({ report, enabledReports }: { report: Report; enabledReports: string[] }) {
@@ -199,25 +270,27 @@ export function ReportsPage() {
     }
   };
 
+
   const getMonthLabel = (ym: string) => {
-    // Support formats: yyyy-MM or yyyy-MM-dd..yyyy-MM-dd
-    if (/^\d{4}-\d{2}$/.test(ym)) {
-      try {
-        const d = parse(`${ym}-01`, 'yyyy-MM-dd', new Date());
-        return format(d, 'LLLL yyyy');
-      } catch { return ym; }
-    }
-    if (/^\d{4}-\d{2}-\d{2}\.\.\d{4}-\d{2}-\d{2}$/.test(ym)) {
-      const [s, e] = ym.split('..');
-      try {
-        const sd = parse(s, 'yyyy-MM-dd', new Date());
-        const ed = parse(e, 'yyyy-MM-dd', new Date());
-        return `${format(sd, 'PPP')} – ${format(ed, 'PPP')}`;
-      } catch { return ym; }
-    }
-    return ym;
-  };
-  const handleDelete = async (reportId: string, label: string) => {
+  // Support formats: yyyy-MM or yyyy-MM-dd..yyyy-MM-dd
+  if (/^\d{4}-\d{2}$/.test(ym)) {
+    try {
+      const d = parse(`${ym}-01`, 'yyyy-MM-dd', new Date());
+      return format(d, 'LLLL yyyy');
+    } catch { return ym; }
+  }
+  if (/^\d{4}-\d{2}-\d{2}\.\.\d{4}-\d{2}-\d{2}$/.test(ym)) {
+    const [s, e] = ym.split('..');
+    try {
+      const sd = parse(s, 'yyyy-MM-dd', new Date());
+      const ed = parse(e, 'yyyy-MM-dd', new Date());
+      return `${format(sd, 'PPP')} – ${format(ed, 'PPP')}`;
+    } catch { return ym; }
+  }
+  return ym;
+};
+
+const handleDelete = async (reportId: string, label: string) => {
     try {
       setDeletingId(reportId);
       const { error } = await supabase.from('reports').delete().eq('id', reportId);
@@ -393,110 +466,82 @@ export function ReportsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {reports.map((report) => {
-            const { trend, icon: TrendIcon, color } = getSentimentTrend(report);
-            
-            return (
-              <Card key={report.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <CalendarIcon className="h-5 w-5" />
-                        {getMonthLabel(report.report_month)}
-                      </CardTitle>
-                      <CardDescription>
-                        Generated on {new Date(report.created_at).toLocaleDateString()}
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <TrendIcon className={`h-5 w-5 ${color}`} />
-                      <Badge variant="outline">{trend}</Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={async () => {
-                          try {
-                            setDownloadingId(report.id);
-                            await downloadReportPdf(report, enabledReports);
-                            toast({ title: 'Download started', description: `${getMonthLabel(report.report_month)} PDF is downloading.` });
-                          } catch (e: any) {
-                            toast({ title: 'Failed to download', description: e?.message || 'Unexpected error', variant: 'destructive' });
-                          } finally {
-                            setDownloadingId(null);
-                          }
-                        }}
-                        disabled={downloadingId === report.id}
-                        aria-label={`Download report ${getMonthLabel(report.report_month)}`}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm" aria-label={`Delete report ${getMonthLabel(report.report_month)}`} disabled={deletingId === report.id}>
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete this report?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. The report for {getMonthLabel(report.report_month)} will be permanently removed.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(report.id, getMonthLabel(report.report_month))} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-4 gap-4 mb-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">{report.total_mentions}</div>
-                      <div className="text-sm text-muted-foreground">Total Mentions</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-success">{report.positives}</div>
-                      <div className="text-sm text-muted-foreground">Positive</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-muted-foreground">{report.neutrals}</div>
-                      <div className="text-sm text-muted-foreground">Neutral</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-destructive">{report.negatives}</div>
-                      <div className="text-sm text-muted-foreground">Negative</div>
-                    </div>
-                  </div>
-                  
-                  <ReportCharts report={report} enabledReports={enabledReports} />
-                  
-                  {report.top_sources.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold mb-2">Top Sources</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {report.top_sources.map((source) => (
-                          <Badge key={source} variant="secondary">
-                            {source}
-                          </Badge>
-                        ))}
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Period</TableHead>
+                <TableHead>Total Mentions</TableHead>
+                <TableHead>Sentiment</TableHead>
+                <TableHead>Generated</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {reports.map((report) => {
+                const { trend, icon: TrendIcon, color } = getSentimentTrend(report);
+                return (
+                  <TableRow key={report.id}>
+                    <TableCell>{getMonthLabel(report.report_month)}</TableCell>
+                    <TableCell>{report.total_mentions}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <TrendIcon className={`h-4 w-4 ${color}`} />
+                        <Badge variant="outline">{trend}</Badge>
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                    </TableCell>
+                    <TableCell>{new Date(report.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-2">
+                        <ReportDetailsDialog report={report} enabledReports={enabledReports} />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              setDownloadingId(report.id);
+                              await downloadReportPdf(report, enabledReports);
+                              toast({ title: 'Download started', description: `${getMonthLabel(report.report_month)} PDF is downloading.` });
+                            } catch (e: any) {
+                              toast({ title: 'Failed to download', description: e?.message || 'Unexpected error', variant: 'destructive' });
+                            } finally {
+                              setDownloadingId(null);
+                            }
+                          }}
+                          disabled={downloadingId === report.id}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" disabled={deletingId === report.id}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete this report?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. The report for {getMonthLabel(report.report_month)} will be permanently removed.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(report.id, getMonthLabel(report.report_month))} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Card>
       )}
     </div>
   );
