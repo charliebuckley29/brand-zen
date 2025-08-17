@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ExternalLink, Flag, Clock, MessageCircle, UserX } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ExternalLink, Flag, Clock, MessageCircle, UserX, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface Mention {
   id: string;
@@ -26,7 +28,149 @@ interface MentionsTableProps {
   onNotMe: (mentionId: string) => void;
 }
 
+function PaginationControls({ 
+  currentPage, 
+  totalPages, 
+  pageSize, 
+  totalItems, 
+  startIndex, 
+  endIndex,
+  onPageChange, 
+  onPageSizeChange 
+}: { 
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+  totalItems: number;
+  startIndex: number;
+  endIndex: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+}) {
+  // Add state for the input value
+  const [inputValue, setInputValue] = useState(currentPage.toString());
+
+  // Update input value when current page changes externally
+  useEffect(() => {
+    setInputValue(currentPage.toString());
+  }, [currentPage]);
+
+  const pageSizeOptions = [10, 25, 50, 100];
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 border-t gap-4 sm:gap-2">
+      {/* Row 1 on mobile, Left side on desktop */}
+      <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+        <Select
+          value={pageSize.toString()}
+          onValueChange={(value) => onPageSizeChange(Number(value))}
+        >
+          <SelectTrigger className="w-[90px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {pageSizeOptions.map(size => (
+              <SelectItem key={size} value={size.toString()}>
+                {size} per page
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-sm text-muted-foreground whitespace-nowrap">
+          {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
+        </p>
+      </div>
+
+      {/* Row 2 on mobile, Right side on desktop */}
+      <div className="flex items-center justify-center gap-2 w-full sm:w-auto">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-2 sm:px-3"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span className="hidden sm:inline ml-1">Previous</span>
+        </Button>
+
+        <div className="flex items-center gap-1">
+          <input
+            type="number"
+            min={1}
+            max={totalPages}
+            value={inputValue}
+            onChange={(e) => {
+              // Allow any number or empty input
+              const newValue = e.target.value;
+              setInputValue(newValue);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const value = parseInt(e.currentTarget.value);
+                if (!isNaN(value)) {
+                  if (value >= 1 && value <= totalPages) {
+                    onPageChange(value);
+                  }
+                }
+                e.currentTarget.blur();
+              }
+            }}
+            onBlur={() => {
+              const value = parseInt(inputValue);
+              if (!isNaN(value)) {
+                if (value < 1) {
+                  onPageChange(1);
+                  setInputValue('1');
+                } else if (value > totalPages) {
+                  onPageChange(totalPages);
+                  setInputValue(totalPages.toString());
+                } else {
+                  onPageChange(value);
+                  setInputValue(value.toString());
+                }
+              } else {
+                setInputValue(currentPage.toString());
+              }
+            }}
+            className="w-12 h-8 rounded-md border border-input bg-background px-1 text-sm text-center"
+          />
+          <span className="text-sm text-muted-foreground whitespace-nowrap">/ {totalPages}</span>
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-2 sm:px-3"
+        >
+          <span className="hidden sm:inline mr-1">Next</span>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji, onNotMe }: MentionsTableProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalPages = Math.ceil(mentions.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentMentions = mentions.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);  // Reset to first page when changing page size
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -59,7 +203,7 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji, onN
     <>
       {/* Mobile Card Layout */}
       <div className="md:hidden space-y-3 p-3">
-        {mentions.map((mention) => (
+        {currentMentions.map((mention, index) => (
           <Card 
             key={mention.id} 
             className="cursor-pointer hover:shadow-md transition-shadow"
@@ -68,6 +212,7 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji, onN
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground tabular-nums">#{startIndex + index + 1}</span>
                   <span className="font-medium text-sm">{mention.source_name}</span>
                   {mention.flagged && <Flag className="h-3 w-3 text-warning" />}
                 </div>
@@ -136,6 +281,16 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji, onN
             </CardContent>
           </Card>
         ))}
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={mentions.length}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
       </div>
 
       {/* Desktop Table Layout */}
@@ -144,6 +299,7 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji, onN
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[60px]">#</TableHead>
                 <TableHead className="w-[120px]">Source</TableHead>
                 <TableHead>Content</TableHead>
                 <TableHead className="w-[120px]">Sentiment</TableHead>
@@ -154,12 +310,15 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji, onN
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mentions.map((mention) => (
+              {currentMentions.map((mention, index) => (
                 <TableRow 
                   key={mention.id} 
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => onMentionClick(mention)}
                 >
+                  <TableCell className="text-muted-foreground text-sm text-right tabular-nums">
+                    {startIndex + index + 1}
+                  </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <span className="truncate">{mention.source_name}</span>
@@ -238,6 +397,16 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji, onN
               ))}
             </TableBody>
           </Table>
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={mentions.length}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
         </div>
       </div>
     </>
