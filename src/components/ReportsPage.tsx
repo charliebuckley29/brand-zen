@@ -119,17 +119,52 @@ function ReportCharts({ report, enabledReports }: { report: Report; enabledRepor
     const load = async () => {
       setLoading(true);
       const { start, end } = getRangeFromKey(report.report_month);
-      let query = supabase
+      // Build base query
+      let baseQuery = supabase
         .from('mentions')
-        .select('published_at, sentiment, source_name, source_type')
+        .select('published_at, sentiment, source_name, source_type', { count: 'exact' })
         .gte('published_at', start.toISOString())
         .lte('published_at', end.toISOString())
         .order('published_at');
+
       if (enabledReports.length && enabledReports.length < 4) {
-        query = (query as any).in('source_type', enabledReports as any);
+        baseQuery = baseQuery.in('source_type', enabledReports);
       }
-      const { data, error } = await query as any;
-      if (error) { setLoading(false); return; }
+
+      // Get total count first
+      const { count, error: countError } = await baseQuery;
+      if (countError) { 
+        console.error("Error fetching count:", countError);
+        setLoading(false); 
+        return; 
+      }
+
+      if (!count) {
+        setChartData([]);
+        setSourceData([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch all data in chunks
+      const chunkSize = 1000;
+      const chunks = Math.ceil(count / chunkSize);
+      let data: any[] = [];
+
+      for (let i = 0; i < chunks; i++) {
+        const { data: chunkData, error: fetchError } = await baseQuery
+          .range(i * chunkSize, (i + 1) * chunkSize - 1);
+        
+        if (fetchError) {
+          console.error("Error fetching chunk:", fetchError);
+          setLoading(false);
+          return;
+        }
+
+        if (chunkData) {
+          data = [...data, ...chunkData];
+        }
+      }
 
       const daily = new Map<string, { positive: number; neutral: number; negative: number }>();
       const sources = new Map<string, number>();
@@ -224,24 +259,30 @@ export function ReportsPage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Update date range when period changes
+    const end = new Date();
+    const start = new Date();
+    
+    if (selectedPeriod === "all") {
+      // For "All Time", set start to 1 year ago
+      start.setFullYear(start.getFullYear() - 1);
+    } else {
+      // For other periods, set start based on selected months
+      const months = parseInt(selectedPeriod);
+      start.setMonth(start.getMonth() - months);
+    }
+    
+    setStartDate(start);
+    setEndDate(end);
     fetchReports();
   }, [selectedPeriod]);
 
   const fetchReports = async () => {
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from("reports")
         .select("*")
         .order("created_at", { ascending: false });
-
-      if (selectedPeriod !== "all") {
-        const months = parseInt(selectedPeriod);
-        const cutoffDate = new Date();
-        cutoffDate.setMonth(cutoffDate.getMonth() - months);
-        query = query.gte("created_at", cutoffDate.toISOString());
-      }
-
-      const { data, error } = await query;
 
       if (error) throw error;
       setReports(data || []);
@@ -321,16 +362,39 @@ const handleDelete = async (reportId: string, label: string) => {
         : format(defaultStart, 'yyyy-MM');
 
       // Fetch mentions within range (RLS restricts to current user)
-      let query = supabase
+      let baseQuery = supabase
         .from("mentions")
-        .select("sentiment, source_name")
+        .select("sentiment, source_name", { count: 'exact' })
         .gte("published_at", rangeStart.toISOString())
         .lte("published_at", rangeEnd.toISOString());
+
       if (enabledReports.length && enabledReports.length < 4) {
-        query = (query as any).in("source_type", enabledReports as any);
+        baseQuery = baseQuery.in("source_type", enabledReports);
       }
-      const { data: mentions, error: mentionsError } = await query;
-      if (mentionsError) throw mentionsError;
+
+      // Get total count first
+      const { count, error: countError } = await baseQuery;
+      if (countError) throw countError;
+
+      if (!count) {
+        toast({ title: 'No mentions found', description: 'No data available for the selected period.', variant: 'destructive' });
+        return;
+      }
+
+      // Fetch all data in chunks
+      const chunkSize = 1000;
+      const chunks = Math.ceil(count / chunkSize);
+      let mentions: any[] = [];
+
+      for (let i = 0; i < chunks; i++) {
+        const { data: chunkData, error: fetchError } = await baseQuery
+          .range(i * chunkSize, (i + 1) * chunkSize - 1);
+        
+        if (fetchError) throw fetchError;
+        if (chunkData) {
+          mentions = [...mentions, ...chunkData];
+        }
+      }
 
       const sourceCounts = new Map<string, number>();
       let total = 0, pos = 0, neg = 0, neu = 0;
@@ -393,7 +457,10 @@ const handleDelete = async (reportId: string, label: string) => {
           <p className="text-sm sm:text-base text-muted-foreground">View and download brand monitoring reports</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:gap-2 items-stretch sm:items-center">
-          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+          <Select 
+            value={selectedPeriod} 
+            onValueChange={setSelectedPeriod}
+          >
             <SelectTrigger className="w-full sm:w-[160px]">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
@@ -490,7 +557,7 @@ const handleDelete = async (reportId: string, label: string) => {
                         <Badge variant="outline">{trend}</Badge>
                       </div>
                     </TableCell>
-                    <TableCell>{new Date(report.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>{format(new Date(report.created_at), "PPp")}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-2">
                         <ReportDetailsDialog report={report} enabledReports={enabledReports} />
