@@ -29,6 +29,9 @@ export function Dashboard() {
   const [mentions, setMentions] = useState<Mention[]>([]);
   const [selectedMention, setSelectedMention] = useState<Mention | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalMentions, setTotalMentions] = useState(0);
   const [stats, setStats] = useState({
     total: 0,
     positive: 0,
@@ -43,29 +46,46 @@ export function Dashboard() {
 
   useEffect(() => {
     fetchMentions();
-  }, [enabledMentions]);
+  }, [enabledMentions, currentPage, pageSize]);
+
   const fetchMentions = async () => {
     try {
       const types = enabledMentions;
-      let query = supabase
-        .from("mentions")
-        .select("*")
-        .order("published_at", { ascending: false });
-      if (types.length && types.length < 4) {
-        query = (query as any).in("source_type", types as any);
-      }
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      setMentions(data || []);
       
-      // Calculate stats
-      const total = data?.length || 0;
-      const positive = data?.filter(m => m.sentiment === 'positive').length || 0;
-      const neutral = data?.filter(m => m.sentiment === 'neutral').length || 0;
-      const negative = data?.filter(m => m.sentiment === 'negative').length || 0;
-      const flagged = data?.filter(m => m.flagged).length || 0;
+      // Fetch paginated mentions
+      let mentionsQuery = supabase
+        .from("mentions")
+        .select("*", { count: 'exact' })
+        .order("published_at", { ascending: false })
+        .range((currentPage - 1) * pageSize, (currentPage * pageSize) - 1);
+
+      // Fetch stats
+      let statsQuery = supabase
+        .from("mentions")
+        .select('id, sentiment, flagged', { count: 'exact' });
+
+      if (types.length && types.length < 4) {
+        mentionsQuery = (mentionsQuery as any).in("source_type", types as any);
+        statsQuery = (statsQuery as any).in("source_type", types as any);
+      }
+
+      const [mentionsResult, statsResult] = await Promise.all([
+        mentionsQuery,
+        statsQuery
+      ]);
+
+      if (mentionsResult.error) throw mentionsResult.error;
+      if (statsResult.error) throw statsResult.error;
+
+      setMentions(mentionsResult.data || []);
+      setTotalMentions(mentionsResult.count || 0);
+      
+      // Calculate stats using the full dataset
+      const total = statsResult.count || 0;
+      const positive = statsResult.data?.filter(m => m.sentiment === 'positive').length || 0;
+      const neutral = statsResult.data?.filter(m => m.sentiment === 'neutral').length || 0;
+      const negative = statsResult.data?.filter(m => m.sentiment === 'negative').length || 0;
+      const flagged = statsResult.data?.filter(m => m.flagged).length || 0;
 
       setStats({ total, positive, neutral, negative, flagged });
     } catch (error) {
@@ -226,6 +246,11 @@ export function Dashboard() {
               onMentionClick={setSelectedMention}
               getSentimentEmoji={getSentimentEmoji}
               onNotMe={(id) => handleNotMe(id)}
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalItems={totalMentions}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
             />
           </CardContent>
         </Card>

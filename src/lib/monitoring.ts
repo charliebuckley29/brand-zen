@@ -44,22 +44,33 @@ export async function getUserKeywords() {
   return data;
 }
 
-export async function getUserMentions(limit = 50) {
+export interface PaginatedResponse<T> {
+  data: T[];
+  count: number;
+}
+
+export async function getUserMentions(page = 1, pageSize = 50, sourceTypes?: string[]) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("mentions")
     .select(`
       *,
       keywords!inner(brand_name)
-    `)
+    `, { count: 'exact' })
     .eq("user_id", user.id)
     .order("published_at", { ascending: false })
-    .limit(limit);
+    .range((page - 1) * pageSize, (page * pageSize) - 1);
+
+  if (sourceTypes && sourceTypes.length && sourceTypes.length < 4) {
+    query = query.in("source_type", sourceTypes);
+  }
+
+  const { data, error, count } = await query;
 
   if (error) throw error;
-  return data;
+  return { data: data || [], count: count || 0 } as PaginatedResponse<any>;
 }
 
 export async function startMonitoring(keywordId: string) {

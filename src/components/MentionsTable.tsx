@@ -26,6 +26,11 @@ interface MentionsTableProps {
   onMentionClick: (mention: Mention) => void;
   getSentimentEmoji: (sentiment: string | null) => string;
   onNotMe: (mentionId: string) => void;
+  currentPage: number;
+  pageSize: number;
+  totalItems: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 function PaginationControls({ 
@@ -153,22 +158,28 @@ function PaginationControls({
   );
 }
 
-export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji, onNotMe }: MentionsTableProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  const totalPages = Math.ceil(mentions.length / pageSize);
+export function MentionsTable({ 
+  mentions, 
+  onMentionClick, 
+  getSentimentEmoji, 
+  onNotMe,
+  currentPage,
+  pageSize,
+  totalItems,
+  onPageChange,
+  onPageSizeChange
+}: MentionsTableProps) {
+  const totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const currentMentions = mentions.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    onPageChange(page);
   };
 
   const handlePageSizeChange = (size: number) => {
-    setPageSize(size);
-    setCurrentPage(1);  // Reset to first page when changing page size
+    onPageSizeChange(size);
+    onPageChange(1);  // Reset to first page when changing page size
   };
 
   const formatDate = (dateString: string) => {
@@ -203,7 +214,7 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji, onN
     <>
       {/* Mobile Card Layout */}
       <div className="md:hidden space-y-3 p-3">
-        {currentMentions.map((mention, index) => (
+        {mentions.map((mention, index) => (
           <Card 
             key={mention.id} 
             className="cursor-pointer hover:shadow-md transition-shadow"
@@ -310,7 +321,7 @@ export function MentionsTable({ mentions, onMentionClick, getSentimentEmoji, onN
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentMentions.map((mention, index) => (
+              {mentions.map((mention, index) => (
                 <TableRow 
                   key={mention.id} 
                   className="cursor-pointer hover:bg-muted/50"
