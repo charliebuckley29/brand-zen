@@ -5,7 +5,7 @@ REM Trim spaces
 set IP=%IP:~1%
 
 REM Start Vite dev server in WSL
-start "" wsl bash -c "cd ~/github-clones/brand-zen/brand-zen && npm run dev"
+start "" wsl bash -c "cd ~/github-clones/brand-zen/brand-zen && npm run dev -- --host"
 
 REM Wait a bit for server to start
 timeout /t 5 /nobreak >nul
