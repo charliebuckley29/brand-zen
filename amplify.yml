@@ -1,0 +1,35 @@
+version: 1
+applications:
+  - frontend:
+      phases:
+        preBuild:
+          commands:
+            # Install dependencies
+            - npm install
+            # Install Puppeteer dependencies (Chromium + fonts)
+            - yum install -y wget xorg-x11-server-Xvfb chromium nss alsa-lib
+            # Export Chromium path for Puppeteer
+            - export PUPPETEER_EXECUTABLE_PATH=$(which chromium)
+        build:
+          commands:
+            # Retrieve secrets from AWS Secrets Manager and store in environment variables
+            - |
+              echo "Fetching secrets from AWS Secrets Manager..."
+              SECRET_JSON=$(aws secretsmanager get-secret-value \
+                --secret-id google-alerts-account-details \
+                --query SecretString \
+                --output text \
+                --region eu-west-2)
+              export GOOGLE_ACCOUNT_EMAIL=$(echo $SECRET_JSON | jq -r '.email')
+              export GOOGLE_ACCOUNT_PASSWORD=$(echo $SECRET_JSON | jq -r '.password')
+              echo "Secrets loaded"
+            # Build the app
+            - npm run build
+      artifacts:
+        baseDirectory: build
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+    appRoot: .
