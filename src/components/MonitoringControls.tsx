@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { RefreshCw, Trash2, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +16,7 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [exclusionsOpen, setExclusionsOpen] = useState(false);
+  const [alsoDeleteRemovedMentions, setAlsoDeleteRemovedMentions] = useState(false);
   const { toast } = useToast();
 
   const handleRefreshMentions = async () => {
@@ -42,13 +44,28 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
         toast({ title: 'Not signed in', description: 'Please sign in to clear mentions.', variant: 'destructive' });
         return;
       }
-      const { error } = await supabase
+      
+      // Delete mentions
+      const { error: mentionsError } = await supabase
         .from('mentions')
         .delete()
         .eq('user_id', user.id);
-      if (error) throw error;
+      if (mentionsError) throw mentionsError;
+      
+      // Also delete removed mentions if checkbox is checked
+      if (alsoDeleteRemovedMentions) {
+        const { error: exclusionsError } = await supabase
+          .from('mention_exclusions')
+          .delete()
+          .eq('user_id', user.id);
+        if (exclusionsError) throw exclusionsError;
+      }
+      
       await onMentionsUpdated();
-      toast({ title: 'Mentions cleared', description: 'All your mentions were removed.' });
+      const message = alsoDeleteRemovedMentions 
+        ? 'All mentions and removed mentions were deleted.' 
+        : 'All your mentions were removed.';
+      toast({ title: 'Mentions cleared', description: message });
     } catch (err) {
       console.error('Error clearing mentions:', err);
       toast({ title: 'Clear failed', description: 'Could not delete mentions.', variant: 'destructive' });
@@ -122,6 +139,27 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
                   This action cannot be undone. All found mentions will be permanently deleted from our database.
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              
+              <div className="flex items-start space-x-2 p-4 border rounded-lg bg-muted/20">
+                <Checkbox 
+                  id="delete-removed"
+                  checked={alsoDeleteRemovedMentions}
+                  onCheckedChange={(checked) => setAlsoDeleteRemovedMentions(checked === true)}
+                  className="mt-1"
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <label 
+                    htmlFor="delete-removed"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Also delete removed mentions
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    ⚠️ <strong>Warning:</strong> This will permanently delete all mentions you've marked as "Not me". This action is irreversible.
+                  </p>
+                </div>
+              </div>
+              
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleClearMentions}>
