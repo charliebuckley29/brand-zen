@@ -60,7 +60,7 @@ export function ExclusionsModal({ open, onOpenChange }: ExclusionsModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl max-w-[90vw]">
         <DialogHeader>
           <DialogTitle>Removed mentions</DialogTitle>
           <DialogDescription>Items you marked as “Not me”. You can re-add them anytime.</DialogDescription>
@@ -74,9 +74,9 @@ export function ExclusionsModal({ open, onOpenChange }: ExclusionsModalProps) {
           <ScrollArea className="max-h-[60vh] pr-2">
             <ul className="space-y-3">
               {items.map((item) => (
-                <li key={item.id} className="flex items-center justify-between gap-3 rounded-md border p-3">
+                <li key={item.id} className="flex items-center gap-4 rounded-md border p-4">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-2">
                       {item.source_domain && (
                         <Badge variant="secondary" className="text-xs">{item.source_domain}</Badge>
                       )}
@@ -86,14 +86,14 @@ export function ExclusionsModal({ open, onOpenChange }: ExclusionsModalProps) {
                       href={item.source_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block truncate text-sm hover:underline"
+                      className="block text-sm hover:underline break-all"
                       title={item.source_url}
                       onClick={(e) => e.stopPropagation()}
                     >
                       {item.source_url}
                     </a>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 min-w-fit">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -108,7 +108,7 @@ export function ExclusionsModal({ open, onOpenChange }: ExclusionsModalProps) {
                       size="sm"
                       onClick={() => handleReadd(item)}
                       disabled={actionId === item.id}
-                      className="whitespace-nowrap px-3 py-1"
+                      className="px-3 py-2 min-w-[80px]"
                     >
                       <RotateCcw className="h-3 w-3 mr-1" />
                       Re-add
