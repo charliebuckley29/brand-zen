@@ -74,8 +74,8 @@ export function ExclusionsModal({ open, onOpenChange }: ExclusionsModalProps) {
           <ScrollArea className="max-h-[60vh] pr-2">
             <ul className="space-y-3">
               {items.map((item) => (
-                <li key={item.id} className="flex items-start justify-between gap-3 rounded-md border p-3">
-                  <div className="min-w-0">
+                <li key={item.id} className="flex items-center justify-between gap-3 rounded-md border p-3">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       {item.source_domain && (
                         <Badge variant="secondary" className="text-xs">{item.source_domain}</Badge>
@@ -93,21 +93,22 @@ export function ExclusionsModal({ open, onOpenChange }: ExclusionsModalProps) {
                       {item.source_url}
                     </a>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 min-w-fit">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => window.open(item.source_url, "_blank", "noopener,noreferrer")}
                       aria-label="Open source"
+                      className="p-2"
                     >
                       <ExternalLink className="h-4 w-4" />
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="default"
                       size="sm"
                       onClick={() => handleReadd(item)}
                       disabled={actionId === item.id}
-                      className="text-xs"
+                      className="whitespace-nowrap px-3 py-1"
                     >
                       <RotateCcw className="h-3 w-3 mr-1" />
                       Re-add
