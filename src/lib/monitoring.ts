@@ -6,7 +6,7 @@ export interface MentionData {
   published_at: string;
   content_snippet: string;
   full_text?: string;
-  sentiment?: 'positive' | 'negative' | 'neutral';
+  sentiment?: number; // -1 = unknown, 0 = strongly negative, 100 = strongly positive
   topics?: string[];
   flagged?: boolean;
   escalation_type?: 'none' | 'pr' | 'legal' | 'crisis';
@@ -84,7 +84,7 @@ export async function startMonitoring(keywordId: string) {
   return (agg?.value?.data) || (news?.value?.data);
 }
 
-export async function analyzeSentiment(text: string): Promise<'positive' | 'negative' | 'neutral'> {
+export async function analyzeSentiment(text: string): Promise<number> {
   // Simple sentiment analysis - in a real app, you'd use a proper service
   const positiveWords = ['good', 'great', 'excellent', 'amazing', 'love', 'awesome', 'fantastic', 'wonderful', 'perfect', 'best'];
   const negativeWords = ['bad', 'terrible', 'awful', 'hate', 'worst', 'horrible', 'disgusting', 'disappointing', 'useless', 'poor'];
@@ -93,9 +93,9 @@ export async function analyzeSentiment(text: string): Promise<'positive' | 'nega
   const positiveCount = words.filter(word => positiveWords.includes(word)).length;
   const negativeCount = words.filter(word => negativeWords.includes(word)).length;
   
-  if (positiveCount > negativeCount) return 'positive';
-  if (negativeCount > positiveCount) return 'negative';
-  return 'neutral';
+  if (positiveCount > negativeCount) return 100; // Strongly positive
+  if (negativeCount > positiveCount) return 0;   // Strongly negative
+  return 50; // Neutral
 }
 
 export async function flagMention(mentionId: string, escalationType: string, notes?: string) {

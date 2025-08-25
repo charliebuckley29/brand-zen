@@ -88,7 +88,7 @@ export type Database = {
           internal_notes: string | null
           keyword_id: string
           published_at: string
-          sentiment: string | null
+          sentiment: number | null
           source_name: string
           source_type: string | null
           source_url: string
@@ -106,7 +106,7 @@ export type Database = {
           internal_notes?: string | null
           keyword_id: string
           published_at: string
-          sentiment?: string | null
+          sentiment?: number | null
           source_name: string
           source_type?: string | null
           source_url: string
@@ -124,7 +124,7 @@ export type Database = {
           internal_notes?: string | null
           keyword_id?: string
           published_at?: string
-          sentiment?: string | null
+          sentiment?: number | null
           source_name?: string
           source_type?: string | null
           source_url?: string

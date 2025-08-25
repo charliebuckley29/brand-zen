@@ -170,8 +170,8 @@ export function AnalyticsChart() {
       let total = 0, pos = 0, neg = 0, neu = 0;
       (mentions || []).forEach((m) => {
         total += 1;
-        if (m.sentiment === 'positive') pos += 1;
-        else if (m.sentiment === 'negative') neg += 1;
+        if (m.sentiment === 100) pos += 1;
+        else if (m.sentiment === 0) neg += 1;
         else neu += 1;
         if (m.source_name) sourceCounts.set(m.source_name, (sourceCounts.get(m.source_name) || 0) + 1);
       });

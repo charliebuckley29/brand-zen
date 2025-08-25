@@ -18,7 +18,7 @@ interface Mention {
   published_at: string;
   content_snippet: string;
   full_text: string | null;
-  sentiment: string | null;
+  sentiment: number | null; // -1 = unknown, 0 = strongly negative, 100 = strongly positive
   topics: string[];
   flagged: boolean;
   escalation_type: string;
@@ -82,9 +82,9 @@ export function Dashboard() {
       
       // Calculate stats using the full dataset
       const total = statsResult.count || 0;
-      const positive = statsResult.data?.filter(m => m.sentiment === 'positive').length || 0;
-      const neutral = statsResult.data?.filter(m => m.sentiment === 'neutral').length || 0;
-      const negative = statsResult.data?.filter(m => m.sentiment === 'negative').length || 0;
+      const positive = statsResult.data?.filter(m => m.sentiment === 100).length || 0;
+      const neutral = statsResult.data?.filter(m => m.sentiment === 50 || (m.sentiment !== 0 && m.sentiment !== 100)).length || 0;
+      const negative = statsResult.data?.filter(m => m.sentiment === 0).length || 0;
       const flagged = statsResult.data?.filter(m => m.flagged).length || 0;
 
       setStats({ total, positive, neutral, negative, flagged });
@@ -134,13 +134,11 @@ export function Dashboard() {
     }
   };
 
-  const getSentimentEmoji = (sentiment: string | null) => {
-    switch (sentiment) {
-      case 'positive': return '✅';
-      case 'negative': return '❌';
-      case 'neutral': return '⚠️';
-      default: return '❓';
-    }
+  const getSentimentEmoji = (sentiment: number | null) => {
+    if (sentiment === 100) return '✅'; // Strongly positive
+    if (sentiment === 0) return '❌';   // Strongly negative  
+    if (sentiment === -1) return '❓';  // Unknown
+    return '⚠️'; // Neutral (anything else like 50)
   };
 
   const handleNotMe = async (mentionId: string) => {

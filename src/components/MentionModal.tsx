@@ -16,7 +16,7 @@ interface Mention {
   published_at: string;
   content_snippet: string;
   full_text: string | null;
-  sentiment: string | null;
+  sentiment: number | null; // -1 = unknown, 0 = strongly negative, 100 = strongly positive
   topics: string[];
   flagged: boolean;
   escalation_type: string;
@@ -27,7 +27,7 @@ interface MentionModalProps {
   mention: Mention;
   onClose: () => void;
   onUpdate: () => void;
-  getSentimentEmoji: (sentiment: string | null) => string;
+  getSentimentEmoji: (sentiment: number | null) => string;
 }
 
 export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: MentionModalProps) {
@@ -49,13 +49,11 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
     });
   };
 
-  const getSentimentColor = (sentiment: string | null) => {
-    switch (sentiment) {
-      case 'positive': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'negative': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      case 'neutral': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-    }
+  const getSentimentColor = (sentiment: number | null) => {
+    if (sentiment === 100) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; // Strongly positive
+    if (sentiment === 0) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'; // Strongly negative
+    if (sentiment === -1) return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'; // Unknown
+    return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; // Neutral (50 or other)
   };
 
   const handleEscalate = async (type: 'legal' | 'pr') => {
@@ -224,7 +222,13 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
             <div>
               <Label className="text-sm font-medium">Sentiment</Label>
               <Badge variant="secondary" className={getSentimentColor(mention.sentiment)}>
-                {getSentimentEmoji(mention.sentiment)} {mention.sentiment || 'Unknown'}
+                {getSentimentEmoji(mention.sentiment)} {
+                  mention.sentiment === 100 ? 'Positive' :
+                  mention.sentiment === 0 ? 'Negative' :
+                  mention.sentiment === -1 ? 'Unknown' :
+                  mention.sentiment === 50 ? 'Neutral' :
+                  'Unknown'
+                }
               </Badge>
             </div>
             <div>

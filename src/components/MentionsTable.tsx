@@ -14,7 +14,7 @@ interface Mention {
   published_at: string;
   content_snippet: string;
   full_text: string | null;
-  sentiment: string | null;
+  sentiment: number | null; // -1 = unknown, 0 = strongly negative, 100 = strongly positive
   topics: string[];
   flagged: boolean;
   escalation_type: string;
@@ -24,7 +24,7 @@ interface Mention {
 interface MentionsTableProps {
   mentions: Mention[];
   onMentionClick: (mention: Mention) => void;
-  getSentimentEmoji: (sentiment: string | null) => string;
+  getSentimentEmoji: (sentiment: number | null) => string;
   onNotMe: (mentionId: string) => void;
   currentPage: number;
   pageSize: number;
@@ -191,13 +191,11 @@ export function MentionsTable({
     });
   };
 
-  const getSentimentColor = (sentiment: string | null) => {
-    switch (sentiment) {
-      case 'positive': return 'bg-success/10 text-success border-success/20';
-      case 'negative': return 'bg-destructive/10 text-destructive border-destructive/20';
-      case 'neutral': return 'bg-warning/10 text-warning border-warning/20';
-      default: return 'bg-muted text-muted-foreground';
-    }
+  const getSentimentColor = (sentiment: number | null) => {
+    if (sentiment === 100) return 'bg-success/10 text-success border-success/20'; // Strongly positive
+    if (sentiment === 0) return 'bg-destructive/10 text-destructive border-destructive/20'; // Strongly negative
+    if (sentiment === -1) return 'bg-muted text-muted-foreground'; // Unknown
+    return 'bg-warning/10 text-warning border-warning/20'; // Neutral (50 or other values)
   };
 
   if (mentions.length === 0) {
@@ -261,7 +259,13 @@ export function MentionsTable({
               
               <div className="flex items-center justify-between mb-3">
                 <Badge variant="outline" className={`text-xs ${getSentimentColor(mention.sentiment)}`}>
-                  {getSentimentEmoji(mention.sentiment)} {mention.sentiment || 'Unknown'}
+                  {getSentimentEmoji(mention.sentiment)} {
+                    mention.sentiment === 100 ? 'Positive' :
+                    mention.sentiment === 0 ? 'Negative' :
+                    mention.sentiment === -1 ? 'Unknown' :
+                    mention.sentiment === 50 ? 'Neutral' :
+                    'Unknown'
+                  }
                 </Badge>
                 
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -341,7 +345,13 @@ export function MentionsTable({
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={`text-xs ${getSentimentColor(mention.sentiment)}`}>
-                      {getSentimentEmoji(mention.sentiment)} {mention.sentiment || 'Unknown'}
+                      {getSentimentEmoji(mention.sentiment)} {
+                        mention.sentiment === 100 ? 'Positive' :
+                        mention.sentiment === 0 ? 'Negative' :
+                        mention.sentiment === -1 ? 'Unknown' :
+                        mention.sentiment === 50 ? 'Neutral' :
+                        'Unknown'
+                      }
                     </Badge>
                   </TableCell>
                   <TableCell>
