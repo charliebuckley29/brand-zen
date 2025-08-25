@@ -93,7 +93,7 @@ export function ExclusionsModal({ open, onOpenChange }: ExclusionsModalProps) {
                       {item.source_url}
                     </a>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -107,8 +107,9 @@ export function ExclusionsModal({ open, onOpenChange }: ExclusionsModalProps) {
                       size="sm"
                       onClick={() => handleReadd(item)}
                       disabled={actionId === item.id}
+                      className="text-xs"
                     >
-                      <RotateCcw className="h-4 w-4 mr-1" />
+                      <RotateCcw className="h-3 w-3 mr-1" />
                       Re-add
                     </Button>
                   </div>
