@@ -5,11 +5,7 @@ applications:
         preBuild:
           commands:
             # Install dependencies
-            - npm install
-            # Install Puppeteer dependencies (Chromium + fonts)
-            - yum install -y wget xorg-x11-server-Xvfb chromium nss alsa-lib
-            # Export Chromium path for Puppeteer
-            - export PUPPETEER_EXECUTABLE_PATH=$(which chromium)
+              - npm install
         build:
           commands:
             # Retrieve secrets from AWS Secrets Manager and store in environment variables
