@@ -22,7 +22,7 @@ applications:
             # Build the app
             - npm run build
       artifacts:
-        baseDirectory: build
+        baseDirectory: dist
         files:
           - '**/*'
       cache:
