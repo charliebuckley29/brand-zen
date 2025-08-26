@@ -1,3 +1,13 @@
+# Hybrid Backend Structure: Supabase + AWS
+
+This project uses both Supabase and AWS (Amplify, Lambda, Cognito, etc.) for backend services.
+
+- **Supabase**: All Supabase-related code (auth, database, types) is in `src/integrations/supabase/`.
+- **AWS**: All AWS-related code (Amplify, Lambda, Cognito, S3, etc.) is in `src/integrations/aws/`.
+- **Lambda functions**: All custom Lambda code is in `aws/lambdas/`.
+- **Frontend**: Uses both integrations as needed, but keeps logic separated for maintainability.
+
+Refer to the respective `README.md` files in each integration folder for more details.
 # Brand Monitoring MVP
 
 This is a low-code MVP dashboard for real-time brand monitoring, built in Lovable.
