@@ -75,7 +75,7 @@ async function invokeModel(modelId, payload, maxAttempts = 3) {
 function normalizeOutput(raw, mention, modelId) {
   let cleaned = mention.full_text || mention.content_snippet || "";
   let summary = mention.content_snippet || "";
-  let sentiment = -1;
+  let sentiment = null;
 
   try {
     // 1) Try parsing as JSON envelope (Anthropic / Bedrock style)

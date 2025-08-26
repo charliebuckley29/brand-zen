@@ -22,7 +22,8 @@ export async function saveMention(keywordId: string, mentionData: MentionData) {
     .insert({
       keyword_id: keywordId,
       user_id: user.id,
-      ...mentionData
+      ...mentionData,
+      sentiment: mentionData.sentiment === undefined ? null : mentionData.sentiment
     })
     .select()
     .single();
