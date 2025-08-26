@@ -156,10 +156,11 @@ async function analyzeWithFallback(mention) {
   const snippet = extractSnippet(mention, brandName);
   // Pre-filter: skip model if snippet is too short (e.g., <30 chars)
   if (!snippet || snippet.trim().length < 30) {
+    // Do not update sentiment if not enough context; leave as null (pending)
     return {
       cleaned_text: snippet,
       summary: mention.content_snippet,
-      sentiment_score: -1,
+      sentiment_score: mention.sentiment ?? null,
       model_used: "skipped:low-context"
     };
   }
@@ -208,10 +209,11 @@ async function analyzeWithFallback(mention) {
     }
   }
 
+  // If all model attempts fail, do not update sentiment; leave as null (pending)
   return {
     cleaned_text: snippet,
     summary: mention.content_snippet,
-    sentiment_score: -1,
+    sentiment_score: mention.sentiment ?? null,
     model_used: "fallback:none"
   };
 }
