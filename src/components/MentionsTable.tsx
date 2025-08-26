@@ -259,13 +259,7 @@ export function MentionsTable({
               
               <div className="flex items-center justify-between mb-3">
                 <Badge variant="outline" className={`text-xs ${getSentimentColor(mention.sentiment)}`}>
-                  {getSentimentEmoji(mention.sentiment)} {
-                    mention.sentiment === 100 ? 'Positive' :
-                    mention.sentiment === 0 ? 'Negative' :
-                    mention.sentiment === -1 ? 'Unknown' :
-                    mention.sentiment === 50 ? 'Neutral' :
-                    'Unknown'
-                  }
+                  {getSentimentEmoji(mention.sentiment)} {mention.sentiment !== null && mention.sentiment !== -1 ? `${mention.sentiment}/100` : 'Unknown'}
                 </Badge>
                 
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -345,13 +339,7 @@ export function MentionsTable({
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={`text-xs ${getSentimentColor(mention.sentiment)}`}>
-                      {getSentimentEmoji(mention.sentiment)} {
-                        mention.sentiment === 100 ? 'Positive' :
-                        mention.sentiment === 0 ? 'Negative' :
-                        mention.sentiment === -1 ? 'Unknown' :
-                        mention.sentiment === 50 ? 'Neutral' :
-                        'Unknown'
-                      }
+                      {getSentimentEmoji(mention.sentiment)} {mention.sentiment !== null && mention.sentiment !== -1 ? `${mention.sentiment}/100` : 'Unknown'}
                     </Badge>
                   </TableCell>
                   <TableCell>

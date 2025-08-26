@@ -222,13 +222,7 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
             <div>
               <Label className="text-sm font-medium">Sentiment</Label>
               <Badge variant="secondary" className={getSentimentColor(mention.sentiment)}>
-                {getSentimentEmoji(mention.sentiment)} {
-                  mention.sentiment === 100 ? 'Positive' :
-                  mention.sentiment === 0 ? 'Negative' :
-                  mention.sentiment === -1 ? 'Unknown' :
-                  mention.sentiment === 50 ? 'Neutral' :
-                  'Unknown'
-                }
+                {getSentimentEmoji(mention.sentiment)} {mention.sentiment !== null && mention.sentiment !== -1 ? `${mention.sentiment}/100` : 'Unknown'}
               </Badge>
             </div>
             <div>
