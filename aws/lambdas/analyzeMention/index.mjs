@@ -115,17 +115,51 @@ function normalizeOutput(raw, mention, modelId) {
   };
 }
 
+
+// Helper to fetch brand_name from Supabase if not present
+async function getBrandName(mention) {
+  if (mention.brand_name) return mention.brand_name;
+  if (!mention.keyword_id) return null;
+  if (!SUPABASE_URL || !SUPABASE_KEY) return null;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/keywords?id=eq.${mention.keyword_id}&select=brand_name`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json"
+      }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    return data?.[0]?.brand_name || null;
+  } catch (err) {
+    console.error("Error fetching brand_name from Supabase:", err);
+    return null;
+  }
+}
+
+// Extract a snippet around the brand name for sentiment analysis
+function extractSnippet(mention, brandName) {
+  const text = mention.full_text || mention.content_snippet || "";
+  if (!brandName || !text) return text;
+  const idx = text.toLowerCase().indexOf(brandName.toLowerCase());
+  if (idx === -1) return text;
+  // Get up to 100 chars before and after the brand name
+  const start = Math.max(0, idx - 100);
+  const end = Math.min(text.length, idx + brandName.length + 100);
+  return text.slice(start, end);
+}
+
 // ---------- Main Analysis ----------
 async function analyzeWithFallback(mention) {
+  const brandName = await getBrandName(mention);
   for (const { id: modelId, retries } of MODEL_PREFERENCE) {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         console.log(JSON.stringify({ level: "info", event: "model.start", modelId, attempt, retries }));
 
-        const text = mention.full_text || mention.content_snippet || "";
-        const task = `Analyze the following text.
-Return JSON with fields: cleaned_text, summary, sentiment_score (0=negative to 100=positive, -1 if unknown).
-Text: ${text}`;
+        const snippet = extractSnippet(mention, brandName);
+        const task = `Analyze the following text.\nReturn JSON with fields: cleaned_text, summary, sentiment_score (0=negative to 100=positive, -1 if unknown).\nText: ${snippet}`;
 
         let payload;
         if (modelId.startsWith("anthropic")) {
