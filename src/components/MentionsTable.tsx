@@ -192,7 +192,8 @@ export function MentionsTable({
   };
 
   const getSentimentColor = (sentiment: number | null) => {
-    if (sentiment === -1 || sentiment === null) return 'bg-muted text-muted-foreground'; // Unknown
+    if (sentiment === null) return 'bg-blue-100 text-blue-800'; // Pending
+    if (sentiment === -1) return 'bg-muted text-muted-foreground'; // Unknown
     if (sentiment < 45) return 'bg-destructive/10 text-destructive border-destructive/20'; // Negative
     if (sentiment <= 55) return 'bg-warning/10 text-warning border-warning/20'; // Neutral
     return 'bg-success/10 text-success border-success/20'; // Positive
@@ -259,21 +260,25 @@ export function MentionsTable({
               
               <div className="flex items-center justify-between mb-3">
                 <Badge variant="outline" className={`text-xs ${getSentimentColor(mention.sentiment)}`}>
-                  {getSentimentEmoji(mention.sentiment)} {mention.sentiment === null ? (
+                  {mention.sentiment === null ? (
                     <span className="inline-flex items-center gap-1">
-                      Pending
+                      <span className="text-blue-800">Pending</span>
                       <Tooltip delayDuration={0}>
                         <TooltipTrigger asChild>
-                          <span tabIndex={0} onClick={e => e.stopPropagation()}><Info className="h-3 w-3 text-muted-foreground cursor-pointer" /></span>
+                          <span tabIndex={0} onClick={e => e.stopPropagation()}><Info className="h-3 w-3 text-blue-800 cursor-pointer" /></span>
                         </TooltipTrigger>
                         <TooltipContent>
                           Our AI agent is currently analyzing this mention to determine its sentiment. This usually takes a few seconds after the mention is first detected.
                         </TooltipContent>
                       </Tooltip>
                     </span>
-                  ) : mention.sentiment !== -1 ? `${mention.sentiment}/100` : (
+                  ) : mention.sentiment !== -1 ? (
+                    <>
+                      {getSentimentEmoji(mention.sentiment)} {`${mention.sentiment}/100`}
+                    </>
+                  ) : (
                     <span className="inline-flex items-center gap-1">
-                      Unknown
+                      <span className="text-muted-foreground">Unknown</span>
                       <Tooltip delayDuration={0}>
                         <TooltipTrigger asChild>
                           <span tabIndex={0} onClick={e => e.stopPropagation()}><Info className="h-3 w-3 text-muted-foreground cursor-pointer" /></span>
