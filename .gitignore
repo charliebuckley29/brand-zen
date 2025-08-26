@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Local development scripts and environment
+rusty-start-vite-dev.bat
+.env
+bun.lockb
+
+# OS/IDE files
+Thumbs.db
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
