@@ -169,6 +169,8 @@ export function MentionsTable({
   onPageChange,
   onPageSizeChange
 }: MentionsTableProps) {
+  // Debug: log all mention sentiments to verify their values
+  console.log('MentionsTable: sentiments', mentions.map(m => ({ id: m.id, sentiment: m.sentiment, type: typeof m.sentiment })));
   const totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
