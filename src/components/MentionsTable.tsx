@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ExternalLink, Flag, Clock, MessageCircle, UserX, ChevronLeft, ChevronRight } from "lucide-react";
+import { ExternalLink, Flag, Clock, MessageCircle, UserX, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface Mention {
@@ -259,7 +259,19 @@ export function MentionsTable({
               
               <div className="flex items-center justify-between mb-3">
                 <Badge variant="outline" className={`text-xs ${getSentimentColor(mention.sentiment)}`}>
-                  {getSentimentEmoji(mention.sentiment)} {mention.sentiment !== null && mention.sentiment !== -1 ? `${mention.sentiment}/100` : 'Unknown'}
+                  {getSentimentEmoji(mention.sentiment)} {mention.sentiment !== null && mention.sentiment !== -1 ? `${mention.sentiment}/100` : (
+                    <span className="inline-flex items-center gap-1">
+                      Unknown
+                      <Tooltip delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          <span tabIndex={0} onClick={e => e.stopPropagation()}><Info className="h-3 w-3 text-muted-foreground cursor-pointer" /></span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Sentiment is unknown because there wasn't enough context to analyze this mention.
+                        </TooltipContent>
+                      </Tooltip>
+                    </span>
+                  )}
                 </Badge>
                 
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -339,7 +351,19 @@ export function MentionsTable({
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={`text-xs ${getSentimentColor(mention.sentiment)}`}>
-                      {getSentimentEmoji(mention.sentiment)} {mention.sentiment !== null && mention.sentiment !== -1 ? `${mention.sentiment}/100` : 'Unknown'}
+                      {getSentimentEmoji(mention.sentiment)} {mention.sentiment !== null && mention.sentiment !== -1 ? `${mention.sentiment}/100` : (
+                        <span className="inline-flex items-center gap-1">
+                          Unknown
+                          <Tooltip delayDuration={0}>
+                            <TooltipTrigger asChild>
+                              <span tabIndex={0} onClick={e => e.stopPropagation()}><Info className="h-3 w-3 text-muted-foreground cursor-pointer" /></span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Sentiment is unknown because there wasn't enough context to analyze this mention.
+                            </TooltipContent>
+                          </Tooltip>
+                        </span>
+                      )}
                     </Badge>
                   </TableCell>
                   <TableCell>

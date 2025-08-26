@@ -153,12 +153,21 @@ function extractSnippet(mention, brandName) {
 // ---------- Main Analysis ----------
 async function analyzeWithFallback(mention) {
   const brandName = await getBrandName(mention);
+  const snippet = extractSnippet(mention, brandName);
+  // Pre-filter: skip model if snippet is too short (e.g., <30 chars)
+  if (!snippet || snippet.trim().length < 30) {
+    return {
+      cleaned_text: snippet,
+      summary: mention.content_snippet,
+      sentiment_score: -1,
+      model_used: "skipped:low-context"
+    };
+  }
   for (const { id: modelId, retries } of MODEL_PREFERENCE) {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         console.log(JSON.stringify({ level: "info", event: "model.start", modelId, attempt, retries }));
 
-        const snippet = extractSnippet(mention, brandName);
         const task = `Analyze the following text.\nReturn JSON with fields: cleaned_text, summary, sentiment_score (0=negative to 100=positive, -1 if unknown).\nText: ${snippet}`;
 
         let payload;
@@ -200,7 +209,7 @@ async function analyzeWithFallback(mention) {
   }
 
   return {
-    cleaned_text: mention.full_text || mention.content_snippet,
+    cleaned_text: snippet,
     summary: mention.content_snippet,
     sentiment_score: -1,
     model_used: "fallback:none"
