@@ -274,7 +274,7 @@ export function MentionsTable({
                         </TooltipContent>
                       </Tooltip>
                     </span>
-                  ) : mention.sentiment !== -1 ? (
+                  ) : (mention.sentiment !== -1 ? (
                     <>
                       {getSentimentEmoji(mention.sentiment)} {`${mention.sentiment}/100`}
                     </>
@@ -290,7 +290,7 @@ export function MentionsTable({
                         </TooltipContent>
                       </Tooltip>
                     </span>
-                  )}
+                  ))}
                 </Badge>
                 
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
