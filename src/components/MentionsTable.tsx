@@ -192,10 +192,10 @@ export function MentionsTable({
   };
 
   const getSentimentColor = (sentiment: number | null) => {
-    if (sentiment === 100) return 'bg-success/10 text-success border-success/20'; // Strongly positive
-    if (sentiment === 0) return 'bg-destructive/10 text-destructive border-destructive/20'; // Strongly negative
-    if (sentiment === -1) return 'bg-muted text-muted-foreground'; // Unknown
-    return 'bg-warning/10 text-warning border-warning/20'; // Neutral (50 or other values)
+    if (sentiment === -1 || sentiment === null) return 'bg-muted text-muted-foreground'; // Unknown
+    if (sentiment < 45) return 'bg-destructive/10 text-destructive border-destructive/20'; // Negative
+    if (sentiment <= 55) return 'bg-warning/10 text-warning border-warning/20'; // Neutral
+    return 'bg-success/10 text-success border-success/20'; // Positive
   };
 
   if (mentions.length === 0) {
@@ -259,7 +259,19 @@ export function MentionsTable({
               
               <div className="flex items-center justify-between mb-3">
                 <Badge variant="outline" className={`text-xs ${getSentimentColor(mention.sentiment)}`}>
-                  {getSentimentEmoji(mention.sentiment)} {mention.sentiment !== null && mention.sentiment !== -1 ? `${mention.sentiment}/100` : (
+                  {getSentimentEmoji(mention.sentiment)} {mention.sentiment === null ? (
+                    <span className="inline-flex items-center gap-1">
+                      Pending
+                      <Tooltip delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          <span tabIndex={0} onClick={e => e.stopPropagation()}><Info className="h-3 w-3 text-muted-foreground cursor-pointer" /></span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Our AI agent is currently analyzing this mention to determine its sentiment. This usually takes a few seconds after the mention is first detected.
+                        </TooltipContent>
+                      </Tooltip>
+                    </span>
+                  ) : mention.sentiment !== -1 ? `${mention.sentiment}/100` : (
                     <span className="inline-flex items-center gap-1">
                       Unknown
                       <Tooltip delayDuration={0}>

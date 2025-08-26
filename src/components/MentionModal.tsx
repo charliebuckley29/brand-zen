@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ExternalLink, Scale, Users, Flag } from "lucide-react";
+import { ExternalLink, Scale, Users, Flag, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -50,10 +50,10 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
   };
 
   const getSentimentColor = (sentiment: number | null) => {
-    if (sentiment === 100) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; // Strongly positive
-    if (sentiment === 0) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'; // Strongly negative
-    if (sentiment === -1) return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'; // Unknown
-    return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; // Neutral (50 or other)
+    if (sentiment === -1 || sentiment === null) return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'; // Unknown
+    if (sentiment < 45) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'; // Negative
+    if (sentiment <= 55) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; // Neutral
+    return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; // Positive
   };
 
   const handleEscalate = async (type: 'legal' | 'pr') => {
@@ -222,7 +222,27 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
             <div>
               <Label className="text-sm font-medium">Sentiment</Label>
               <Badge variant="secondary" className={getSentimentColor(mention.sentiment)}>
-                {getSentimentEmoji(mention.sentiment)} {mention.sentiment !== null && mention.sentiment !== -1 ? `${mention.sentiment}/100` : 'Unknown'}
+                {getSentimentEmoji(mention.sentiment)} {mention.sentiment === null ? (
+                  <span className="inline-flex items-center gap-1">
+                    Pending
+                    <span tabIndex={0} className="inline-block"><Info className="h-3 w-3 text-muted-foreground cursor-pointer" />
+                      <span className="sr-only">Info</span>
+                      <div className="absolute z-10 mt-2 w-64 rounded bg-background p-2 text-xs shadow-lg border border-border" style={{display:'none'}}>
+                        Our AI agent is currently analyzing this mention to determine its sentiment. This usually takes a few seconds after the mention is first detected.
+                      </div>
+                    </span>
+                  </span>
+                ) : mention.sentiment !== -1 ? `${mention.sentiment}/100` : (
+                  <span className="inline-flex items-center gap-1">
+                    Unknown
+                    <span tabIndex={0} className="inline-block"><Info className="h-3 w-3 text-muted-foreground cursor-pointer" />
+                      <span className="sr-only">Info</span>
+                      <div className="absolute z-10 mt-2 w-64 rounded bg-background p-2 text-xs shadow-lg border border-border" style={{display:'none'}}>
+                        Sentiment is unknown because there wasn't enough context to analyze this mention.
+                      </div>
+                    </span>
+                  </span>
+                )}
               </Badge>
             </div>
             <div>
