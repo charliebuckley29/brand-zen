@@ -232,6 +232,14 @@ export const handler = async (event) => {
 
   if (SUPABASE_URL && SUPABASE_KEY && mention?.id) {
     try {
+      const patchBody = {
+        cleaned_text: result.cleaned_text,
+        summary: result.summary,
+        sentiment: result.sentiment_score === undefined ? null : result.sentiment_score,
+        model_used: result.model_used,
+        updated_at: new Date().toISOString()
+      };
+      console.log('PATCHING SUPABASE', patchBody);
       const res = await fetch(`${SUPABASE_URL}/rest/v1/mentions?id=eq.${mention.id}`, {
         method: "PATCH",
         headers: {
@@ -239,13 +247,7 @@ export const handler = async (event) => {
           Authorization: `Bearer ${SUPABASE_KEY}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          cleaned_text: result.cleaned_text,
-          summary: result.summary,
-          sentiment: result.sentiment_score,
-          model_used: result.model_used,
-          updated_at: new Date().toISOString()
-        })
+        body: JSON.stringify(patchBody)
       });
       if (!res.ok) throw new Error(await res.text());
       console.log(`📤 Supabase updated for mention=${mention.id}`);
