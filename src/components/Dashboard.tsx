@@ -77,8 +77,10 @@ export function Dashboard() {
       if (mentionsResult.error) throw mentionsResult.error;
       if (statsResult.error) throw statsResult.error;
 
-      setMentions(mentionsResult.data || []);
-      setTotalMentions(mentionsResult.count || 0);
+  // Debug: log raw mentions data from Supabase before setting state
+  console.log('Dashboard: raw mentions from Supabase', (mentionsResult.data || []).map(m => ({ id: m.id, sentiment: m.sentiment, type: typeof m.sentiment })));
+  setMentions(mentionsResult.data || []);
+  setTotalMentions(mentionsResult.count || 0);
       
       // Calculate stats using the full dataset
       const total = statsResult.count || 0;
