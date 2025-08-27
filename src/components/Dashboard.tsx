@@ -49,6 +49,7 @@ export function Dashboard() {
   }, [enabledMentions, currentPage, pageSize]);
 
   const fetchMentions = async () => {
+  console.log('FETCH MENTIONS CALLED');
     try {
       const types = enabledMentions;
       
