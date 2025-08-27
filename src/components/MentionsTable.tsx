@@ -201,9 +201,9 @@ export function MentionsTable({
   const getSentimentColor = (sentiment: number | null) => {
   if (sentiment === null) return 'bg-blue-100 text-blue-800 border-blue-200'; // Pending
   if (sentiment === -1) return 'bg-muted text-muted-foreground'; // Unknown
-    if (sentiment < 45) return 'bg-destructive/10 text-destructive border-destructive/20'; // Negative
-    if (sentiment <= 55) return 'bg-warning/10 text-warning border-warning/20'; // Neutral
-    return 'bg-success/10 text-success border-success/20'; // Positive
+  if (sentiment < 45) return 'bg-destructive/10 text-destructive border-destructive/20'; // Negative
+  if (sentiment <= 55) return 'bg-warning/10 text-warning border-warning/20'; // Neutral
+  return 'bg-success/10 text-success border-success/20'; // Positive
   };
 
   if (mentions.length === 0) {
@@ -269,7 +269,7 @@ export function MentionsTable({
                 <Badge variant="outline" className={`text-xs ${getSentimentColor(mention.sentiment)}`}>
                   {mention.sentiment === null ? (
                     <span className="inline-flex items-center gap-1">
-                      <span className="text-blue-800">Pending</span>
+                      ⏳ <span className="text-blue-800">Pending</span>
                       <Tooltip delayDuration={0}>
                         <TooltipTrigger asChild>
                           <span tabIndex={0} onClick={e => e.stopPropagation()}><Info className="h-3 w-3 text-blue-800 cursor-pointer" /></span>
@@ -279,13 +279,9 @@ export function MentionsTable({
                         </TooltipContent>
                       </Tooltip>
                     </span>
-                  ) : (mention.sentiment !== -1 ? (
-                    <>
-                      {getSentimentEmoji(mention.sentiment)} {`${mention.sentiment}/100`}
-                    </>
-                  ) : (
+                  ) : mention.sentiment === -1 ? (
                     <span className="inline-flex items-center gap-1">
-                      <span className="text-muted-foreground">Unknown</span>
+                      ❓ <span className="text-muted-foreground">Unknown</span>
                       <Tooltip delayDuration={0}>
                         <TooltipTrigger asChild>
                           <span tabIndex={0} onClick={e => e.stopPropagation()}><Info className="h-3 w-3 text-muted-foreground cursor-pointer" /></span>
@@ -295,7 +291,11 @@ export function MentionsTable({
                         </TooltipContent>
                       </Tooltip>
                     </span>
-                  ))}
+                  ) : (
+                    <>
+                      {getSentimentEmoji(mention.sentiment)} {`${mention.sentiment}/100`}
+                    </>
+                  )}
                 </Badge>
                 
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">

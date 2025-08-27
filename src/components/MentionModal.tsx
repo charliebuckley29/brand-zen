@@ -225,7 +225,7 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
               <Badge variant="secondary" className={getSentimentColor(mention.sentiment)}>
                 {mention.sentiment === null ? (
                   <span className="inline-flex items-center gap-1">
-                    <span className="text-blue-800">Pending</span>
+                    ⏳ <span className="text-blue-800">Pending</span>
                     <Tooltip delayDuration={0}>
                       <TooltipTrigger asChild>
                         <span tabIndex={0}><Info className="h-3 w-3 text-blue-800 cursor-pointer" /></span>
@@ -235,13 +235,9 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
                       </TooltipContent>
                     </Tooltip>
                   </span>
-                ) : (mention.sentiment !== -1 ? (
-                  <>
-                    {getSentimentEmoji(mention.sentiment)} {`${mention.sentiment}/100`}
-                  </>
-                ) : (
+                ) : mention.sentiment === -1 ? (
                   <span className="inline-flex items-center gap-1">
-                    <span className="text-muted-foreground">Unknown</span>
+                    ❓ <span className="text-muted-foreground">Unknown</span>
                     <Tooltip delayDuration={0}>
                       <TooltipTrigger asChild>
                         <span tabIndex={0}><Info className="h-3 w-3 text-muted-foreground cursor-pointer" /></span>
@@ -251,7 +247,11 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
                       </TooltipContent>
                     </Tooltip>
                   </span>
-                ))}
+                ) : (
+                  <>
+                    {getSentimentEmoji(mention.sentiment)} {`${mention.sentiment}/100`}
+                  </>
+                )}
               </Badge>
             </div>
             <div>
