@@ -50,10 +50,11 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
   };
 
   const getSentimentColor = (sentiment: number | null) => {
-    if (sentiment === -1 || sentiment === null) return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'; // Unknown
-    if (sentiment < 45) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'; // Negative
-    if (sentiment <= 55) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; // Neutral
-    return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; // Positive
+  if (sentiment === null) return 'bg-blue-100 text-blue-800 border-blue-200'; // Pending
+  if (sentiment === -1) return 'bg-muted text-muted-foreground'; // Unknown
+  if (sentiment < 45) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'; // Negative
+  if (sentiment <= 55) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; // Neutral
+  return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; // Positive
   };
 
   const handleEscalate = async (type: 'legal' | 'pr') => {
@@ -222,27 +223,35 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
             <div>
               <Label className="text-sm font-medium">Sentiment</Label>
               <Badge variant="secondary" className={getSentimentColor(mention.sentiment)}>
-                {getSentimentEmoji(mention.sentiment)} {mention.sentiment === null ? (
+                {mention.sentiment === null ? (
                   <span className="inline-flex items-center gap-1">
-                    Pending
-                    <span tabIndex={0} className="inline-block"><Info className="h-3 w-3 text-muted-foreground cursor-pointer" />
-                      <span className="sr-only">Info</span>
-                      <div className="absolute z-10 mt-2 w-64 rounded bg-background p-2 text-xs shadow-lg border border-border" style={{display:'none'}}>
+                    <span className="text-blue-800">Pending</span>
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger asChild>
+                        <span tabIndex={0}><Info className="h-3 w-3 text-blue-800 cursor-pointer" /></span>
+                      </TooltipTrigger>
+                      <TooltipContent>
                         Our AI agent is currently analyzing this mention to determine its sentiment. This usually takes a few seconds after the mention is first detected.
-                      </div>
-                    </span>
+                      </TooltipContent>
+                    </Tooltip>
                   </span>
-                ) : mention.sentiment !== -1 ? `${mention.sentiment}/100` : (
+                ) : (mention.sentiment !== -1 ? (
+                  <>
+                    {getSentimentEmoji(mention.sentiment)} {`${mention.sentiment}/100`}
+                  </>
+                ) : (
                   <span className="inline-flex items-center gap-1">
-                    Unknown
-                    <span tabIndex={0} className="inline-block"><Info className="h-3 w-3 text-muted-foreground cursor-pointer" />
-                      <span className="sr-only">Info</span>
-                      <div className="absolute z-10 mt-2 w-64 rounded bg-background p-2 text-xs shadow-lg border border-border" style={{display:'none'}}>
+                    <span className="text-muted-foreground">Unknown</span>
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger asChild>
+                        <span tabIndex={0}><Info className="h-3 w-3 text-muted-foreground cursor-pointer" /></span>
+                      </TooltipTrigger>
+                      <TooltipContent>
                         Sentiment is unknown because there wasn't enough context to analyze this mention.
-                      </div>
-                    </span>
+                      </TooltipContent>
+                    </Tooltip>
                   </span>
-                )}
+                ))}
               </Badge>
             </div>
             <div>

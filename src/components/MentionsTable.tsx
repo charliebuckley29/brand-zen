@@ -170,7 +170,7 @@ export function MentionsTable({
   onPageSizeChange
 }: MentionsTableProps) {
   // Debug: log all mention sentiments to verify their values
-  console.log('MentionsTable: sentiments', mentions.map(m => ({ id: m.id, sentiment: m.sentiment, type: typeof m.sentiment })));
+  console.log('MentionsTable props', mentions.map(m => ({ id: m.id, sentiment: m.sentiment, type: typeof m.sentiment })));
 
   // Debug: log sentiment for each row as rendered
   mentions.forEach((mention, idx) => {
@@ -199,8 +199,8 @@ export function MentionsTable({
   };
 
   const getSentimentColor = (sentiment: number | null) => {
-    if (sentiment === null) return 'bg-blue-100 text-blue-800'; // Pending
-    if (sentiment === -1) return 'bg-muted text-muted-foreground'; // Unknown
+  if (sentiment === null) return 'bg-blue-100 text-blue-800 border-blue-200'; // Pending
+  if (sentiment === -1) return 'bg-muted text-muted-foreground'; // Unknown
     if (sentiment < 45) return 'bg-destructive/10 text-destructive border-destructive/20'; // Negative
     if (sentiment <= 55) return 'bg-warning/10 text-warning border-warning/20'; // Neutral
     return 'bg-success/10 text-success border-success/20'; // Positive
