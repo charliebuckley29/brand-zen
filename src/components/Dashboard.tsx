@@ -27,6 +27,10 @@ interface Mention {
 
 export function Dashboard() {
   const [mentions, setMentions] = useState<Mention[]>([]);
+  // ...existing code...
+  console.log('DASHBOARD RENDER', mentions);
+  const [mentions, setMentions] = useState<Mention[]>([]);
+  console.log('DASHBOARD RENDER', mentions);
   const [selectedMention, setSelectedMention] = useState<Mention | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
