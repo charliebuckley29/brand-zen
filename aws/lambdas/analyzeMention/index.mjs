@@ -230,7 +230,13 @@ export const handler = async (event) => {
   const result = await analyzeWithFallback(mention);
   console.log("✅ Final result:", JSON.stringify(result, null, 2));
 
-  if (SUPABASE_URL && SUPABASE_KEY && mention?.id) {
+  // Only update Supabase if a real model result was returned (not skipped/fallback)
+  const shouldUpdateSentiment =
+    result.model_used &&
+    !result.model_used.startsWith("skipped:") &&
+    !result.model_used.startsWith("fallback:");
+
+  if (SUPABASE_URL && SUPABASE_KEY && mention?.id && shouldUpdateSentiment) {
     try {
       const patchBody = {
         cleaned_text: result.cleaned_text,
@@ -254,6 +260,8 @@ export const handler = async (event) => {
     } catch (err) {
       console.error("💥 Error pushing to Supabase:", err);
     }
+  } else if (!shouldUpdateSentiment) {
+    console.log("⏭️ Skipping Supabase sentiment update: low-context or model unavailable, leaving as null (pending)");
   }
 
   return result;
