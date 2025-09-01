@@ -18,26 +18,62 @@ async function parseRSS(rssUrl: string): Promise<RSSItem[]> {
     const response = await fetch(rssUrl)
     const rssText = await response.text()
     
-    // Simple RSS parsing - extract items
-    const items: RSSItem[] = []
-    const itemMatches = rssText.match(/<item[^>]*>[\s\S]*?<\/item>/g) || []
+    console.log(`Fetching RSS from: ${rssUrl}`)
+    console.log(`RSS response length: ${rssText.length}`)
     
-    for (const itemXml of itemMatches) {
-      const title = itemXml.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1]?.trim() || ''
-      const link = itemXml.match(/<link[^>]*>([\s\S]*?)<\/link>/)?.[1]?.trim() || ''
-      const pubDate = itemXml.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || ''
-      const description = itemXml.match(/<description[^>]*>([\s\S]*?)<\/description>/)?.[1]?.trim() || ''
+    const items: RSSItem[] = []
+    
+    // Check if it's an Atom feed (Google Alerts format)
+    if (rssText.includes('<entry>')) {
+      console.log('Detected Atom feed format')
+      const entryMatches = rssText.match(/<entry[^>]*>[\s\S]*?<\/entry>/g) || []
+      console.log(`Found ${entryMatches.length} entries in Atom feed`)
       
-      if (title && link) {
-        items.push({
-          title: title.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1'),
-          link: link.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1'),
-          pubDate,
-          description: description.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/<[^>]*>/g, '')
-        })
+      for (const entryXml of entryMatches) {
+        const title = entryXml.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1]?.trim() || ''
+        // Atom feeds can have link as href attribute
+        let link = entryXml.match(/<link[^>]*href=["']([^"']+)["'][^>]*>/)?.[1]?.trim() || ''
+        if (!link) {
+          link = entryXml.match(/<link[^>]*>([\s\S]*?)<\/link>/)?.[1]?.trim() || ''
+        }
+        const pubDate = entryXml.match(/<published[^>]*>([\s\S]*?)<\/published>/)?.[1]?.trim() || 
+                        entryXml.match(/<updated[^>]*>([\s\S]*?)<\/updated>/)?.[1]?.trim() || ''
+        const description = entryXml.match(/<summary[^>]*>([\s\S]*?)<\/summary>/)?.[1]?.trim() || 
+                           entryXml.match(/<content[^>]*>([\s\S]*?)<\/content>/)?.[1]?.trim() || ''
+        
+        if (title && link) {
+          items.push({
+            title: title.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/<[^>]*>/g, ''),
+            link: link.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1'),
+            pubDate,
+            description: description.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/<[^>]*>/g, '')
+          })
+        }
+      }
+    } else {
+      // Standard RSS format
+      console.log('Detected RSS feed format')
+      const itemMatches = rssText.match(/<item[^>]*>[\s\S]*?<\/item>/g) || []
+      console.log(`Found ${itemMatches.length} items in RSS feed`)
+      
+      for (const itemXml of itemMatches) {
+        const title = itemXml.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1]?.trim() || ''
+        const link = itemXml.match(/<link[^>]*>([\s\S]*?)<\/link>/)?.[1]?.trim() || ''
+        const pubDate = itemXml.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || ''
+        const description = itemXml.match(/<description[^>]*>([\s\S]*?)<\/description>/)?.[1]?.trim() || ''
+        
+        if (title && link) {
+          items.push({
+            title: title.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1'),
+            link: link.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1'),
+            pubDate,
+            description: description.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/<[^>]*>/g, '')
+          })
+        }
       }
     }
     
+    console.log(`Parsed ${items.length} total items from feed`)
     return items
   } catch (error) {
     console.error('RSS parsing error:', error)
