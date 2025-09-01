@@ -1,0 +1,26 @@
+{
+  "family": "n8n-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "containerDefinitions": [
+    {
+      "name": "n8n",
+      "image": "215764924409.dkr.ecr.eu-west-2.amazonaws.com/n8n:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 5678,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "N8N_BASIC_AUTH_ACTIVE", "value": "true" },
+        { "name": "N8N_BASIC_AUTH_USER", "value": "admin" },
+        { "name": "N8N_BASIC_AUTH_PASSWORD", "value": "supersecret" }
+      ]
+    }
+  ],
+  "executionRoleArn": "arn:aws:iam::215764924409:role/ecsTaskExecutionRole"
+}
