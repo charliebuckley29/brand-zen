@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RefreshCw, Trash2, History, Rss } from "lucide-react";
+import { RefreshCw, Trash2, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ExclusionsModal } from "./ExclusionsModal";
@@ -17,15 +17,18 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
   const [isClearing, setIsClearing] = useState(false);
   const [exclusionsOpen, setExclusionsOpen] = useState(false);
   const [alsoDeleteRemovedMentions, setAlsoDeleteRemovedMentions] = useState(false);
-  const [isGoogleAlertsLoading, setIsGoogleAlertsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleRefreshMentions = async () => {
     try {
       setIsRefreshing(true);
       const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
+      const googleAlertsEnabled = (typeof window !== 'undefined') ? localStorage.getItem('google_alerts_enabled') !== 'false' : true;
+      
       const calls = [supabase.functions.invoke('aggregate-sources', { body: {} })];
       if (rssEnabled) calls.push(supabase.functions.invoke('monitor-news', { body: {} }));
+      if (googleAlertsEnabled) calls.push(supabase.functions.invoke('google-alerts', { body: {} }));
+      
       await Promise.allSettled(calls as any);
       await onMentionsUpdated();
       toast({ title: 'Mentions refreshed', description: 'Fetched latest mentions.' });
@@ -34,32 +37,6 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
       toast({ title: 'Refresh failed', description: 'Could not fetch new mentions.', variant: 'destructive' });
     } finally {
       setIsRefreshing(false);
-    }
-  };
-
-  const handleGoogleAlerts = async () => {
-    try {
-      setIsGoogleAlertsLoading(true);
-      const { data, error } = await supabase.functions.invoke('google-alerts', { body: {} });
-      if (error) throw error;
-      
-      await onMentionsUpdated();
-      const processed = data?.processed || 0;
-      const keywords = data?.keywords_checked || 0;
-      
-      toast({ 
-        title: 'Google Alerts processed', 
-        description: `Found ${processed} new mentions from ${keywords} RSS feeds.`
-      });
-    } catch (err) {
-      console.error('Error fetching Google Alerts:', err);
-      toast({ 
-        title: 'Google Alerts failed', 
-        description: 'Could not fetch mentions from Google Alerts RSS feeds.', 
-        variant: 'destructive' 
-      });
-    } finally {
-      setIsGoogleAlertsLoading(false);
     }
   };
 
@@ -128,24 +105,6 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
               <>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh mentions
-              </>
-            )}
-          </Button>
-          <Button 
-            onClick={handleGoogleAlerts}
-            disabled={isGoogleAlertsLoading}
-            variant="secondary"
-            className="w-full sm:w-auto"
-          >
-            {isGoogleAlertsLoading ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Fetching...
-              </>
-            ) : (
-              <>
-                <Rss className="w-4 h-4 mr-2" />
-                Google Alerts
               </>
             )}
           </Button>

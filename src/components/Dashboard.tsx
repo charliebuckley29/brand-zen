@@ -102,8 +102,12 @@ export function Dashboard() {
     try {
       setIsRefreshing(true);
       const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
+      const googleAlertsEnabled = (typeof window !== 'undefined') ? localStorage.getItem('google_alerts_enabled') !== 'false' : true;
+      
       const calls = [supabase.functions.invoke('aggregate-sources', { body: {} })];
       if (rssEnabled) calls.push(supabase.functions.invoke('monitor-news', { body: {} }));
+      if (googleAlertsEnabled) calls.push(supabase.functions.invoke('google-alerts', { body: {} }));
+      
       await Promise.allSettled(calls as any);
       await fetchMentions();
       toast({ title: "Mentions refreshed", description: "Fetched latest mentions." });
