@@ -1,0 +1,192 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+interface RSSItem {
+  title: string
+  link: string
+  pubDate: string
+  description: string
+}
+
+async function parseRSS(rssUrl: string): Promise<RSSItem[]> {
+  try {
+    const response = await fetch(rssUrl)
+    const rssText = await response.text()
+    
+    // Simple RSS parsing - extract items
+    const items: RSSItem[] = []
+    const itemMatches = rssText.match(/<item[^>]*>[\s\S]*?<\/item>/g) || []
+    
+    for (const itemXml of itemMatches) {
+      const title = itemXml.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1]?.trim() || ''
+      const link = itemXml.match(/<link[^>]*>([\s\S]*?)<\/link>/)?.[1]?.trim() || ''
+      const pubDate = itemXml.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || ''
+      const description = itemXml.match(/<description[^>]*>([\s\S]*?)<\/description>/)?.[1]?.trim() || ''
+      
+      if (title && link) {
+        items.push({
+          title: title.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1'),
+          link: link.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1'),
+          pubDate,
+          description: description.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/<[^>]*>/g, '')
+        })
+      }
+    }
+    
+    return items
+  } catch (error) {
+    console.error('RSS parsing error:', error)
+    return []
+  }
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
+    )
+
+    // Get user from JWT
+    const {
+      data: { user },
+    } = await supabaseClient.auth.getUser()
+
+    if (!user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        },
+      )
+    }
+
+    console.log('Fetching Google Alerts for user:', user.id)
+
+    // Get user's keywords that have Google Alert RSS URLs
+    const { data: keywords, error: keywordsError } = await supabaseClient
+      .from('keywords')
+      .select('id, brand_name, google_alert_rss_url')
+      .eq('user_id', user.id)
+      .not('google_alert_rss_url', 'is', null)
+
+    if (keywordsError) {
+      console.error('Keywords error:', keywordsError)
+      throw keywordsError
+    }
+
+    if (!keywords || keywords.length === 0) {
+      return new Response(
+        JSON.stringify({ message: 'No Google Alert RSS URLs found', processed: 0 }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      )
+    }
+
+    console.log(`Processing ${keywords.length} keywords with RSS URLs`)
+
+    let totalProcessed = 0
+    const newMentions: any[] = []
+
+    for (const keyword of keywords) {
+      console.log(`Processing RSS for keyword: ${keyword.brand_name}`)
+      
+      const rssItems = await parseRSS(keyword.google_alert_rss_url)
+      console.log(`Found ${rssItems.length} RSS items for ${keyword.brand_name}`)
+
+      for (const item of rssItems) {
+        // Check if this mention already exists
+        const { data: existing } = await supabaseClient
+          .from('mentions')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('keyword_id', keyword.id)
+          .eq('source_url', item.link)
+          .maybeSingle()
+
+        if (existing) {
+          continue // Skip if already exists
+        }
+
+        // Parse pub date
+        let publishedAt = new Date()
+        if (item.pubDate) {
+          try {
+            publishedAt = new Date(item.pubDate)
+          } catch {
+            publishedAt = new Date()
+          }
+        }
+
+        const mention = {
+          user_id: user.id,
+          keyword_id: keyword.id,
+          source_name: 'Google Alerts',
+          source_url: item.link,
+          source_type: 'google_alerts',
+          content_snippet: item.description.substring(0, 500),
+          full_text: item.description,
+          published_at: publishedAt.toISOString(),
+          sentiment: 50, // Default neutral
+        }
+
+        newMentions.push(mention)
+        totalProcessed++
+      }
+    }
+
+    // Batch insert new mentions
+    if (newMentions.length > 0) {
+      const { error: insertError } = await supabaseClient
+        .from('mentions')
+        .insert(newMentions)
+
+      if (insertError) {
+        console.error('Insert error:', insertError)
+        throw insertError
+      }
+    }
+
+    console.log(`Successfully processed ${totalProcessed} new mentions`)
+
+    return new Response(
+      JSON.stringify({
+        message: 'Google Alerts processed successfully',
+        processed: totalProcessed,
+        keywords_checked: keywords.length
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      },
+    )
+
+  } catch (error) {
+    console.error('Google Alerts error:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      },
+    )
+  }
+})

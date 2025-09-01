@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RefreshCw, Trash2, History } from "lucide-react";
+import { RefreshCw, Trash2, History, Rss } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ExclusionsModal } from "./ExclusionsModal";
@@ -17,6 +17,7 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
   const [isClearing, setIsClearing] = useState(false);
   const [exclusionsOpen, setExclusionsOpen] = useState(false);
   const [alsoDeleteRemovedMentions, setAlsoDeleteRemovedMentions] = useState(false);
+  const [isGoogleAlertsLoading, setIsGoogleAlertsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleRefreshMentions = async () => {
@@ -33,6 +34,32 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
       toast({ title: 'Refresh failed', description: 'Could not fetch new mentions.', variant: 'destructive' });
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  const handleGoogleAlerts = async () => {
+    try {
+      setIsGoogleAlertsLoading(true);
+      const { data, error } = await supabase.functions.invoke('google-alerts', { body: {} });
+      if (error) throw error;
+      
+      await onMentionsUpdated();
+      const processed = data?.processed || 0;
+      const keywords = data?.keywords_checked || 0;
+      
+      toast({ 
+        title: 'Google Alerts processed', 
+        description: `Found ${processed} new mentions from ${keywords} RSS feeds.`
+      });
+    } catch (err) {
+      console.error('Error fetching Google Alerts:', err);
+      toast({ 
+        title: 'Google Alerts failed', 
+        description: 'Could not fetch mentions from Google Alerts RSS feeds.', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsGoogleAlertsLoading(false);
     }
   };
 
@@ -101,6 +128,24 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
               <>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh mentions
+              </>
+            )}
+          </Button>
+          <Button 
+            onClick={handleGoogleAlerts}
+            disabled={isGoogleAlertsLoading}
+            variant="secondary"
+            className="w-full sm:w-auto"
+          >
+            {isGoogleAlertsLoading ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Fetching...
+              </>
+            ) : (
+              <>
+                <Rss className="w-4 h-4 mr-2" />
+                Google Alerts
               </>
             )}
           </Button>
