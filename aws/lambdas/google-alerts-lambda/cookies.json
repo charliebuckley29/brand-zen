@@ -1,0 +1,74 @@
+[
+  {
+    "name": "__Secure-1PAPISID",
+    "value": "1JPOj7s1UEmyhVwf/AybK0WUyq3irOGtIy",
+    "domain": ".google.co.uk",
+    "path": "/",
+    "httpOnly": false,
+    "secure": true
+  },
+  {
+    "name": "__Secure-1PSID",
+    "value": "g.a0000whY6Nsv3jKbDjj0dWx6mvNzPSIX8e-YH5rilBuqOhWVBpmknHoQkdA-RRuIoDENz-Yo1gACgYKAXgSARcSFQHGX2MiRGW6VTfs9lib3G7f_qRYaBoVAUF8yKr4pg3vtyZCXatNxkUhmJNJ0076",
+    "domain": ".google.co.uk",
+    "path": "/",
+    "httpOnly": true,
+    "secure": true
+  },
+  {
+    "name": "__Secure-3PAPISID",
+    "value": "1JPOj7s1UEmyhVwf/AybK0WUyq3irOGtIy",
+    "domain": ".google.co.uk",
+    "path": "/",
+    "httpOnly": false,
+    "secure": true
+  },
+  {
+    "name": "__Secure-3PSID",
+    "value": "g.a0000whY6Nsv3jKbDjj0dWx6mvNzPSIX8e-YH5rilBuqOhWVBpmkmFBCuTVIib7CLYYn86tCRwACgYKAdISARcSFQHGX2MigaY6HgRdI3RSEnxrSMnjcxoVAUF8yKqcLO8uI-sr1PAbApTeL9g_0076",
+    "domain": ".google.co.uk",
+    "path": "/",
+    "httpOnly": true,
+    "secure": true
+  },
+  {
+    "name": "APISID",
+    "value": "OOjNf-5kmZfw6aom/A50m5BfH4fjoZj9Bg",
+    "domain": ".google.co.uk",
+    "path": "/",
+    "httpOnly": false,
+    "secure": false
+  },
+  {
+    "name": "HSID",
+    "value": "ACunvJgux9lJsR4y2",
+    "domain": ".google.co.uk",
+    "path": "/",
+    "httpOnly": true,
+    "secure": false
+  },
+  {
+    "name": "SAPISID",
+    "value": "1JPOj7s1UEmyhVwf/AybK0WUyq3irOGtIy",
+    "domain": ".google.co.uk",
+    "path": "/",
+    "httpOnly": false,
+    "secure": true
+  },
+  {
+    "name": "SID",
+    "value": "g.a0000whY6Nsv3jKbDjj0dWx6mvNzPSIX8e-YH5rilBuqOhWVBpmkOrhFyb1_SFvPi_vRAf2XMQACgYKAUsSARcSFQHGX2MilccrYj9cNr8ZpE-KgdnXGxoVAUF8yKpdEeLO42iOgFdXqCA8HcL70076",
+    "domain": ".google.co.uk",
+    "path": "/",
+    "httpOnly": false,
+    "secure": false
+  },
+  {
+    "name": "SSID",
+    "value": "AtY5nr-vNGaCl0YW5",
+    "domain": ".google.co.uk",
+    "path": "/",
+    "httpOnly": true,
+    "secure": true
+  }
+]
