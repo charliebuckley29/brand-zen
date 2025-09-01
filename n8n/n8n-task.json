@@ -4,10 +4,11 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
   "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::215764924409:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
       "name": "n8n",
-      "image": "215764924409.dkr.ecr.eu-west-2.amazonaws.com/n8n:latest",
+      "image": "n8nio/n8n:latest",
       "essential": true,
       "portMappings": [
         {
@@ -18,9 +19,20 @@
       "environment": [
         { "name": "N8N_BASIC_AUTH_ACTIVE", "value": "true" },
         { "name": "N8N_BASIC_AUTH_USER", "value": "admin" },
-        { "name": "N8N_BASIC_AUTH_PASSWORD", "value": "supersecret" }
-      ]
+        { "name": "N8N_BASIC_AUTH_PASSWORD", "value": "supersecret" },
+        { "name": "N8N_HOST", "value": "0.0.0.0" },
+        { "name": "N8N_PORT", "value": "5678" },
+        { "name": "N8N_EDITOR_BASE_URL", "value": "http://localhost:5678" },
+        { "name": "N8N_SECURE_COOKIE", "value": "false" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/n8n",
+          "awslogs-region": "eu-west-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
     }
-  ],
-  "executionRoleArn": "arn:aws:iam::215764924409:role/ecsTaskExecutionRole"
+  ]
 }
