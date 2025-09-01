@@ -15,42 +15,69 @@ interface RSSItem {
 
 async function parseRSS(rssUrl: string): Promise<RSSItem[]> {
   try {
-    const response = await fetch(rssUrl)
-    const rssText = await response.text()
-    
     console.log(`Fetching RSS from: ${rssUrl}`)
+    const response = await fetch(rssUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; RSS Reader)'
+      }
+    })
+    
+    if (!response.ok) {
+      console.error(`HTTP error! status: ${response.status}`)
+      return []
+    }
+    
+    const rssText = await response.text()
     console.log(`RSS response length: ${rssText.length}`)
+    console.log(`First 500 chars: ${rssText.substring(0, 500)}`)
     
     const items: RSSItem[] = []
     
     // Check if it's an Atom feed (Google Alerts format)
-    if (rssText.includes('<entry>')) {
+    if (rssText.includes('<entry>') || rssText.includes('<entry ')) {
       console.log('Detected Atom feed format')
       const entryMatches = rssText.match(/<entry[^>]*>[\s\S]*?<\/entry>/g) || []
       console.log(`Found ${entryMatches.length} entries in Atom feed`)
       
       for (const entryXml of entryMatches) {
-        const title = entryXml.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1]?.trim() || ''
-        // Atom feeds can have link as href attribute
-        let link = entryXml.match(/<link[^>]*href=["']([^"']+)["'][^>]*>/)?.[1]?.trim() || ''
-        if (!link) {
-          link = entryXml.match(/<link[^>]*>([\s\S]*?)<\/link>/)?.[1]?.trim() || ''
+        console.log(`Processing entry: ${entryXml.substring(0, 200)}...`)
+        
+        let title = entryXml.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1]?.trim() || ''
+        title = title.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/<[^>]*>/g, '').trim()
+        
+        // Multiple ways to extract link from Atom feeds
+        let link = ''
+        // Try href attribute first
+        const hrefMatch = entryXml.match(/<link[^>]*href=["']([^"']+)["'][^>]*\/?>/)
+        if (hrefMatch) {
+          link = hrefMatch[1]
+        } else {
+          // Try link content
+          const linkMatch = entryXml.match(/<link[^>]*>([\s\S]*?)<\/link>/)
+          if (linkMatch) {
+            link = linkMatch[1].trim()
+          }
         }
-        const pubDate = entryXml.match(/<published[^>]*>([\s\S]*?)<\/published>/)?.[1]?.trim() || 
-                        entryXml.match(/<updated[^>]*>([\s\S]*?)<\/updated>/)?.[1]?.trim() || ''
-        const description = entryXml.match(/<summary[^>]*>([\s\S]*?)<\/summary>/)?.[1]?.trim() || 
-                           entryXml.match(/<content[^>]*>([\s\S]*?)<\/content>/)?.[1]?.trim() || ''
+        
+        let pubDate = entryXml.match(/<published[^>]*>([\s\S]*?)<\/published>/)?.[1]?.trim() || 
+                      entryXml.match(/<updated[^>]*>([\s\S]*?)<\/updated>/)?.[1]?.trim() || ''
+        
+        let description = entryXml.match(/<summary[^>]*>([\s\S]*?)<\/summary>/)?.[1]?.trim() || 
+                         entryXml.match(/<content[^>]*>([\s\S]*?)<\/content>/)?.[1]?.trim() || ''
+        description = description.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/<[^>]*>/g, '').trim()
+        
+        console.log(`Extracted - Title: "${title}", Link: "${link}"`)
         
         if (title && link) {
           items.push({
-            title: title.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/<[^>]*>/g, ''),
+            title,
             link: link.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1'),
             pubDate,
-            description: description.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/<[^>]*>/g, '')
+            description
           })
         }
       }
-    } else {
+    } else if (rssText.includes('<item>') || rssText.includes('<item ')) {
       // Standard RSS format
       console.log('Detected RSS feed format')
       const itemMatches = rssText.match(/<item[^>]*>[\s\S]*?<\/item>/g) || []
@@ -71,6 +98,8 @@ async function parseRSS(rssUrl: string): Promise<RSSItem[]> {
           })
         }
       }
+    } else {
+      console.log('No recognized feed format found (no <entry> or <item> tags)')
     }
     
     console.log(`Parsed ${items.length} total items from feed`)
@@ -177,7 +206,7 @@ serve(async (req) => {
           keyword_id: keyword.id,
           source_name: 'Google Alerts',
           source_url: item.link,
-          source_type: 'google_alerts',
+          source_type: 'google_alert',
           content_snippet: item.description.substring(0, 500),
           full_text: item.description,
           published_at: publishedAt.toISOString(),
