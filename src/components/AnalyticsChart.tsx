@@ -106,9 +106,11 @@ export function AnalyticsChart() {
         const dayData = dailyData.get(date)!;
         dayData.total++;
         
-        if (mention.sentiment === "positive") dayData.positive++;
-        else if (mention.sentiment === "negative") dayData.negative++;
-        else dayData.neutral++;
+        if (mention.sentiment !== null && mention.sentiment !== -1) {
+          if (mention.sentiment >= 51) dayData.positive++;
+          else if (mention.sentiment === 50) dayData.neutral++;
+          else if (mention.sentiment <= 49) dayData.negative++;
+        }
 
         // Aggregate sources
         if (mention.source_name) {
@@ -170,9 +172,11 @@ export function AnalyticsChart() {
       let total = 0, pos = 0, neg = 0, neu = 0;
       (mentions || []).forEach((m) => {
         total += 1;
-        if (m.sentiment === 100) pos += 1;
-        else if (m.sentiment === 0) neg += 1;
-        else neu += 1;
+        if (m.sentiment !== null && m.sentiment !== -1) {
+          if (m.sentiment >= 51) pos += 1;
+          else if (m.sentiment === 50) neu += 1;
+          else if (m.sentiment <= 49) neg += 1;
+        }
         if (m.source_name) sourceCounts.set(m.source_name, (sourceCounts.get(m.source_name) || 0) + 1);
       });
       const topSources = Array.from(sourceCounts.entries())

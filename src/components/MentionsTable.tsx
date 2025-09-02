@@ -199,11 +199,21 @@ export function MentionsTable({
   };
 
   const getSentimentColor = (sentiment: number | null) => {
-  if (sentiment === null) return 'bg-blue-100 text-blue-800 border-blue-200'; // Pending
-  if (sentiment === -1) return 'bg-muted text-muted-foreground'; // Unknown
-  if (sentiment < 45) return 'bg-destructive/10 text-destructive border-destructive/20'; // Negative
-  if (sentiment <= 55) return 'bg-warning/10 text-warning border-warning/20'; // Neutral
-  return 'bg-success/10 text-success border-success/20'; // Positive
+    if (sentiment === null) return 'bg-blue-100 text-blue-800 border-blue-200'; // Pending
+    if (sentiment === -1) return 'bg-muted text-muted-foreground'; // Unknown
+    if (sentiment === 50) return 'bg-warning/10 text-warning border-warning/20'; // Neutral (yellow)
+    if (sentiment <= 49) return 'bg-destructive/10 text-destructive border-destructive/20'; // Negative (red)
+    if (sentiment >= 51) return 'bg-success/10 text-success border-success/20'; // Positive (green)
+    return 'bg-warning/10 text-warning border-warning/20'; // Default to neutral
+  };
+
+  const getSentimentLabel = (sentiment: number | null) => {
+    if (sentiment === null) return 'Pending';
+    if (sentiment === -1) return 'Unknown';
+    if (sentiment === 50) return 'Neutral';
+    if (sentiment <= 49) return 'Negative';
+    if (sentiment >= 51) return 'Positive';
+    return 'Neutral';
   };
 
   if (mentions.length === 0) {
@@ -293,7 +303,7 @@ export function MentionsTable({
                     </span>
                   ) : (
                     <>
-                      {getSentimentEmoji(mention.sentiment)} {`${mention.sentiment}/100`}
+                      {getSentimentEmoji(mention.sentiment)} {getSentimentLabel(mention.sentiment)}
                     </>
                   )}
                 </Badge>
@@ -375,9 +385,21 @@ export function MentionsTable({
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={`text-xs ${getSentimentColor(mention.sentiment)}`}>
-                      {getSentimentEmoji(mention.sentiment)} {mention.sentiment !== null && mention.sentiment !== -1 ? `${mention.sentiment}/100` : (
+                      {mention.sentiment === null ? (
                         <span className="inline-flex items-center gap-1">
-                          Unknown
+                          ⏳ <span className="text-blue-800">Pending</span>
+                          <Tooltip delayDuration={0}>
+                            <TooltipTrigger asChild>
+                              <span tabIndex={0} onClick={e => e.stopPropagation()}><Info className="h-3 w-3 text-blue-800 cursor-pointer" /></span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Our AI agent is currently analyzing this mention to determine its sentiment. This usually takes a few seconds after the mention is first detected.
+                            </TooltipContent>
+                          </Tooltip>
+                        </span>
+                      ) : mention.sentiment === -1 ? (
+                        <span className="inline-flex items-center gap-1">
+                          ❓ <span className="text-muted-foreground">Unknown</span>
                           <Tooltip delayDuration={0}>
                             <TooltipTrigger asChild>
                               <span tabIndex={0} onClick={e => e.stopPropagation()}><Info className="h-3 w-3 text-muted-foreground cursor-pointer" /></span>
@@ -387,6 +409,10 @@ export function MentionsTable({
                             </TooltipContent>
                           </Tooltip>
                         </span>
+                      ) : (
+                        <>
+                          {getSentimentEmoji(mention.sentiment)} {getSentimentLabel(mention.sentiment)}
+                        </>
                       )}
                     </Badge>
                   </TableCell>

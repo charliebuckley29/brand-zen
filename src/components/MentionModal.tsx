@@ -51,14 +51,22 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
   };
 
   const getSentimentColor = (sentiment: number | null) => {
-  if (sentiment === null) return 'bg-blue-100 text-blue-800 border-blue-200'; // Pending
-  if (sentiment === -1) return 'bg-muted text-muted-foreground'; // Unknown
-  if (sentiment < 45) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'; // Negative
-  if (sentiment <= 55) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; // Neutral
-  return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; // Positive
+    if (sentiment === null) return 'bg-blue-100 text-blue-800 border-blue-200'; // Pending
+    if (sentiment === -1) return 'bg-muted text-muted-foreground'; // Unknown
+    if (sentiment === 50) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; // Neutral
+    if (sentiment <= 49) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'; // Negative
+    if (sentiment >= 51) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; // Positive
+    return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; // Default to neutral
   };
 
-  const handleEscalate = async (type: 'legal' | 'pr') => {
+  const getSentimentLabel = (sentiment: number | null) => {
+    if (sentiment === null) return 'Pending';
+    if (sentiment === -1) return 'Unknown';
+    if (sentiment === 50) return 'Neutral';
+    if (sentiment <= 49) return 'Negative';
+    if (sentiment >= 51) return 'Positive';
+    return 'Neutral';
+  };
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -250,7 +258,7 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
                   </span>
                 ) : (
                   <>
-                    {getSentimentEmoji(mention.sentiment)} {`${mention.sentiment}/100`}
+                    {getSentimentEmoji(mention.sentiment)} {getSentimentLabel(mention.sentiment)} ({mention.sentiment}/100)
                   </>
                 )}
               </Badge>

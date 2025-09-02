@@ -84,11 +84,11 @@ export function Dashboard() {
   setMentions(mentionsResult.data || []);
   setTotalMentions(mentionsResult.count || 0);
       
-      // Calculate stats using the full dataset
+      // Calculate stats using the new sentiment categorization
       const total = statsResult.count || 0;
-      const positive = statsResult.data?.filter(m => m.sentiment === 100).length || 0;
-      const neutral = statsResult.data?.filter(m => m.sentiment === 50 || (m.sentiment !== 0 && m.sentiment !== 100)).length || 0;
-      const negative = statsResult.data?.filter(m => m.sentiment === 0).length || 0;
+      const positive = statsResult.data?.filter(m => m.sentiment !== null && m.sentiment !== -1 && m.sentiment >= 51).length || 0;
+      const neutral = statsResult.data?.filter(m => m.sentiment === 50).length || 0;
+      const negative = statsResult.data?.filter(m => m.sentiment !== null && m.sentiment !== -1 && m.sentiment <= 49).length || 0;
       const flagged = statsResult.data?.filter(m => m.flagged).length || 0;
 
       setStats({ total, positive, neutral, negative, flagged });
@@ -143,10 +143,12 @@ export function Dashboard() {
   };
 
   const getSentimentEmoji = (sentiment: number | null) => {
-    if (sentiment === 100) return '✅'; // Strongly positive
-    if (sentiment === 0) return '❌';   // Strongly negative  
-    if (sentiment === -1) return '❓';  // Unknown
-    return '⚠️'; // Neutral (anything else like 50)
+    if (sentiment === null) return '⏳'; // Pending
+    if (sentiment === -1) return '❓'; // Unknown
+    if (sentiment === 50) return '🟡'; // Neutral
+    if (sentiment <= 49) return '🔴'; // Negative
+    if (sentiment >= 51) return '🟢'; // Positive
+    return '🟡'; // Default to neutral for any edge cases
   };
 
   const handleNotMe = async (mentionId: string) => {
