@@ -1,0 +1,129 @@
+{
+  "name": "Enrich Mentions using Parser + OpenAI + Fallback",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "enrich-mention",
+        "responseMode": "onReceived",
+        "responseData": {
+          "responseCode": 200,
+          "responseBody": "={ success: true }"
+        }
+      },
+      "name": "Trigger - Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "mention_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "source_url",
+              "value": "={{ $json.source_url }}"
+            }
+          ]
+        }
+      },
+      "name": "Set - Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/parser?url={{ $json.source_url }}",
+        "method": "GET",
+        "responseFormat": "json",
+        "jsonParameters": true
+      },
+      "name": "HTTP - Parse Article",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        600,
+        300
+      ],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "model": "gpt-4",
+        "messages": {
+          "message": [
+            {
+              "role": "system",
+              "content": "You are a brand monitoring assistant. Respond only in JSON inside a code block. Fields: cleaned_text, summary, sentiment_score, model_used."
+            },
+            {
+              "role": "user",
+              "content": "{{ $json.content }}"
+            }
+          ]
+        },
+        "simplifyOutput": false
+      },
+      "name": "OpenAI - Analyze Mention",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        800,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-credentials-id"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Trigger - Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set - Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Payload": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Parse Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Parse Article": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Analyze Mention",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
