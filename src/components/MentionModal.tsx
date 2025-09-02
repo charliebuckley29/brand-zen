@@ -67,6 +67,8 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
     if (sentiment >= 51) return 'Positive';
     return 'Neutral';
   };
+
+  const handleEscalate = async (type: 'legal' | 'pr') => {
     setIsLoading(true);
     try {
       const { error } = await supabase
