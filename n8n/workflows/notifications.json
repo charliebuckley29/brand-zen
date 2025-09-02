@@ -1,0 +1,214 @@
+{
+  "name": "Notify on Mention Update (Workflow 3)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "notify-mention-update",
+        "responseMode": "onReceived",
+        "responseData": {
+          "responseCode": 200,
+          "responseBody": "={ success: true }"
+        }
+      },
+      "name": "Trigger - Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "mention_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "user_id",
+              "value": "={{ $json.user_id }}"
+            },
+            {
+              "name": "sentiment_score",
+              "value": "={{ $json.sentiment_score }}"
+            },
+            {
+              "name": "summary",
+              "value": "={{ $json.summary }}"
+            },
+            {
+              "name": "source_url",
+              "value": "={{ $json.source_url }}"
+            }
+          ]
+        }
+      },
+      "name": "Set - Mention Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "url": "={{ 'https://your-project.supabase.co/rest/v1/notification_preferences?user_id=eq.' + $json.user_id }}",
+        "responseFormat": "json",
+        "headerParametersJson": "={\n  \"apikey\": \"your-supabase-api-key\",\n  \"Authorization\": \"Bearer your-supabase-api-key\",\n  \"Prefer\": \"return=representation\"\n}"
+      },
+      "name": "Get Notification Preferences",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [600, 300],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "supabase-credentials-id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $node['Set - Mention Fields'].json.sentiment_score }}",
+              "operation": "smaller",
+              "value2": 50
+            }
+          ]
+        },
+        "combineOperation": "AND"
+      },
+      "name": "IF - Sentiment < 50",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node['Get Notification Preferences'].json[0].slack_webhook }}",
+        "method": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  \"text\": \"🔥 Brand Alert: Negative mention detected!\\nSummary: {{ $node['Set - Mention Fields'].json.summary }}\\nLink: {{ $node['Set - Mention Fields'].json.source_url }}\"\n}"
+      },
+      "name": "Send Slack Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [1000, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@yourdomain.com",
+        "toEmail": "={{ $node['Get Notification Preferences'].json[0].email }}",
+        "subject": "Brand Alert: Negative Mention",
+        "text": "Hello, a new negative brand mention was detected.\\n\\nSummary: {{ $node['Set - Mention Fields'].json.summary }}\\nLink: {{ $node['Set - Mention Fields'].json.source_url }}"
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [1000, 300],
+      "credentials": {
+        "smtp": {
+          "id": "smtp-credentials-id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "+1234567890",
+        "to": "={{ $node['Get Notification Preferences'].json[0].phone }}",
+        "message": "Negative brand mention detected. Check your dashboard."
+      },
+      "name": "Send SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1000, 400],
+      "credentials": {
+        "twilioApi": {
+          "id": "twilio-credentials-id"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "url": "https://your-project.supabase.co/rest/v1/notifications",
+        "method": "POST",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "headerParametersJson": "={\n  \"apikey\": \"your-supabase-api-key\",\n  \"Authorization\": \"Bearer your-supabase-api-key\",\n  \"Prefer\": \"return=representation\"\n}",
+        "bodyParametersJson": "={\n  \"mention_id\": \"{{ $node['Set - Mention Fields'].json.mention_id }}\",\n  \"user_id\": \"{{ $node['Set - Mention Fields'].json.user_id }}\",\n  \"channel\": \"multi\",\n  \"status\": \"sent\"\n}"
+      },
+      "name": "Log Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [1200, 300],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "supabase-credentials-id"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Trigger - Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set - Mention Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Mention Fields": {
+      "main": [
+        [
+          {
+            "node": "Get Notification Preferences",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Notification Preferences": {
+      "main": [
+        [
+          {
+            "node": "IF - Sentiment < 50",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Sentiment < 50": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send SMS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  }
+}
