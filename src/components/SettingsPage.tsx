@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X, Globe, Newspaper, Youtube, MessageSquare } from "lucide-react";
+import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X, Globe, Newspaper, Youtube, MessageSquare, Rss } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -46,6 +46,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
 
   const { loading: prefsLoading, prefs, setPref, setAllForSource } = useSourcePreferences();
   const [rssEnabled, setRssEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('rss_news_ingestion') !== 'false' : true));
+  const [googleAlertsEnabled, setGoogleAlertsEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('google_alerts_enabled') !== 'false' : true));
 
   useEffect(() => {
     fetchBrandData();
@@ -680,6 +681,30 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                     try {
                       localStorage.setItem('rss_news_ingestion', v ? 'true' : 'false');
                       toast({ title: v ? 'RSS ingestion enabled' : 'RSS ingestion disabled' });
+                    } catch {}
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Google Alerts */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Rss className="h-4 w-4" />
+                <div>
+                  <h4 className="text-sm font-medium">Google Alerts RSS</h4>
+                  <p className="text-xs text-muted-foreground">Fetch mentions from Google Alerts RSS feeds</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{googleAlertsEnabled ? 'On' : 'Off'}</span>
+                <Switch
+                  checked={googleAlertsEnabled}
+                  onCheckedChange={(v) => {
+                    setGoogleAlertsEnabled(v);
+                    try {
+                      localStorage.setItem('google_alerts_enabled', v ? 'true' : 'false');
+                      toast({ title: v ? 'Google Alerts enabled' : 'Google Alerts disabled' });
                     } catch {}
                   }}
                 />
