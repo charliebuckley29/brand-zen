@@ -260,7 +260,7 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
                   </span>
                 ) : (
                   <>
-                    {getSentimentEmoji(mention.sentiment)} {getSentimentLabel(mention.sentiment)} ({mention.sentiment}/100)
+                    {getSentimentEmoji(mention.sentiment)} {getSentimentLabel(mention.sentiment)} {(mention.sentiment !== 50) ? `(${mention.sentiment}%)` : ''}
                   </>
                 )}
               </Badge>
