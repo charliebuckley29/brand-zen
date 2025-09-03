@@ -210,7 +210,14 @@ serve(async (req) => {
           content_snippet: item.description.substring(0, 500),
           full_text: item.description,
           published_at: publishedAt.toISOString(),
-          sentiment: 50, // Default neutral
+          sentiment: null,
+          escalation_type: null,
+          flagged: false,
+          cleaned_text: null,
+          model_used: null,
+          summary: null,
+          internal_notes: null,
+          topics: null,
         }
 
         newMentions.push(mention)
