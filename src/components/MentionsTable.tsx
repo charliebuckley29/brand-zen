@@ -17,7 +17,7 @@ interface Mention {
   sentiment: number | null; // -1 = unknown, 0 = strongly negative, 100 = strongly positive
   topics: string[] | null;
   flagged: boolean;
-  escalation_type: string;
+  escalation_type: string | null;
   internal_notes: string | null;
 }
 
@@ -326,7 +326,7 @@ export function MentionsTable({
                       +{mention.topics.length - 3}
                     </Badge>
                   )}
-                  {mention.escalation_type !== 'none' && (
+                  {mention.escalation_type && mention.escalation_type !== 'none' && (
                     <Badge variant="destructive" className="text-xs">
                       {mention.escalation_type.toUpperCase()}
                     </Badge>
@@ -431,7 +431,7 @@ export function MentionsTable({
                     </div>
                   </TableCell>
                   <TableCell>
-                    {mention.escalation_type !== 'none' && (
+                    {mention.escalation_type && mention.escalation_type !== 'none' && (
                       <Badge variant="destructive" className="text-xs">
                         {mention.escalation_type.toUpperCase()}
                       </Badge>
