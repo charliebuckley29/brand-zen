@@ -18,7 +18,7 @@ interface Mention {
   content_snippet: string;
   full_text: string | null;
   sentiment: number | null; // -1 = unknown, 0 = strongly negative, 100 = strongly positive
-  topics: string[];
+  topics: string[] | null;
   flagged: boolean;
   escalation_type: string;
   internal_notes: string | null;
@@ -268,7 +268,7 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
             <div>
               <Label className="text-sm font-medium">Topics</Label>
               <div className="flex flex-wrap gap-2 mt-1">
-                {mention.topics.map((topic, index) => (
+                {mention.topics && mention.topics.map((topic, index) => (
                   <Badge key={index} variant="outline">
                     {topic}
                   </Badge>
