@@ -219,6 +219,14 @@ Deno.serve(async (req) => {
                 content_snippet,
                 full_text,
                 source_type: 'news',
+                sentiment: null,
+                escalation_type: null,
+                flagged: false,
+                cleaned_text: null,
+                model_used: null,
+                summary: null,
+                internal_notes: null,
+                topics: null,
               });
             } catch (innerErr) {
               console.log('Article parse failed', { url: it.link, error: String(innerErr) });

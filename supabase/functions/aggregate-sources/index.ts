@@ -259,7 +259,14 @@ Deno.serve(async (req) => {
               content_snippet: w.snippet || term,
               source_type: "web",
               flagged: false,
-              escalation_type: "none",
+              escalation_type: null,
+              sentiment: null,
+              cleaned_text: null,
+              model_used: null,
+              summary: null,
+              internal_notes: null,
+              topics: null,
+              full_text: w.snippet || term,
             });
             perSourceCounts.web++;
           }
@@ -282,7 +289,14 @@ Deno.serve(async (req) => {
               content_snippet: n.description || n.title || term,
               source_type: "news",
               flagged: false,
-              escalation_type: "none",
+              escalation_type: null,
+              sentiment: null,
+              cleaned_text: null,
+              model_used: null,
+              summary: null,
+              internal_notes: null,
+              topics: null,
+              full_text: n.description || n.title || term,
             });
             perSourceCounts.news++;
           }
@@ -305,7 +319,14 @@ Deno.serve(async (req) => {
               content_snippet: r.selftext || r.title || term,
               source_type: "reddit",
               flagged: false,
-              escalation_type: "none",
+              escalation_type: null,
+              sentiment: null,
+              cleaned_text: null,
+              model_used: null,
+              summary: null,
+              internal_notes: null,
+              topics: null,
+              full_text: r.selftext || r.title || term,
             });
             perSourceCounts.reddit++;
           }
@@ -328,7 +349,14 @@ Deno.serve(async (req) => {
               content_snippet: v.description || v.title || term,
               source_type: "youtube",
               flagged: false,
-              escalation_type: "none",
+              escalation_type: null,
+              sentiment: null,
+              cleaned_text: null,
+              model_used: null,
+              summary: null,
+              internal_notes: null,
+              topics: null,
+              full_text: v.description || v.title || term,
             });
             perSourceCounts.youtube++;
           }
