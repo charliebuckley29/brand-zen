@@ -15,7 +15,7 @@ interface Mention {
   content_snippet: string;
   full_text: string | null;
   sentiment: number | null; // -1 = unknown, 0 = strongly negative, 100 = strongly positive
-  topics: string[];
+  topics: string[] | null;
   flagged: boolean;
   escalation_type: string;
   internal_notes: string | null;
@@ -314,14 +314,14 @@ export function MentionsTable({
                 </div>
               </div>
               
-              {(mention.topics.length > 0 || mention.escalation_type !== 'none') && (
+              {((mention.topics && mention.topics.length > 0) || mention.escalation_type !== 'none') && (
                 <div className="flex flex-wrap gap-1">
-                  {mention.topics.slice(0, 3).map((topic, index) => (
+                  {mention.topics && mention.topics.slice(0, 3).map((topic, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
                       {topic}
                     </Badge>
                   ))}
-                  {mention.topics.length > 3 && (
+                  {mention.topics && mention.topics.length > 3 && (
                     <Badge variant="secondary" className="text-xs">
                       +{mention.topics.length - 3}
                     </Badge>
@@ -340,7 +340,7 @@ export function MentionsTable({
           currentPage={currentPage}
           totalPages={totalPages}
           pageSize={pageSize}
-          totalItems={mentions.length}
+          totalItems={totalItems}
           startIndex={startIndex}
           endIndex={endIndex}
           onPageChange={handlePageChange}
@@ -418,12 +418,12 @@ export function MentionsTable({
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {mention.topics.slice(0, 2).map((topic, index) => (
+                      {mention.topics && mention.topics.slice(0, 2).map((topic, index) => (
                         <Badge key={index} variant="secondary" className="text-xs">
                           {topic}
                         </Badge>
                       ))}
-                      {mention.topics.length > 2 && (
+                      {mention.topics && mention.topics.length > 2 && (
                         <Badge variant="secondary" className="text-xs">
                           +{mention.topics.length - 2}
                         </Badge>
@@ -484,7 +484,7 @@ export function MentionsTable({
             currentPage={currentPage}
             totalPages={totalPages}
             pageSize={pageSize}
-            totalItems={mentions.length}
+            totalItems={totalItems}
             startIndex={startIndex}
             endIndex={endIndex}
             onPageChange={handlePageChange}
