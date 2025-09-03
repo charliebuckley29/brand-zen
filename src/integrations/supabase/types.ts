@@ -79,6 +79,7 @@ export type Database = {
       }
       mentions: {
         Row: {
+          cleaned_text: string | null
           content_snippet: string
           created_at: string
           escalation_type: string | null
@@ -87,16 +88,19 @@ export type Database = {
           id: string
           internal_notes: string | null
           keyword_id: string
+          model_used: string | null
           published_at: string
           sentiment: number | null
           source_name: string
           source_type: string | null
           source_url: string
+          summary: string | null
           topics: string[] | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          cleaned_text?: string | null
           content_snippet: string
           created_at?: string
           escalation_type?: string | null
@@ -105,16 +109,19 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           keyword_id: string
+          model_used?: string | null
           published_at: string
           sentiment?: number | null
           source_name: string
           source_type?: string | null
           source_url: string
+          summary?: string | null
           topics?: string[] | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          cleaned_text?: string | null
           content_snippet?: string
           created_at?: string
           escalation_type?: string | null
@@ -123,11 +130,13 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           keyword_id?: string
+          model_used?: string | null
           published_at?: string
           sentiment?: number | null
           source_name?: string
           source_type?: string | null
           source_url?: string
+          summary?: string | null
           topics?: string[] | null
           updated_at?: string
           user_id?: string
