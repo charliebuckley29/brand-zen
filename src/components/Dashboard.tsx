@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MentionsTable } from "./MentionsTable";
 import { MonitoringControls } from "./MonitoringControls";
 import { MentionModal } from "./MentionModal";
+import { DebugMentions } from "./DebugMentions";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -283,6 +284,9 @@ export function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Debug Component - Remove this after testing */}
+        <DebugMentions />
 
         {/* Monitoring Controls */}
         <MonitoringControls onMentionsUpdated={fetchMentions} />
