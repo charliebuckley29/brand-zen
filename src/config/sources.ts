@@ -1,4 +1,4 @@
-import { SourceType } from "@/hooks/useSourcePreferences";
+export type SourceType = "web" | "news" | "reddit" | "youtube" | "x";
 
 export type SourceCategory = "news" | "social" | "web" | "video";
 
