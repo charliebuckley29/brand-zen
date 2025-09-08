@@ -229,17 +229,28 @@ export function ModeratorPanel() {
 
       if (profileError) throw profileError;
 
+      // Update email if it has changed
+      if (profileData.email !== selectedUser?.email && profileData.email.trim()) {
+        const { error: emailError } = await supabase
+          .rpc('update_user_email_by_moderator', {
+            target_user_id: userId,
+            new_email: profileData.email.trim()
+          });
+
+        if (emailError) throw emailError;
+      }
+
       // Update or create keywords if brand information is provided
-      if (profileData.brand_name) {
+      if (profileData.brand_name.trim()) {
         const variantsArray = profileData.variants.split(',').map(v => v.trim()).filter(v => v);
         
         const { error: keywordError } = await supabase
           .from("keywords")
           .upsert({
             user_id: userId,
-            brand_name: profileData.brand_name,
+            brand_name: profileData.brand_name.trim(),
             variants: variantsArray,
-            google_alert_rss_url: profileData.google_alert_rss_url || null
+            google_alert_rss_url: profileData.google_alert_rss_url.trim() || null
           }, {
             onConflict: 'user_id'
           });
@@ -247,20 +258,10 @@ export function ModeratorPanel() {
         if (keywordError) throw keywordError;
       }
 
-      // Update email if it has changed
-      if (profileData.email !== selectedUser?.email) {
-        // Note: This would require admin privileges or a custom function
-        // For now, we'll skip email updates and inform the user
-        toast({
-          title: "Profile Updated",
-          description: "Profile updated successfully. Email changes require direct admin access.",
-        });
-      } else {
-        toast({
-          title: "Profile Updated",
-          description: "User profile updated successfully"
-        });
-      }
+      toast({
+        title: "Profile Updated",
+        description: "User profile updated successfully"
+      });
 
       setEditMode(false);
       fetchData(); // Refresh data
@@ -555,10 +556,7 @@ export function ModeratorPanel() {
                         type="email"
                         value={editingProfile.email}
                         onChange={(e) => setEditingProfile(prev => ({ ...prev, email: e.target.value }))}
-                        disabled
-                        className="opacity-50"
                       />
-                      <p className="text-xs text-muted-foreground mt-1">Email changes require admin access</p>
                     </div>
                     <div>
                       <Label htmlFor="edit-phone">Phone Number</Label>

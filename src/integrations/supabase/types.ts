@@ -328,6 +328,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_user_email_by_moderator: {
+        Args: { new_email: string; target_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       user_type: "moderator" | "legal_user" | "pr_user" | "basic_user"
