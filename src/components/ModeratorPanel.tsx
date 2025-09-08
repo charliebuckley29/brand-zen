@@ -221,14 +221,14 @@ export function ModeratorPanel() {
     try {
       setIsUpdating(true);
 
-      // Update profile information
+      // Update profile information (upsert to handle cases where profile doesn't exist)
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({
+        .upsert({
+          user_id: userId,
           full_name: profileData.full_name,
           phone_number: profileData.phone_number || null
-        })
-        .eq("user_id", userId);
+        });
 
       if (profileError) throw profileError;
 
