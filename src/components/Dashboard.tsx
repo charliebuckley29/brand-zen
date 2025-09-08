@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { excludeMention } from "@/lib/monitoring";
 import { useSourcePreferences } from "@/hooks/useSourcePreferences";
 import { AutomationStatus } from "@/components/AutomationStatus";
+import { RealtimeIndicator } from "@/components/RealtimeIndicator";
 
 interface Mention {
   id: string;
@@ -217,7 +218,8 @@ export function Dashboard() {
           <h1 className="text-2xl sm:text-3xl font-bold">Brand Monitoring Dashboard</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Track and analyze brand mentions across the web</p>
         </div>
-
+        
+        <RealtimeIndicator />
       </div>
 
         {/* Stats Cards */}
