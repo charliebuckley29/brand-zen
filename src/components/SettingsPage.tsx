@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X, Globe, Newspaper, Youtube, MessageSquare, Rss, AlertCircle } from "lucide-react";
+import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X as XIcon, Globe, Newspaper, Youtube, MessageSquare, Rss, AlertCircle } from "lucide-react";
+import { SOURCES, type SourceType } from "@/config/sources";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +20,24 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 interface SettingsPageProps {
   onSignOut: () => void;
 }
+
+// Helper function to get the appropriate icon for each source
+const getSourceIcon = (sourceType: SourceType) => {
+  switch (sourceType) {
+    case 'web':
+      return Globe;
+    case 'news':
+      return Newspaper;
+    case 'reddit':
+      return MessageSquare;
+    case 'youtube':
+      return Youtube;
+    case 'x':
+      return XIcon;
+    default:
+      return Globe;
+  }
+};
 
 export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [newEmail, setNewEmail] = useState("");
@@ -484,13 +503,13 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                             {newVariants.map((variant, index) => (
                               <Badge key={index} variant="secondary" className="flex items-center gap-1">
                                 {variant}
-                                <button
-                                  type="button"
-                                  onClick={() => removeVariant(index)}
-                                  className="ml-1 hover:text-destructive"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
+                                 <button
+                                   type="button"
+                                   onClick={() => removeVariant(index)}
+                                   className="ml-1 hover:text-destructive"
+                                 >
+                                   <XIcon className="h-3 w-3" />
+                                 </button>
                               </Badge>
                             ))}
                           </div>
@@ -564,13 +583,13 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                             {setupVariants.map((variant, index) => (
                               <Badge key={index} variant="secondary" className="flex items-center gap-1">
                                 {variant}
-                                <button
-                                  type="button"
-                                  onClick={() => removeSetupVariant(index)}
-                                  className="ml-1 hover:text-destructive"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
+                                 <button
+                                   type="button"
+                                   onClick={() => removeSetupVariant(index)}
+                                   className="ml-1 hover:text-destructive"
+                                 >
+                                   <XIcon className="h-3 w-3" />
+                                 </button>
                               </Badge>
                             ))}
                           </div>
@@ -611,85 +630,43 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Web */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4" />
-                <div>
-                  <h4 className="text-sm font-medium">Web</h4>
-                  <p className="text-xs text-muted-foreground">General web results</p>
+            {Object.entries(SOURCES).map(([sourceId, sourceConfig]) => {
+              const IconComponent = getSourceIcon(sourceId as SourceType);
+              const isEnabled = (prefs[sourceId as SourceType]?.show_in_mentions !== false) && 
+                               (prefs[sourceId as SourceType]?.show_in_analytics !== false) && 
+                               (prefs[sourceId as SourceType]?.show_in_reports !== false);
+              
+              return (
+                <div key={sourceId} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <IconComponent className="h-4 w-4" />
+                    <div>
+                      <h4 className="text-sm font-medium">{sourceConfig.name}</h4>
+                      <p className="text-xs text-muted-foreground">{sourceConfig.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {isEnabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                    <Switch
+                      checked={isEnabled}
+                      onCheckedChange={async (v) => {
+                        try { 
+                          await setAllForSource(sourceId as SourceType, v); 
+                        } catch (e: any) { 
+                          toast({ 
+                            title: "Update failed", 
+                            description: e.message, 
+                            variant: "destructive" 
+                          }); 
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Enabled</span>
-                <Switch
-                  checked={(prefs.web?.show_in_mentions !== false) && (prefs.web?.show_in_analytics !== false) && (prefs.web?.show_in_reports !== false)}
-                  onCheckedChange={async (v) => {
-                    try { await setAllForSource("web", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* News */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Newspaper className="h-4 w-4" />
-                <div>
-                  <h4 className="text-sm font-medium">News</h4>
-                  <p className="text-xs text-muted-foreground">News articles</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Enabled</span>
-                <Switch
-                  checked={(prefs.news?.show_in_mentions !== false) && (prefs.news?.show_in_analytics !== false) && (prefs.news?.show_in_reports !== false)}
-                  onCheckedChange={async (v) => {
-                    try { await setAllForSource("news", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Reddit */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                <div>
-                  <h4 className="text-sm font-medium">Reddit</h4>
-                  <p className="text-xs text-muted-foreground">Reddit posts</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Enabled</span>
-                <Switch
-                  checked={(prefs.reddit?.show_in_mentions !== false) && (prefs.reddit?.show_in_analytics !== false) && (prefs.reddit?.show_in_reports !== false)}
-                  onCheckedChange={async (v) => {
-                    try { await setAllForSource("reddit", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* YouTube */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Youtube className="h-4 w-4" />
-                <div>
-                  <h4 className="text-sm font-medium">YouTube</h4>
-                  <p className="text-xs text-muted-foreground">YouTube videos</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Enabled</span>
-                <Switch
-                  checked={(prefs.youtube?.show_in_mentions !== false) && (prefs.youtube?.show_in_analytics !== false) && (prefs.youtube?.show_in_reports !== false)}
-                  onCheckedChange={async (v) => {
-                    try { await setAllForSource("youtube", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                  }}
-                />
-              </div>
-            </div>
+              );
+            })}
 
             {/* RSS News Ingestion */}
             <div className="flex items-center justify-between">
