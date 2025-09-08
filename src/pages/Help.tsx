@@ -20,8 +20,11 @@ import {
   FileText,
   Eye,
   Filter,
-  ArrowLeft
+  ArrowLeft,
+  Newspaper,
+  Video
 } from "lucide-react";
+import { SOURCE_CATEGORIES, SOURCES, getSourcesByCategory, getImplementedSources } from "@/config/sources";
 
 const Help = () => {
   const handleSupportEmail = (type: 'help' | 'bug') => {
@@ -101,19 +104,41 @@ const Help = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">3. Configure Google Alerts (Optional)</h3>
+                    <h3 className="text-lg font-semibold">3. Configure Source Preferences</h3>
                     <p className="text-muted-foreground">
-                      Link your Google Alerts RSS feed to automatically import mentions from Google's monitoring system. 
-                      This expands your monitoring coverage significantly.
+                      Choose which types of sources you want to monitor and how they appear in your mentions, analytics, and reports. 
+                      You can always adjust these settings later.
                     </p>
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">4. Review Your Dashboard</h3>
+                    <h3 className="text-lg font-semibold">4. Set Up Google Alerts (Optional)</h3>
                     <p className="text-muted-foreground">
-                      Once set up, your dashboard will display incoming mentions, sentiment analysis, and key metrics 
-                      about your brand's online presence.
+                      Connect your Google Alerts RSS feed to significantly expand your monitoring coverage. 
+                      This integration brings in mentions that Google discovers across the web.
                     </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Account Setup
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">User Roles</h3>
+                    <ul className="space-y-1 text-sm text-muted-foreground">
+                      <li>• <strong>Basic User:</strong> Monitor brands, view mentions, and generate reports</li>
+                      <li>• <strong>PR User:</strong> All basic features plus advanced PR management tools</li>
+                      <li>• <strong>Legal User:</strong> All features plus legal escalation management</li>
+                      <li>• <strong>Moderator:</strong> Full system access and user management</li>
+                    </ul>
                   </div>
                 </div>
               </CardContent>
@@ -126,26 +151,8 @@ const Help = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Dashboard & Analytics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm">
-                    <li>• Real-time mention tracking</li>
-                    <li>• Sentiment analysis (positive, negative, neutral)</li>
-                    <li>• Source breakdown (news, social media, blogs)</li>
-                    <li>• Trending mentions and alerts</li>
-                    <li>• Historical data visualization</li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Flag className="h-5 w-5" />
-                    Mention Management
+                    <Eye className="h-5 w-5" />
+                    Mentions Overview
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -189,7 +196,7 @@ const Help = () => {
                     <li>• Control which sources appear in mentions</li>
                     <li>• Toggle sources for reports and analytics</li>
                     <li>• Customize data visibility by source type</li>
-                    <li>• Manage news, social media, and blog sources</li>
+                    <li>• Manage {getImplementedSources().map(s => s.name.toLowerCase()).join(', ')} sources</li>
                   </ul>
                 </CardContent>
               </Card>
@@ -217,23 +224,38 @@ const Help = () => {
 
                   <div>
                     <h3 className="font-semibold mb-2">Source Coverage</h3>
-                    <div className="grid gap-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">News Sites</Badge>
-                        <span className="text-muted-foreground">Major news publications and industry outlets</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">Social Media</Badge>
-                        <span className="text-muted-foreground">Twitter, Facebook, LinkedIn, and other platforms</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">Blogs</Badge>
-                        <span className="text-muted-foreground">Industry blogs and personal websites</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">Forums</Badge>
-                        <span className="text-muted-foreground">Reddit, specialized forums, and communities</span>
-                      </div>
+                    <div className="grid gap-3 text-sm">
+                      {Object.values(SOURCE_CATEGORIES).map(category => {
+                        const sources = getSourcesByCategory(category.id);
+                        const implementedSources = sources.filter(s => s.implemented);
+                        
+                        if (implementedSources.length === 0) return null;
+                        
+                        const IconComponent = category.icon === "newspaper" ? Newspaper : 
+                                            category.icon === "users" ? Users :
+                                            category.icon === "video" ? Video : Globe;
+                        
+                        return (
+                          <div key={category.id} className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="flex items-center gap-1">
+                                <IconComponent className="h-3 w-3" />
+                                {category.name}
+                              </Badge>
+                              <span className="text-muted-foreground">{category.description}</span>
+                            </div>
+                            <div className="ml-6 space-y-1">
+                              {implementedSources.map(source => (
+                                <div key={source.id} className="flex items-center gap-2 text-xs">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                  <span className="font-medium">{source.name}</span>
+                                  <span className="text-muted-foreground">- {source.description}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -283,6 +305,103 @@ const Help = () => {
                 </div>
               </CardContent>
             </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5" />
+                  Source Implementation Details
+                </CardTitle>
+                <CardDescription>
+                  Technical details about our data sources and coverage
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {Object.values(SOURCE_CATEGORIES).map(category => {
+                  const sources = getSourcesByCategory(category.id).filter(s => s.implemented);
+                  if (sources.length === 0) return null;
+                  
+                  const IconComponent = category.icon === "newspaper" ? Newspaper : 
+                                      category.icon === "users" ? Users :
+                                      category.icon === "video" ? Video : Globe;
+                  
+                  return (
+                    <div key={category.id} className="space-y-4">
+                      <div className="flex items-center gap-2 pb-2 border-b">
+                        <IconComponent className="h-4 w-4 text-primary" />
+                        <h3 className="font-semibold">{category.name}</h3>
+                        <Badge variant="secondary">{sources.length} source{sources.length > 1 ? 's' : ''}</Badge>
+                      </div>
+                      
+                      <div className="grid gap-4">
+                        {sources.map(source => (
+                          <div key={source.id} className="border rounded-lg p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-medium">{source.name}</h4>
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                <span className="text-xs text-green-600 font-medium">Active</span>
+                              </div>
+                            </div>
+                            
+                            <p className="text-sm text-muted-foreground">{source.description}</p>
+                            
+                            {source.apiProvider && (
+                              <div className="text-xs">
+                                <span className="font-medium">API Provider:</span> {source.apiProvider}
+                              </div>
+                            )}
+                            
+                            {source.examples.length > 0 && (
+                              <div>
+                                <span className="text-xs font-medium block mb-1">Coverage Examples:</span>
+                                <div className="flex flex-wrap gap-1">
+                                  {source.examples.slice(0, 3).map((example, idx) => (
+                                    <Badge key={idx} variant="outline" className="text-xs">
+                                      {example}
+                                    </Badge>
+                                  ))}
+                                  {source.examples.length > 3 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      +{source.examples.length - 3} more
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {source.limitations && source.limitations.length > 0 && (
+                              <div>
+                                <span className="text-xs font-medium block mb-1">Limitations:</span>
+                                <ul className="text-xs text-muted-foreground space-y-1">
+                                  {source.limitations.map((limitation, idx) => (
+                                    <li key={idx}>• {limitation}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            
+                            {source.implementationNotes && (
+                              <div className="bg-muted/50 rounded p-2">
+                                <span className="text-xs font-medium block mb-1">Implementation Notes:</span>
+                                <p className="text-xs text-muted-foreground">{source.implementationNotes}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                <div className="mt-6 pt-4 border-t">
+                  <p className="text-xs text-muted-foreground">
+                    This configuration is maintained in <code>src/config/sources.ts</code> and automatically 
+                    updates the help documentation as new sources are implemented.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Administration */}
@@ -298,44 +417,54 @@ const Help = () => {
                 <div className="grid gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge>Basic User</Badge>
-                      <span className="text-sm font-medium">Standard Access</span>
+                      <Badge variant="outline">Basic User</Badge>
+                      <span className="text-sm text-muted-foreground">Default role for new users</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Access to dashboard, mentions, reports, and personal settings. 
-                      Can manage their own brand monitoring setup.
-                    </p>
+                    <ul className="text-sm space-y-1 ml-4">
+                      <li>• View and manage own brand mentions</li>
+                      <li>• Generate personal reports</li>
+                      <li>• Configure source preferences</li>
+                      <li>• Access analytics dashboard</li>
+                    </ul>
                   </div>
 
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="secondary">PR User</Badge>
-                      <span className="text-sm font-medium">Enhanced Access</span>
+                      <Badge variant="outline">PR User</Badge>
+                      <span className="text-sm text-muted-foreground">Enhanced PR management capabilities</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      All basic user features plus advanced reporting and analytics capabilities.
-                    </p>
+                    <ul className="text-sm space-y-1 ml-4">
+                      <li>• All Basic User permissions</li>
+                      <li>• Advanced mention flagging and escalation</li>
+                      <li>• PR-focused reporting tools</li>
+                      <li>• Enhanced analytics for brand sentiment</li>
+                    </ul>
                   </div>
 
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="secondary">Legal User</Badge>
-                      <span className="text-sm font-medium">Legal Focus</span>
+                      <Badge variant="outline">Legal User</Badge>
+                      <span className="text-sm text-muted-foreground">Legal team access and tools</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Specialized access for legal team members with focus on flagged mentions and escalations.
-                    </p>
+                    <ul className="text-sm space-y-1 ml-4">
+                      <li>• All PR User permissions</li>
+                      <li>• Legal escalation management</li>
+                      <li>• Compliance reporting features</li>
+                      <li>• Access to legal-specific mention categories</li>
+                    </ul>
                   </div>
 
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="default">Moderator</Badge>
-                      <span className="text-sm font-medium">Full Access</span>
+                      <Badge variant="outline">Moderator</Badge>
+                      <span className="text-sm text-muted-foreground">Full system administration</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Complete administrative access including user management, global settings, 
-                      and the ability to edit any user's profile or brand settings.
-                    </p>
+                    <ul className="text-sm space-y-1 ml-4">
+                      <li>• All system permissions</li>
+                      <li>• User management and role assignment</li>
+                      <li>• Global settings configuration</li>
+                      <li>• System monitoring and maintenance</li>
+                    </ul>
                   </div>
                 </div>
               </CardContent>
@@ -345,32 +474,24 @@ const Help = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Settings className="h-5 w-5" />
-                  Account Settings
+                  System Configuration
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-semibold mb-2">Profile Management</h3>
+                    <h3 className="font-semibold mb-2">Global Settings</h3>
                     <p className="text-muted-foreground text-sm">
-                      Update your personal information, change passwords, and manage account preferences. 
-                      Keep your contact information current for important notifications.
+                      Moderators can configure system-wide settings including monitoring parameters, 
+                      notification preferences, and integration configurations.
                     </p>
                   </div>
 
                   <div>
-                    <h3 className="font-semibold mb-2">Brand Settings</h3>
+                    <h3 className="font-semibold mb-2">User Management</h3>
                     <p className="text-muted-foreground text-sm">
-                      Modify your brand name, add or remove variants, and update Google Alerts integration. 
-                      Note: Some organizations may restrict brand name changes - contact support if needed.
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2">Source Preferences</h3>
-                    <p className="text-muted-foreground text-sm">
-                      Control which types of sources appear in your mentions, reports, and analytics. 
-                      Customize your monitoring experience based on your needs.
+                      Moderators can view all users, edit profiles, change user roles, 
+                      and manage access permissions across the platform.
                     </p>
                   </div>
                 </div>
@@ -393,18 +514,15 @@ const Help = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Button 
-                    onClick={() => handleSupportEmail('help')} 
-                    className="w-full justify-start"
-                    variant="outline"
+                    onClick={() => handleSupportEmail('help')}
+                    className="w-full flex items-center gap-2"
                   >
-                    <Mail className="mr-2 h-4 w-4" />
-                    Contact Support Team
+                    <Mail className="h-4 w-4" />
+                    Contact Support
                   </Button>
                   <p className="text-sm text-muted-foreground">
-                    Email: <code className="bg-muted px-2 py-1 rounded">help@reputations.io</code>
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    For general questions, account issues, feature requests, and training support.
+                    Email us at <strong>help@reputations.io</strong> for general support, 
+                    account questions, or feature requests.
                   </p>
                 </CardContent>
               </Card>
@@ -421,55 +539,55 @@ const Help = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Button 
-                    onClick={() => handleSupportEmail('bug')} 
-                    className="w-full justify-start"
+                    onClick={() => handleSupportEmail('bug')}
                     variant="outline"
+                    className="w-full flex items-center gap-2"
                   >
-                    <Bug className="mr-2 h-4 w-4" />
+                    <Bug className="h-4 w-4" />
                     Report Bug
                   </Button>
                   <p className="text-sm text-muted-foreground">
-                    Email: <code className="bg-muted px-2 py-1 rounded">bugs@reputation.io</code>
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    For technical issues, bugs, system errors, and platform problems.
+                    Email us at <strong>bugs@reputation.io</strong> to report technical issues, 
+                    bugs, or system errors.
                   </p>
                 </CardContent>
               </Card>
             </div>
 
+            {/* FAQ Section */}
             <Card>
               <CardHeader>
-                <CardTitle>Frequently Asked Questions</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <HelpCircle className="h-5 w-5" />
+                  Frequently Asked Questions
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
                   <h3 className="font-semibold mb-2">How often are mentions updated?</h3>
                   <p className="text-sm text-muted-foreground">
-                    Mentions are collected and updated continuously throughout the day. 
-                    New mentions typically appear within 15-30 minutes of being published online.
+                    Our system continuously monitors for new mentions. Most sources are checked multiple times per day, 
+                    with some high-priority sources monitored in near real-time.
                   </p>
                 </div>
 
                 <Separator />
 
                 <div>
-                  <h3 className="font-semibold mb-2">Can I change my brand name after setup?</h3>
+                  <h3 className="font-semibold mb-2">Can I customize which sources to monitor?</h3>
                   <p className="text-sm text-muted-foreground">
-                    Yes, you can modify your brand name and variants in your settings. 
-                    However, some organizations may have this feature restricted by administrators. 
-                    Contact support if you need assistance with brand name changes.
+                    Yes! Use the Source Preferences feature to control which types of sources appear in your mentions, 
+                    reports, and analytics. You can toggle individual source types on or off.
                   </p>
                 </div>
 
                 <Separator />
 
                 <div>
-                  <h3 className="font-semibold mb-2">What does the sentiment analysis mean?</h3>
+                  <h3 className="font-semibold mb-2">What happens to flagged mentions?</h3>
                   <p className="text-sm text-muted-foreground">
-                    Our AI analyzes the context and tone of each mention to classify it as positive, 
-                    negative, or neutral. This helps you quickly identify mentions that may require attention 
-                    or celebration.
+                    Flagged mentions are highlighted in your dashboard and can be categorized by escalation type 
+                    (legal, PR, customer service). This helps ensure important mentions get proper attention.
                   </p>
                 </div>
 
@@ -478,8 +596,8 @@ const Help = () => {
                 <div>
                   <h3 className="font-semibold mb-2">How do I set up Google Alerts integration?</h3>
                   <p className="text-sm text-muted-foreground">
-                    Create a Google Alert for your brand, then copy the RSS feed URL from the alert settings. 
-                    Paste this URL into your brand settings to automatically import Google's findings.
+                    Create Google Alerts for your brand keywords, then copy the RSS feed URL from your Google Alerts settings. 
+                    Paste this URL in your brand monitoring configuration to automatically import Google's findings.
                   </p>
                 </div>
 
