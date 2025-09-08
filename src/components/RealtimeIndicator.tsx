@@ -61,7 +61,7 @@ export function RealtimeIndicator() {
       
       <Badge variant="secondary" className="text-xs">
         <Clock className="h-3 w-3 mr-1" />
-        Auto-fetch: 5min
+        Auto: 15min
       </Badge>
     </div>
   );

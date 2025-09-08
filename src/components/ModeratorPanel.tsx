@@ -22,6 +22,7 @@ interface User {
   phone_number: string | null;
   user_type: UserType;
   created_at: string;
+  fetch_frequency_minutes: number;
 }
 
 interface UserKeywords {
@@ -84,7 +85,7 @@ export function ModeratorPanel() {
       // Fetch all profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("user_id, full_name, phone_number");
+        .select("user_id, full_name, phone_number, fetch_frequency_minutes");
 
       if (profilesError) throw profilesError;
 
@@ -93,11 +94,12 @@ export function ModeratorPanel() {
         .rpc("get_user_emails_for_moderator");
 
       // Create a map of profiles by user_id
-      const profilesMap: Record<string, { full_name: string; phone_number: string | null }> = {};
+      const profilesMap: Record<string, { full_name: string; phone_number: string | null; fetch_frequency_minutes: number }> = {};
       profilesData?.forEach(profile => {
         profilesMap[profile.user_id] = {
           full_name: profile.full_name,
-          phone_number: profile.phone_number
+          phone_number: profile.phone_number,
+          fetch_frequency_minutes: profile.fetch_frequency_minutes || 15
         };
       });
 
@@ -113,7 +115,8 @@ export function ModeratorPanel() {
         full_name: profilesMap[user.user_id]?.full_name || 'Unknown User',
         phone_number: profilesMap[user.user_id]?.phone_number || null,
         user_type: user.user_type,
-        created_at: user.created_at
+        created_at: user.created_at,
+        fetch_frequency_minutes: profilesMap[user.user_id]?.fetch_frequency_minutes || 15
       }));
 
       // Fetch user keywords with brand info
@@ -277,6 +280,31 @@ export function ModeratorPanel() {
     }
   };
 
+  const updateUserFetchFrequency = async (userId: string, frequency: number) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ fetch_frequency_minutes: frequency })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Frequency Updated",
+        description: `Fetch frequency set to ${frequency} minutes`
+      });
+
+      fetchData(); // Refresh data
+    } catch (error) {
+      console.error("Error updating fetch frequency:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update fetch frequency",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -330,6 +358,7 @@ export function ModeratorPanel() {
                     <TableHead>User Name</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Created</TableHead>
+                    <TableHead>Fetch Frequency</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -365,6 +394,26 @@ export function ModeratorPanel() {
                         </Badge>
                       </TableCell>
                       <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Select 
+                            value={user.fetch_frequency_minutes.toString()} 
+                            onValueChange={(value: string) => updateUserFetchFrequency(user.id, parseInt(value))}
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="5">5min</SelectItem>
+                              <SelectItem value="10">10min</SelectItem>
+                              <SelectItem value="15">15min</SelectItem>
+                              <SelectItem value="30">30min</SelectItem>
+                              <SelectItem value="60">1hr</SelectItem>
+                              <SelectItem value="120">2hr</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Select 
                           value={user.user_type} 

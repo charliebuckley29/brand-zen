@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useFetchFrequency } from "@/hooks/useFetchFrequency";
 
 interface AutomationStatusProps {
   className?: string;
@@ -15,6 +16,7 @@ export function AutomationStatus({ className }: AutomationStatusProps) {
   const [isManualFetching, setIsManualFetching] = useState(false);
   const [automationEnabled, setAutomationEnabled] = useState(true);
   const { toast } = useToast();
+  const { frequency, loading } = useFetchFrequency();
 
   useEffect(() => {
     // Set up realtime subscription to track mention insertions
@@ -74,11 +76,11 @@ export function AutomationStatus({ className }: AutomationStatusProps) {
     const timeDiff = now.getTime() - lastFetch.getTime();
     const minutesDiff = timeDiff / (1000 * 60);
     
-    // Green if last fetch was within 10 minutes
-    if (minutesDiff <= 10) return "default";
-    // Yellow if within 30 minutes
-    if (minutesDiff <= 30) return "secondary";
-    // Red if more than 30 minutes
+    // Green if last fetch was within user's frequency + 5min buffer
+    if (minutesDiff <= frequency + 5) return "default";
+    // Yellow if within 2x user's frequency
+    if (minutesDiff <= frequency * 2) return "secondary";
+    // Red if more than 2x user's frequency
     return "destructive";
   };
 
@@ -110,7 +112,7 @@ export function AutomationStatus({ className }: AutomationStatusProps) {
           <div>
             <CardTitle className="text-sm font-medium">Automation Status</CardTitle>
             <CardDescription className="text-xs">
-              Automated mention fetching every 5 minutes
+              Automated fetching every {frequency} minutes
             </CardDescription>
           </div>
           <Badge variant={automationEnabled ? "default" : "secondary"}>
