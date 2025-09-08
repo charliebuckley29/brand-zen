@@ -310,6 +310,13 @@ export type Database = {
         Args: { _setting_key: string }
         Returns: Json
       }
+      get_user_emails_for_moderator: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
       get_user_type: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["user_type"]

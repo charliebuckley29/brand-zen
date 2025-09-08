@@ -77,6 +77,10 @@ export function ModeratorPanel() {
 
       if (profilesError) throw profilesError;
 
+      // Fetch user emails (for moderators only)
+      const { data: emailsData, error: emailsError } = await supabase
+        .rpc("get_user_emails_for_moderator");
+
       // Create a map of profiles by user_id
       const profilesMap: Record<string, { full_name: string; phone_number: string | null }> = {};
       profilesData?.forEach(profile => {
@@ -86,9 +90,15 @@ export function ModeratorPanel() {
         };
       });
 
+      // Create a map of emails by user_id
+      const emailsMap: Record<string, string> = {};
+      emailsData?.forEach(emailData => {
+        emailsMap[emailData.user_id] = emailData.email;
+      });
+
       const formattedUsers: User[] = (usersData || []).map(user => ({
         id: user.user_id,
-        email: `${user.user_id.slice(0, 8)}...@email.com`, // Placeholder since we can't fetch emails from client
+        email: emailsMap[user.user_id] || 'Email not available',
         full_name: profilesMap[user.user_id]?.full_name || 'Unknown User',
         phone_number: profilesMap[user.user_id]?.phone_number || null,
         user_type: user.user_type,
