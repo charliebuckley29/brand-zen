@@ -8,13 +8,16 @@ import { MentionModal } from "./MentionModal";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { showToastWithStorage } from "@/lib/notifications";
 import { excludeMention } from "@/lib/monitoring";
 import { useSourcePreferences } from "@/hooks/useSourcePreferences";
+import { RealtimeIndicator } from "@/components/RealtimeIndicator";
 
 interface Mention {
   id: string;
   source_name: string;
   source_url: string;
+  source_type: string;
   published_at: string;
   content_snippet: string;
   full_text: string | null;
@@ -49,22 +52,84 @@ export function Dashboard() {
     fetchMentions();
   }, [enabledMentions, currentPage, pageSize]);
 
+  // Set up realtime subscription for new mentions
+  useEffect(() => {
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const channel = supabase
+        .channel('mentions-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'mentions',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('New mention received via realtime:', payload.new);
+            
+            // Add the new mention to the existing list if it passes filters
+            const newMention = payload.new as Mention;
+            if (enabledMentions.includes(newMention.source_type as any)) {
+              setMentions(prev => [newMention, ...prev.slice(0, pageSize - 1)]);
+              
+              // Show toast notification for new mention and store in database
+              showToastWithStorage(
+                toast,
+                "New mention found!",
+                `From ${newMention.source_name}: ${newMention.content_snippet.slice(0, 100)}...`,
+                'default',
+                'mention',
+                {
+                  mention_id: newMention.id,
+                  source_name: newMention.source_name,
+                  source_url: newMention.source_url,
+                  sentiment: newMention.sentiment
+                }
+              );
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    const cleanup = setupRealtimeSubscription();
+    return () => {
+      cleanup.then(fn => fn && fn());
+    };
+  }, [enabledMentions, pageSize, toast]);
+
   const fetchMentions = async () => {
-  console.log('FETCH MENTIONS CALLED');
+    console.log('FETCH MENTIONS CALLED');
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('No user found, cannot fetch mentions');
+        return;
+      }
+
       const types = enabledMentions;
       
-      // Fetch paginated mentions
+      // Fetch paginated mentions for current user's keywords only
       let mentionsQuery = supabase
         .from("mentions")
         .select("*", { count: 'exact' })
+        .eq('user_id', user.id)
         .order("published_at", { ascending: false })
         .range((currentPage - 1) * pageSize, (currentPage * pageSize) - 1);
 
-      // Fetch stats
+      // Fetch stats for current user's mentions only
       let statsQuery = supabase
         .from("mentions")
-        .select('id, sentiment, flagged', { count: 'exact' });
+        .select('id, sentiment, flagged', { count: 'exact' })
+        .eq('user_id', user.id);
 
       if (types.length && types.length < 4) {
         mentionsQuery = (mentionsQuery as any).in("source_type", types as any);
@@ -79,10 +144,10 @@ export function Dashboard() {
       if (mentionsResult.error) throw mentionsResult.error;
       if (statsResult.error) throw statsResult.error;
 
-  // Debug: log raw mentions data from Supabase before setting state
-  console.log('Dashboard: raw mentions from Supabase', (mentionsResult.data || []).map(m => ({ id: m.id, sentiment: m.sentiment, type: typeof m.sentiment })));
-  setMentions(mentionsResult.data || []);
-  setTotalMentions(mentionsResult.count || 0);
+      // Debug: log raw mentions data from Supabase before setting state
+      console.log('Dashboard: raw mentions from Supabase', (mentionsResult.data || []).map(m => ({ id: m.id, sentiment: m.sentiment, type: typeof m.sentiment })));
+      setMentions(mentionsResult.data || []);
+      setTotalMentions(mentionsResult.count || 0);
       
       // Calculate stats using the new sentiment categorization
       const total = statsResult.count || 0;
@@ -181,7 +246,8 @@ export function Dashboard() {
           <h1 className="text-2xl sm:text-3xl font-bold">Brand Monitoring Dashboard</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Track and analyze brand mentions across the web</p>
         </div>
-
+        
+        <RealtimeIndicator />
       </div>
 
         {/* Stats Cards */}
@@ -236,6 +302,7 @@ export function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
 
         {/* Monitoring Controls */}
         <MonitoringControls onMentionsUpdated={fetchMentions} />

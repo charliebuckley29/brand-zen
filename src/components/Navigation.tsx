@@ -9,9 +9,14 @@ import {
   Home, 
   Bell,
   Menu,
-  X
+  X,
+  Shield,
+  HelpCircle,
+  Key
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationCenter } from "@/components/NotificationCenter";
+import { useUserRole } from "@/hooks/use-user-role";
 
 interface NavigationProps {
   currentView: string;
@@ -21,6 +26,7 @@ interface NavigationProps {
 
 export function Navigation({ currentView, onViewChange, unreadCount = 0 }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isModerator, isAdmin } = useUserRole();
 
   const navItems = [
     {
@@ -43,28 +49,58 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
       id: "settings",
       label: "Settings",
       icon: Settings
-    }
+    },
+    {
+      id: "help",
+      label: "Help & Support",
+      icon: HelpCircle,
+      isExternal: true
+    },
+    ...(isAdmin ? [{
+      id: "admin",
+      label: "Admin Panel",
+      icon: Key,
+      isExternal: true,
+      url: '/admin'
+    }] : []),
+    ...(isModerator ? [{
+      id: "moderator",
+      label: "Moderator Panel",
+      icon: Shield
+    }] : [])
   ];
 
-  const NavButton = ({ item, className = "" }: { item: typeof navItems[0], className?: string }) => (
-    <Button
-      key={item.id}
-      variant={currentView === item.id ? "default" : "ghost"}
-      onClick={() => {
+  const NavButton = ({ item, className = "" }: { item: typeof navItems[0], className?: string }) => {
+    const handleClick = () => {
+      if (item.isExternal) {
+        if (item.id === 'admin') {
+          window.location.href = '/admin';
+        } else {
+          window.location.href = '/help';
+        }
+      } else {
         onViewChange(item.id);
         setIsMobileMenuOpen(false);
-      }}
-      className={cn("justify-start", className)}
-    >
-      <item.icon className="h-4 w-4 mr-2" />
-      {item.label}
-      {item.badge && (
-        <Badge variant="destructive" className="ml-auto">
-          {item.badge}
-        </Badge>
-      )}
-    </Button>
-  );
+      }
+    };
+
+    return (
+      <Button
+        key={item.id}
+        variant={currentView === item.id ? "default" : "ghost"}
+        onClick={handleClick}
+        className={cn("justify-start", className)}
+      >
+        <item.icon className="h-4 w-4 mr-2" />
+        {item.label}
+        {item.badge && (
+          <Badge variant="destructive" className="ml-auto">
+            {item.badge}
+          </Badge>
+        )}
+      </Button>
+    );
+  };
 
   return (
     <>
@@ -87,7 +123,10 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
             <div className="p-4 pt-16">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold">Brand Protected</h2>
-                <ThemeToggle />
+                <div className="flex items-center gap-2">
+                  <NotificationCenter />
+                  <ThemeToggle />
+                </div>
               </div>
               <nav className="space-y-2">
                 {navItems.map((item) => (
@@ -116,7 +155,10 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
         <div className="p-4">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold">Brand Protected</h2>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <NotificationCenter />
+              <ThemeToggle />
+            </div>
           </div>
           <nav className="space-y-2">
             {navItems.map((item) => (

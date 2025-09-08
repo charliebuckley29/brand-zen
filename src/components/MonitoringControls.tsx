@@ -7,6 +7,7 @@ import { RefreshCw, Trash2, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ExclusionsModal } from "./ExclusionsModal";
+import { AutomationStatus } from "@/components/AutomationStatus";
 
 interface MonitoringControlsProps {
   onMentionsUpdated: () => void;
@@ -90,24 +91,9 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <AutomationStatus onMentionsUpdated={onMentionsUpdated} />
+        
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button 
-            onClick={handleRefreshMentions}
-            disabled={isRefreshing}
-            className="w-full sm:w-auto"
-          >
-            {isRefreshing ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Refreshing...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh mentions
-              </>
-            )}
-          </Button>
           <Button 
             variant="outline"
             onClick={() => setExclusionsOpen(true)}
@@ -175,7 +161,7 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
         </div>
         
         <div className="text-sm text-muted-foreground">
-          <p>Use the controls to fetch the latest mentions, clear all current mentions, or review any removed mentions that have been marked as not you.</p>
+          <p>Use the controls to fetch the latest mentions, clear all current mentions, or review any removed mentions that have been marked as not you. Automation runs based on your configured frequency settings.</p>
         </div>
         <ExclusionsModal open={exclusionsOpen} onOpenChange={setExclusionsOpen} />
       </CardContent>

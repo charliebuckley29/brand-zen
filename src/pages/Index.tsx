@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { MainDashboard } from "@/components/MainDashboard";
 import { Auth } from "@/components/Auth";
+import { ProfileCompletion } from "@/components/ProfileCompletion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [hasKeywords, setHasKeywords] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { profileData, isProfileComplete, loading: profileLoading, updateProfile } = useProfileCompletion();
 
   useEffect(() => {
     // Check authentication status
@@ -56,7 +59,7 @@ const Index = () => {
     await supabase.auth.signOut();
   };
 
-  if (isLoading) {
+  if (isLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -70,6 +73,16 @@ const Index = () => {
   // Show authentication if not logged in
   if (!user) {
     return <Auth />;
+  }
+
+  // Show profile completion if profile is incomplete
+  if (user && isProfileComplete === false) {
+    return (
+      <ProfileCompletion
+        initialData={profileData}
+        onComplete={updateProfile}
+      />
+    );
   }
 
   // Show dashboard (MainDashboard handles brand setup if no keywords)

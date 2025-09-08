@@ -6,16 +6,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X, Globe, Newspaper, Youtube, MessageSquare, Rss } from "lucide-react";
+import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X as XIcon, Globe, Newspaper, Youtube, MessageSquare, Rss, AlertCircle } from "lucide-react";
+import { SOURCES, type SourceType } from "@/config/sources";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { startMonitoring } from "@/lib/monitoring";
 import { Switch } from "@/components/ui/switch";
 import { useSourcePreferences } from "@/hooks/useSourcePreferences";
+import { useGlobalSettings } from "@/hooks/useGlobalSettings";
+import { useUserRole } from "@/hooks/use-user-role";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PhoneInputWithCountry } from "@/components/ui/phone-input-with-country";
+import { isValidPhoneNumber } from "react-phone-number-input";
 interface SettingsPageProps {
   onSignOut: () => void;
 }
+
+// Helper function to get the appropriate icon for each source
+const getSourceIcon = (sourceType: SourceType) => {
+  switch (sourceType) {
+    case 'web':
+      return Globe;
+    case 'news':
+      return Newspaper;
+    case 'reddit':
+      return MessageSquare;
+    case 'youtube':
+      return Youtube;
+    case 'x':
+      return XIcon;
+    default:
+      return Globe;
+  }
+};
 
 export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [newEmail, setNewEmail] = useState("");
@@ -26,6 +51,12 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  
+  // Profile management state
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [profileFullName, setProfileFullName] = useState("");
+  const [profilePhoneNumber, setProfilePhoneNumber] = useState("");
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   
   // Brand management state
   const [brandData, setBrandData] = useState<{ id: string; brand_name: string; variants: string[] } | null>(null);
@@ -43,14 +74,30 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [isCreatingBrand, setIsCreatingBrand] = useState(false);
   
   const { toast } = useToast();
+  const { userType } = useUserRole();
+  const { getSetting, loading: globalSettingsLoading } = useGlobalSettings();
+  const { profileData, loading: profileLoading, updateProfile } = useProfileCompletion();
 
   const { loading: prefsLoading, prefs, setPref, setAllForSource } = useSourcePreferences();
   const [rssEnabled, setRssEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('rss_news_ingestion') !== 'false' : true));
   const [googleAlertsEnabled, setGoogleAlertsEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('google_alerts_enabled') !== 'false' : true));
 
+  // Check if user can change brand name
+  const canChangeBrandName = globalSettingsLoading 
+    ? true // Show enabled while loading to prevent flicker
+    : getSetting('usersCanChangeBrandName', true);
+
   useEffect(() => {
     fetchBrandData();
   }, []);
+
+  // Update profile form when profile data changes
+  useEffect(() => {
+    if (profileData) {
+      setProfileFullName(profileData.full_name || "");
+      setProfilePhoneNumber(profileData.phone_number || "");
+    }
+  }, [profileData]);
   const fetchBrandData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -304,6 +351,51 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       setIsUpdatingPassword(false);
     }
   };
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profileFullName.trim()) {
+      toast({
+        title: "Name required",
+        description: "Please enter your full name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate phone number if provided
+    if (profilePhoneNumber && !isValidPhoneNumber(profilePhoneNumber)) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter a valid phone number with country code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdatingProfile(true);
+    try {
+      const result = await updateProfile(profileFullName, profilePhoneNumber);
+      
+      if (result.success) {
+        setProfileDialogOpen(false);
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been successfully updated.",
+        });
+      } else {
+        throw new Error("Failed to update profile");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error updating profile",
+        description: error.message || "Failed to update profile.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
   return (
     <div className="space-y-6">
       <div>
@@ -338,6 +430,104 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
           </CardContent>
         </Card>
 
+        {/* Profile */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Profile Information
+            </CardTitle>
+            <CardDescription>
+              Manage your personal information and contact details
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {profileLoading ? (
+              <div className="text-sm text-muted-foreground">Loading profile...</div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium">Full Name</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {profileData?.full_name || "Not set"}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium">Phone Number</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {profileData?.phone_number || "Not set"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        Edit Profile
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Edit Profile</DialogTitle>
+                        <DialogDescription>
+                          Update your personal information and contact details.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleProfileUpdate} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="fullName">Full Name *</Label>
+                          <Input
+                            id="fullName"
+                            type="text"
+                            placeholder="Enter your full name"
+                            value={profileFullName}
+                            onChange={(e) => setProfileFullName(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="phoneNumber">Phone Number</Label>
+                          <PhoneInputWithCountry
+                            id="phoneNumber"
+                            placeholder="Enter your phone number (optional)"
+                            value={profilePhoneNumber}
+                            onChange={(value) => setProfilePhoneNumber(value || "")}
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => {
+                              setProfileDialogOpen(false);
+                              // Reset form to current data
+                              setProfileFullName(profileData?.full_name || "");
+                              setProfilePhoneNumber(profileData?.phone_number || "");
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            type="submit" 
+                            disabled={isUpdatingProfile || !profileFullName.trim()}
+                          >
+                            {isUpdatingProfile ? "Updating..." : "Update Profile"}
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Brand Management */}
         <Card>
           <CardHeader>
@@ -350,6 +540,14 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {!canChangeBrandName && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Brand name editing is currently disabled. Please contact support to change your brand name.
+                </AlertDescription>
+              </Alert>
+            )}
             {brandData ? (
               <>
                 {/* Brand Name */}
@@ -360,7 +558,12 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   </div>
                   <Dialog open={brandDialogOpen} onOpenChange={setBrandDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        disabled={!canChangeBrandName}
+                        className={!canChangeBrandName ? "opacity-50 cursor-not-allowed" : ""}
+                      >
                         Edit Brand
                       </Button>
                     </DialogTrigger>
@@ -423,7 +626,12 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   </div>
                   <Dialog open={variantsDialogOpen} onOpenChange={setVariantsDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        disabled={!canChangeBrandName}
+                        className={!canChangeBrandName ? "opacity-50 cursor-not-allowed" : ""}
+                      >
                         Edit Variants
                       </Button>
                     </DialogTrigger>
@@ -456,13 +664,13 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                             {newVariants.map((variant, index) => (
                               <Badge key={index} variant="secondary" className="flex items-center gap-1">
                                 {variant}
-                                <button
-                                  type="button"
-                                  onClick={() => removeVariant(index)}
-                                  className="ml-1 hover:text-destructive"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
+                                 <button
+                                   type="button"
+                                   onClick={() => removeVariant(index)}
+                                   className="ml-1 hover:text-destructive"
+                                 >
+                                   <XIcon className="h-3 w-3" />
+                                 </button>
                               </Badge>
                             ))}
                           </div>
@@ -536,13 +744,13 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                             {setupVariants.map((variant, index) => (
                               <Badge key={index} variant="secondary" className="flex items-center gap-1">
                                 {variant}
-                                <button
-                                  type="button"
-                                  onClick={() => removeSetupVariant(index)}
-                                  className="ml-1 hover:text-destructive"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
+                                 <button
+                                   type="button"
+                                   onClick={() => removeSetupVariant(index)}
+                                   className="ml-1 hover:text-destructive"
+                                 >
+                                   <XIcon className="h-3 w-3" />
+                                 </button>
                               </Badge>
                             ))}
                           </div>
@@ -583,85 +791,43 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Web */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4" />
-                <div>
-                  <h4 className="text-sm font-medium">Web</h4>
-                  <p className="text-xs text-muted-foreground">General web results</p>
+            {Object.entries(SOURCES).map(([sourceId, sourceConfig]) => {
+              const IconComponent = getSourceIcon(sourceId as SourceType);
+              const isEnabled = (prefs[sourceId as SourceType]?.show_in_mentions !== false) && 
+                               (prefs[sourceId as SourceType]?.show_in_analytics !== false) && 
+                               (prefs[sourceId as SourceType]?.show_in_reports !== false);
+              
+              return (
+                <div key={sourceId} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <IconComponent className="h-4 w-4" />
+                    <div>
+                      <h4 className="text-sm font-medium">{sourceConfig.name}</h4>
+                      <p className="text-xs text-muted-foreground">{sourceConfig.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {isEnabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                    <Switch
+                      checked={isEnabled}
+                      onCheckedChange={async (v) => {
+                        try { 
+                          await setAllForSource(sourceId as SourceType, v); 
+                        } catch (e: any) { 
+                          toast({ 
+                            title: "Update failed", 
+                            description: e.message, 
+                            variant: "destructive" 
+                          }); 
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Enabled</span>
-                <Switch
-                  checked={(prefs.web?.show_in_mentions !== false) && (prefs.web?.show_in_analytics !== false) && (prefs.web?.show_in_reports !== false)}
-                  onCheckedChange={async (v) => {
-                    try { await setAllForSource("web", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* News */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Newspaper className="h-4 w-4" />
-                <div>
-                  <h4 className="text-sm font-medium">News</h4>
-                  <p className="text-xs text-muted-foreground">News articles</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Enabled</span>
-                <Switch
-                  checked={(prefs.news?.show_in_mentions !== false) && (prefs.news?.show_in_analytics !== false) && (prefs.news?.show_in_reports !== false)}
-                  onCheckedChange={async (v) => {
-                    try { await setAllForSource("news", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Reddit */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                <div>
-                  <h4 className="text-sm font-medium">Reddit</h4>
-                  <p className="text-xs text-muted-foreground">Reddit posts</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Enabled</span>
-                <Switch
-                  checked={(prefs.reddit?.show_in_mentions !== false) && (prefs.reddit?.show_in_analytics !== false) && (prefs.reddit?.show_in_reports !== false)}
-                  onCheckedChange={async (v) => {
-                    try { await setAllForSource("reddit", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* YouTube */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Youtube className="h-4 w-4" />
-                <div>
-                  <h4 className="text-sm font-medium">YouTube</h4>
-                  <p className="text-xs text-muted-foreground">YouTube videos</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Enabled</span>
-                <Switch
-                  checked={(prefs.youtube?.show_in_mentions !== false) && (prefs.youtube?.show_in_analytics !== false) && (prefs.youtube?.show_in_reports !== false)}
-                  onCheckedChange={async (v) => {
-                    try { await setAllForSource("youtube", v); } catch (e: any) { toast({ title: "Update failed", description: e.message, variant: "destructive" }); }
-                  }}
-                />
-              </div>
-            </div>
+              );
+            })}
 
             {/* RSS News Ingestion */}
             <div className="flex items-center justify-between">

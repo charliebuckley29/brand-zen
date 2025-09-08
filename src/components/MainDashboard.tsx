@@ -5,9 +5,12 @@ import { ReportsPage } from "@/components/ReportsPage";
 import { SettingsPage } from "@/components/SettingsPage";
 import { BrandSetup } from "@/components/BrandSetup";
 import { Navigation } from "@/components/Navigation";
+import { ModeratorPanel } from "@/components/ModeratorPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { startMonitoring } from "@/lib/monitoring";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/use-user-role";
+import { useNotifications } from "@/hooks/use-notifications";
 
 interface MainDashboardProps {
   onSignOut: () => void;
@@ -17,32 +20,10 @@ interface MainDashboardProps {
 
 export function MainDashboard({ onSignOut, hasKeywords, onKeywordsUpdated }: MainDashboardProps) {
   const [currentView, setCurrentView] = useState("dashboard");
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { isModerator } = useUserRole();
+  const { unreadCount } = useNotifications();
 
-  useEffect(() => {
-    if (hasKeywords) {
-      checkUnreadMentions();
-    }
-  }, [hasKeywords]);
-
-  const checkUnreadMentions = async () => {
-    try {
-      // Check for mentions from the last 24 hours that might be "new"
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      
-      const { data, error } = await supabase
-        .from("mentions")
-        .select("id")
-        .gte("created_at", yesterday.toISOString())
-        .eq("flagged", true);
-
-      if (error) throw error;
-      setUnreadCount(data?.length || 0);
-    } catch (error) {
-      console.error("Error checking unread mentions:", error);
-    }
-  };
+  // Note: unreadCount is now managed by useNotifications hook
 
   const renderCurrentView = () => {
     if (!hasKeywords) {
@@ -58,6 +39,8 @@ export function MainDashboard({ onSignOut, hasKeywords, onKeywordsUpdated }: Mai
         return <SettingsPage onSignOut={onSignOut} />;
       case "brand-setup":
         return <BrandSetup onComplete={onKeywordsUpdated} />;
+      case "moderator":
+        return isModerator ? <ModeratorPanel /> : <Dashboard />;
       default:
         return <Dashboard />;
     }

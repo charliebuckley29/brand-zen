@@ -11,6 +11,7 @@ interface Mention {
   id: string;
   source_name: string;
   source_url: string;
+  source_type: string;
   published_at: string;
   content_snippet: string;
   full_text: string | null;
@@ -314,24 +315,10 @@ export function MentionsTable({
                 </div>
               </div>
               
-              {((mention.topics && mention.topics.length > 0) || mention.escalation_type !== 'none') && (
-                <div className="flex flex-wrap gap-1">
-                  {mention.topics && mention.topics.slice(0, 3).map((topic, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {topic}
-                    </Badge>
-                  ))}
-                  {mention.topics && mention.topics.length > 3 && (
-                    <Badge variant="secondary" className="text-xs">
-                      +{mention.topics.length - 3}
-                    </Badge>
-                  )}
-                  {mention.escalation_type && mention.escalation_type !== 'none' && (
-                    <Badge variant="destructive" className="text-xs">
-                      {mention.escalation_type.toUpperCase()}
-                    </Badge>
-                  )}
-                </div>
+              {mention.escalation_type && mention.escalation_type !== 'none' && (
+                <Badge variant="destructive" className="text-xs">
+                  {mention.escalation_type.toUpperCase()}
+                </Badge>
               )}
             </CardContent>
           </Card>
@@ -354,14 +341,13 @@ export function MentionsTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[60px]">#</TableHead>
-                <TableHead className="w-[120px]">Source</TableHead>
+                <TableHead className="w-[50px]">#</TableHead>
+                <TableHead className="w-[140px]">Source</TableHead>
                 <TableHead>Content</TableHead>
-                <TableHead className="w-[120px]">Sentiment</TableHead>
-                <TableHead className="w-[150px]">Topics</TableHead>
+                <TableHead className="w-[130px]">Sentiment</TableHead>
                 <TableHead className="w-[100px]">Status</TableHead>
-                <TableHead className="w-[120px]">Date Found</TableHead>
-                <TableHead className="w-[80px]">Actions</TableHead>
+                <TableHead className="w-[140px]">Date Found</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -415,20 +401,6 @@ export function MentionsTable({
                         </>
                       )}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {mention.topics && mention.topics.slice(0, 2).map((topic, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {topic}
-                        </Badge>
-                      ))}
-                      {mention.topics && mention.topics.length > 2 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{mention.topics.length - 2}
-                        </Badge>
-                      )}
-                    </div>
                   </TableCell>
                   <TableCell>
                     {mention.escalation_type && mention.escalation_type !== 'none' && (

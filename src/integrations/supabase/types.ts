@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          additional_config: Json | null
+          api_key: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          source_name: string
+          updated_at: string
+        }
+        Insert: {
+          additional_config?: Json | null
+          api_key?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          source_name: string
+          updated_at?: string
+        }
+        Update: {
+          additional_config?: Json | null
+          api_key?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          source_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      global_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       keywords: {
         Row: {
           brand_name: string
@@ -151,6 +208,75 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          external_delivery: Json | null
+          id: string
+          message: string
+          read: boolean
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          external_delivery?: Json | null
+          id?: string
+          message: string
+          read?: boolean
+          title: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          external_delivery?: Json | null
+          id?: string
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          fetch_frequency_minutes: number | null
+          full_name: string
+          id: string
+          phone_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fetch_frequency_minutes?: number | null
+          full_name: string
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fetch_frequency_minutes?: number | null
+          full_name?: string
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           created_at: string
@@ -223,15 +349,68 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+          user_type: Database["public"]["Enums"]["user_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_global_setting: {
+        Args: { _setting_key: string }
+        Returns: Json
+      }
+      get_user_emails_for_moderator: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
+      get_user_type: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["user_type"]
+      }
+      has_access_level: {
+        Args: {
+          _required_type: Database["public"]["Enums"]["user_type"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      trigger_mention_fetch: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      update_user_email_by_moderator: {
+        Args: { new_email: string; target_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_type: "moderator" | "legal_user" | "pr_user" | "basic_user" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -358,6 +537,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_type: ["moderator", "legal_user", "pr_user", "basic_user", "admin"],
+    },
   },
 } as const
