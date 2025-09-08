@@ -1,0 +1,180 @@
+{
+  "name": "Enrich Mention via OpenAI",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "enrich-mention",
+        "options": {},
+        "responseMode": "lastNode"
+      },
+      "id": "Webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://sjypzdqelypxymzzxhxi.supabase.co/rest/v1/keywords?id=eq.{{$json[\"keyword_id\"]}}",
+        "responseFormat": "json",
+        "options": {},
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqeXB6ZHFlbHlweHltenp4aHhpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDU4NDg2NCwiZXhwIjoyMDcwMTYwODY0fQ.YP3TFRjHKTGRNwjvCRobz3sMQ-9K0CEuGit1X6yywUQ"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqeXB6ZHFlbHlweHltenp4aHhpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDU4NDg2NCwiZXhwIjoyMDcwMTYwODY0fQ.YP3TFRjHKTGRNwjvCRobz3sMQ-9K0CEuGit1X6yywUQ"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "id": "Get Brand Info",
+      "name": "Get Brand Info",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "\nconst fullText = $json[\"full_text\"] || $json[\"content_snippet\"] || \"\";\nconst keyword = $node[\"Get Brand Info\"].json[0];\nconst brand = keyword.brand_name.toLowerCase();\nconst variants = keyword.variants || [];\n\nconst terms = [brand, ...variants.map(v => v.toLowerCase())];\n\nlet matchIndex = -1;\nfor (const term of terms) {\n  const idx = fullText.toLowerCase().indexOf(term);\n  if (idx !== -1) {\n    matchIndex = idx;\n    break;\n  }\n}\n\nconst maxChars = 2000;\nlet truncated = fullText;\n\nif (matchIndex !== -1) {\n  const start = Math.max(0, matchIndex - maxChars / 2);\n  const end = Math.min(fullText.length, matchIndex + maxChars / 2);\n  truncated = fullText.slice(start, end);\n} else {\n  truncated = fullText.slice(0, maxChars);\n}\n\nreturn [{\n  truncated,\n  brand_name: keyword.brand_name,\n  mention_id: $json[\"id\"]\n}];\n"
+      },
+      "id": "Truncate Text",
+      "name": "Truncate Text",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "temperature": 0.7,
+        "maxTokens": 300,
+        "prompt": "\nAnalyze this brand mention related to \"{{ $json[\"brand_name\"] }}\". Return:\n- Sentiment (positive, negative, or neutral)\n- Cleaned text (remove irrelevant parts)\n- One-line summary\n\nMention:\n{{ $json[\"truncated\"] }}\n\nRespond in this JSON format:\n{\n  \"sentiment\": \"positive\",\n  \"cleaned_text\": \"...\",\n  \"summary\": \"...\"\n}\n"
+      },
+      "id": "OpenAI",
+      "name": "OpenAI",
+      "type": "n8n-nodes-base.openai",
+      "typeVersion": 1,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [JSON.parse($node[\"OpenAI\"].json[\"text\"])];"
+      },
+      "id": "Parse JSON",
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://sjypzdqelypxymzzxhxi.supabase.co/rest/v1/mentions?id=eq.{{$node[\"Truncate Text\"].json[\"mention_id\"]}}",
+        "method": "PATCH",
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "sentiment",
+              "value": "={{ $json[\"sentiment\"] }}"
+            },
+            {
+              "name": "cleaned_text",
+              "value": "={{ $json[\"cleaned_text\"] }}"
+            },
+            {
+              "name": "summary",
+              "value": "={{ $json[\"summary\"] }}"
+            },
+            {
+              "name": "model_used",
+              "value": "gpt-4o"
+            }
+          ]
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqeXB6ZHFlbHlweHltenp4aHhpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDU4NDg2NCwiZXhwIjoyMDcwMTYwODY0fQ.YP3TFRjHKTGRNwjvCRobz3sMQ-9K0CEuGit1X6yywUQ"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqeXB6ZHFlbHlweHltenp4aHhpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDU4NDg2NCwiZXhwIjoyMDcwMTYwODY0fQ.YP3TFRjHKTGRNwjvCRobz3sMQ-9K0CEuGit1X6yywUQ"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "id": "Update Supabase",
+      "name": "Update Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": [
+      {
+        "node": "Get Brand Info",
+        "type": "main",
+        "index": 0
+      }
+    ],
+    "Get Brand Info": [
+      {
+        "node": "Truncate Text",
+        "type": "main",
+        "index": 0
+      }
+    ],
+    "Truncate Text": [
+      {
+        "node": "OpenAI",
+        "type": "main",
+        "index": 0
+      }
+    ],
+    "OpenAI": [
+      {
+        "node": "Parse JSON",
+        "type": "main",
+        "index": 0
+      }
+    ],
+    "Parse JSON": [
+      {
+        "node": "Update Supabase",
+        "type": "main",
+        "index": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "name": "enrich-mention",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "enrich-mention",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://sjypzdqelypxymzzxhxi.supabase.co/rest/v1/keywords",
+        "options": {
+          "queryParameters": [
+            {
+              "name": "id",
+              "value": "eq.{{$json[\"keyword_id\"]}}"
+            }
+          ],
+          "headers": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqeXB6ZHFlbHlweHltenp4aHhpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDU4NDg2NCwiZXhwIjoyMDcwMTYwODY0fQ.YP3TFRjHKTGRNwjvCRobz3sMQ-9K0CEuGit1X6yywUQ"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqeXB6ZHFlbHlweHltenp4aHhpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDU4NDg2NCwiZXhwIjoyMDcwMTYwODY0fQ.YP3TFRjHKTGRNwjvCRobz3sMQ-9K0CEuGit1X6yywUQ"
+            }
+          ]
+        }
+      },
+      "id": "2",
+      "name": "Get Brand Info",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "\nconst fullText = $json[\"full_text\"] || $json[\"content_snippet\"] || \"\";\nconst keyword = $node[\"Get Brand Info\"].json[0];\nconst brand = keyword.brand_name.toLowerCase();\nconst variants = keyword.variants || [];\n\nconst terms = [brand, ...variants.map(v => v.toLowerCase())];\n\nlet matchIndex = -1;\nfor (const term of terms) {\n  const idx = fullText.toLowerCase().indexOf(term);\n  if (idx !== -1) {\n    matchIndex = idx;\n    break;\n  }\n}\n\nconst maxChars = 2000;\nlet truncated = fullText;\nif (matchIndex !== -1) {\n  const start = Math.max(0, matchIndex - maxChars / 2);\n  const end = Math.min(fullText.length, matchIndex + maxChars / 2);\n  truncated = fullText.slice(start, end);\n} else {\n  truncated = fullText.slice(0, maxChars);\n}\n\nreturn [{\n  truncated,\n  brand_name: keyword.brand_name,\n  mention_id: $json[\"id\"]\n}];\n"
+      },
+      "id": "3",
+      "name": "Truncate Around Brand",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "prompt": "\nAnalyze this brand mention related to \"{{ $json[\"brand_name\"] }}\". Return:\n\n- Sentiment (positive, negative, or neutral)\n- Cleaned text (remove irrelevant parts)\n- One-line summary\n\nMention:\n{{ $json[\"truncated\"] }}\n\nRespond in this JSON format:\n\n{\n  \"sentiment\": \"positive\",\n  \"cleaned_text\": \"...\",\n  \"summary\": \"...\"\n}\n",
+        "maxTokens": 300
+      },
+      "id": "4",
+      "name": "OpenAI",
+      "type": "n8n-nodes-base.openai",
+      "typeVersion": 1,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [JSON.parse($json[\"text\"])]"
+      },
+      "id": "5",
+      "name": "Parse OpenAI Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://sjypzdqelypxymzzxhxi.supabase.co/rest/v1/mentions?id=eq.{{$node[\"Truncate Around Brand\"].json[\"mention_id\"]}}",
+        "options": {
+          "headers": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqeXB6ZHFlbHlweHltenp4aHhpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDU4NDg2NCwiZXhwIjoyMDcwMTYwODY0fQ.YP3TFRjHKTGRNwjvCRobz3sMQ-9K0CEuGit1X6yywUQ"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqeXB6ZHFlbHlweHltenp4aHhpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDU4NDg2NCwiZXhwIjoyMDcwMTYwODY0fQ.YP3TFRjHKTGRNwjvCRobz3sMQ-9K0CEuGit1X6yywUQ"
+            }
+          ]
+        },
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "sentiment",
+              "value": "={{ $json[\"sentiment\"] }}"
+            },
+            {
+              "name": "cleaned_text",
+              "value": "={{ $json[\"cleaned_text\"] }}"
+            },
+            {
+              "name": "summary",
+              "value": "={{ $json[\"summary\"] }}"
+            },
+            {
+              "name": "model_used",
+              "value": "gpt-4o"
+            }
+          ]
+        }
+      },
+      "id": "6",
+      "name": "Update Mention in Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": [
+      {
+        "node": "Get Brand Info",
+        "type": "main",
+        "index": 0
+      }
+    ],
+    "Get Brand Info": [
+      {
+        "node": "Truncate Around Brand",
+        "type": "main",
+        "index": 0
+      }
+    ],
+    "Truncate Around Brand": [
+      {
+        "node": "OpenAI",
+        "type": "main",
+        "index": 0
+      }
+    ],
+    "OpenAI": [
+      {
+        "node": "Parse OpenAI Response",
+        "type": "main",
+        "index": 0
+      }
+    ],
+    "Parse OpenAI Response": [
+      {
+        "node": "Update Mention in Supabase",
+        "type": "main",
+        "index": 0
+      }
+    ]
+  },
+  "active": true,
+  "versionId": "1756909015395499"
+}

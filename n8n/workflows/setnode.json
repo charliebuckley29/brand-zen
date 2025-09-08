@@ -1,0 +1,26 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "keyword_id",
+              "value": "={{ $json.body?.keyword_id || $json.body?.record?.keyword_id || '' }}"
+            }
+          ]
+        }
+      },
+      "id": "SetKeywordId",
+      "name": "Set Keyword ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        600,
+        300
+      ]
+    }
+  ],
+  "connections": {}
+}
