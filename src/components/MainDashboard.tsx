@@ -5,9 +5,11 @@ import { ReportsPage } from "@/components/ReportsPage";
 import { SettingsPage } from "@/components/SettingsPage";
 import { BrandSetup } from "@/components/BrandSetup";
 import { Navigation } from "@/components/Navigation";
+import { ModeratorPanel } from "@/components/ModeratorPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { startMonitoring } from "@/lib/monitoring";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/use-user-role";
 
 interface MainDashboardProps {
   onSignOut: () => void;
@@ -18,6 +20,7 @@ interface MainDashboardProps {
 export function MainDashboard({ onSignOut, hasKeywords, onKeywordsUpdated }: MainDashboardProps) {
   const [currentView, setCurrentView] = useState("dashboard");
   const [unreadCount, setUnreadCount] = useState(0);
+  const { isModerator } = useUserRole();
 
   useEffect(() => {
     if (hasKeywords) {
@@ -58,6 +61,8 @@ export function MainDashboard({ onSignOut, hasKeywords, onKeywordsUpdated }: Mai
         return <SettingsPage onSignOut={onSignOut} />;
       case "brand-setup":
         return <BrandSetup onComplete={onKeywordsUpdated} />;
+      case "moderator":
+        return isModerator ? <ModeratorPanel /> : <Dashboard />;
       default:
         return <Dashboard />;
     }

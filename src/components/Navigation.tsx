@@ -9,9 +9,11 @@ import {
   Home, 
   Bell,
   Menu,
-  X
+  X,
+  Shield
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useUserRole } from "@/hooks/use-user-role";
 
 interface NavigationProps {
   currentView: string;
@@ -21,6 +23,7 @@ interface NavigationProps {
 
 export function Navigation({ currentView, onViewChange, unreadCount = 0 }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isModerator } = useUserRole();
 
   const navItems = [
     {
@@ -43,7 +46,12 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
       id: "settings",
       label: "Settings",
       icon: Settings
-    }
+    },
+    ...(isModerator ? [{
+      id: "moderator",
+      label: "Moderator Panel",
+      icon: Shield
+    }] : [])
   ];
 
   const NavButton = ({ item, className = "" }: { item: typeof navItems[0], className?: string }) => (
