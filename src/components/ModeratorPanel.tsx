@@ -228,6 +228,8 @@ export function ModeratorPanel() {
           user_id: userId,
           full_name: profileData.full_name,
           phone_number: profileData.phone_number || null
+        }, {
+          onConflict: 'user_id'
         });
 
       if (profileError) throw profileError;
