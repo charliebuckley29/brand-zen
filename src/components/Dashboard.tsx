@@ -8,6 +8,7 @@ import { MentionModal } from "./MentionModal";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { showToastWithStorage } from "@/lib/notifications";
 import { excludeMention } from "@/lib/monitoring";
 import { useSourcePreferences } from "@/hooks/useSourcePreferences";
 import { RealtimeIndicator } from "@/components/RealtimeIndicator";
@@ -70,11 +71,20 @@ export function Dashboard() {
           if (enabledMentions.includes(newMention.source_type as any)) {
             setMentions(prev => [newMention, ...prev.slice(0, pageSize - 1)]);
             
-            // Show toast notification for new mention
-            toast({
-              title: "New mention found!",
-              description: `From ${newMention.source_name}: ${newMention.content_snippet.slice(0, 100)}...`,
-            });
+            // Show toast notification for new mention and store in database
+            showToastWithStorage(
+              toast,
+              "New mention found!",
+              `From ${newMention.source_name}: ${newMention.content_snippet.slice(0, 100)}...`,
+              'default',
+              'mention',
+              {
+                mention_id: newMention.id,
+                source_name: newMention.source_name,
+                source_url: newMention.source_url,
+                sentiment: newMention.sentiment
+              }
+            );
           }
         }
       )

@@ -65,6 +65,9 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
+[functions.send-notification]
+verify_jwt = false
+
 [functions.automated-mention-fetch]
 verify_jwt = false
 # Specifies static files to be bundled with the function. Supports glob patterns.

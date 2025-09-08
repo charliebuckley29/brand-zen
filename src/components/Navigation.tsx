@@ -15,6 +15,7 @@ import {
   Key
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationCenter } from "@/components/NotificationCenter";
 import { useUserRole } from "@/hooks/use-user-role";
 
 interface NavigationProps {
@@ -122,7 +123,10 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
             <div className="p-4 pt-16">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold">Brand Protected</h2>
-                <ThemeToggle />
+                <div className="flex items-center gap-2">
+                  <NotificationCenter />
+                  <ThemeToggle />
+                </div>
               </div>
               <nav className="space-y-2">
                 {navItems.map((item) => (
@@ -151,7 +155,10 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
         <div className="p-4">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold">Brand Protected</h2>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <NotificationCenter />
+              <ThemeToggle />
+            </div>
           </div>
           <nav className="space-y-2">
             {navItems.map((item) => (
