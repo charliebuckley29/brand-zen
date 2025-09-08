@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type SourceType = "web" | "news" | "reddit" | "youtube";
+export type SourceType = "web" | "news" | "reddit" | "youtube" | "x";
 
 type PrefRecord = {
   id?: string;
@@ -12,7 +12,7 @@ type PrefRecord = {
   show_in_reports: boolean;
 };
 
-const ALL_SOURCES: SourceType[] = ["web", "news", "reddit", "youtube"];
+const ALL_SOURCES: SourceType[] = ["web", "news", "reddit", "youtube", "x"];
 
 export function useSourcePreferences() {
   const [loading, setLoading] = useState(true);
@@ -22,6 +22,7 @@ export function useSourcePreferences() {
     news: null,
     reddit: null,
     youtube: null,
+    x: null,
   });
 
   useEffect(() => {
