@@ -18,6 +18,8 @@ import { useGlobalSettings } from "@/hooks/useGlobalSettings";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PhoneInputWithCountry } from "@/components/ui/phone-input-with-country";
+import { isValidPhoneNumber } from "react-phone-number-input";
 interface SettingsPageProps {
   onSignOut: () => void;
 }
@@ -361,6 +363,16 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       return;
     }
 
+    // Validate phone number if provided
+    if (profilePhoneNumber && !isValidPhoneNumber(profilePhoneNumber)) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter a valid phone number with country code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUpdatingProfile(true);
     try {
       const result = await updateProfile(profileFullName, profilePhoneNumber);
@@ -480,12 +492,11 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="phoneNumber">Phone Number</Label>
-                          <Input
+                          <PhoneInputWithCountry
                             id="phoneNumber"
-                            type="tel"
                             placeholder="Enter your phone number (optional)"
                             value={profilePhoneNumber}
-                            onChange={(e) => setProfilePhoneNumber(e.target.value)}
+                            onChange={(value) => setProfilePhoneNumber(value || "")}
                           />
                         </div>
                         <div className="flex justify-end gap-2">

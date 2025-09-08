@@ -1,0 +1,69 @@
+/* Custom styles for react-phone-number-input */
+.PhoneInput {
+  display: flex;
+  align-items: center;
+}
+
+.PhoneInputCountry {
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.PhoneInputCountrySelect {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.PhoneInputCountrySelect:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.PhoneInputCountrySelectArrow {
+  display: none;
+}
+
+.PhoneInputCountryIcon {
+  width: 20px;
+  height: 15px;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.PhoneInput input {
+  flex: 1;
+  height: 40px;
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: hsl(var(--foreground));
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.PhoneInput input::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.PhoneInput input:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px hsl(var(--ring));
+}
+
+.PhoneInput input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Dark mode adjustments are handled by CSS variables */

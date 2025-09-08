@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, User } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PhoneInputWithCountry } from "@/components/ui/phone-input-with-country";
+import { isValidPhoneNumber } from "react-phone-number-input";
 
 interface ProfileCompletionProps {
   initialData?: {
@@ -28,6 +30,16 @@ export function ProfileCompletion({ initialData, onComplete }: ProfileCompletion
       toast({
         title: "Missing Information",
         description: "Please enter your full name to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate phone number if provided
+    if (phoneNumber && !isValidPhoneNumber(phoneNumber)) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter a valid phone number with country code.",
         variant: "destructive",
       });
       return;
@@ -96,12 +108,11 @@ export function ProfileCompletion({ initialData, onComplete }: ProfileCompletion
               <Label htmlFor="phoneNumber">
                 Phone Number <span className="text-sm text-muted-foreground">(recommended)</span>
               </Label>
-              <Input
+              <PhoneInputWithCountry
                 id="phoneNumber"
-                type="tel"
                 placeholder="Enter your phone number"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={(value) => setPhoneNumber(value || "")}
               />
               <p className="text-xs text-muted-foreground">
                 Providing your phone number helps our support team assist you more effectively
