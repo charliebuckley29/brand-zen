@@ -11,7 +11,8 @@ import {
   Menu,
   X,
   Shield,
-  HelpCircle
+  HelpCircle,
+  Key
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useUserRole } from "@/hooks/use-user-role";
@@ -24,7 +25,7 @@ interface NavigationProps {
 
 export function Navigation({ currentView, onViewChange, unreadCount = 0 }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isModerator } = useUserRole();
+  const { isModerator, isAdmin } = useUserRole();
 
   const navItems = [
     {
@@ -54,6 +55,13 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
       icon: HelpCircle,
       isExternal: true
     },
+    ...(isAdmin ? [{
+      id: "admin",
+      label: "Admin Panel",
+      icon: Key,
+      isExternal: true,
+      url: '/admin'
+    }] : []),
     ...(isModerator ? [{
       id: "moderator",
       label: "Moderator Panel",
@@ -64,7 +72,11 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
   const NavButton = ({ item, className = "" }: { item: typeof navItems[0], className?: string }) => {
     const handleClick = () => {
       if (item.isExternal) {
-        window.location.href = '/help';
+        if (item.id === 'admin') {
+          window.location.href = '/admin';
+        } else {
+          window.location.href = '/help';
+        }
       } else {
         onViewChange(item.id);
         setIsMobileMenuOpen(false);

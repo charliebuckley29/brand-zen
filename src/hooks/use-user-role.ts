@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type UserType = 'moderator' | 'legal_user' | 'pr_user' | 'basic_user';
+export type UserType = 'admin' | 'moderator' | 'legal_user' | 'pr_user' | 'basic_user';
 
 export function useUserRole() {
   const [userType, setUserType] = useState<UserType | null>(null);
@@ -41,6 +41,7 @@ export function useUserRole() {
     if (!userType) return false;
     
     const hierarchy: Record<UserType, number> = {
+      'admin': 5,
       'moderator': 4,
       'legal_user': 3,
       'pr_user': 2,
@@ -53,6 +54,7 @@ export function useUserRole() {
   const isModerator = hasAccess('moderator');
   const isLegalUser = hasAccess('legal_user');
   const isPRUser = hasAccess('pr_user');
+  const isAdmin = hasAccess('admin');
 
   return {
     userType,
@@ -60,6 +62,7 @@ export function useUserRole() {
     hasAccess,
     isModerator,
     isLegalUser,
-    isPRUser
+    isPRUser,
+    isAdmin
   };
 }

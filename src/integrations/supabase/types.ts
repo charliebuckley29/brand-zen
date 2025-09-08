@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          additional_config: Json | null
+          api_key: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          source_name: string
+          updated_at: string
+        }
+        Insert: {
+          additional_config?: Json | null
+          api_key?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          source_name: string
+          updated_at?: string
+        }
+        Update: {
+          additional_config?: Json | null
+          api_key?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          source_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       global_settings: {
         Row: {
           created_at: string
