@@ -8,15 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Flag, Settings as SettingsIcon, AlertTriangle } from "lucide-react";
+import { Users, Flag, Settings as SettingsIcon, AlertTriangle, Eye } from "lucide-react";
 import type { UserType } from "@/hooks/use-user-role";
 import { GlobalSettingSwitch } from "@/components/GlobalSettingSwitch";
 
 interface User {
   id: string;
   email: string;
+  full_name: string;
+  phone_number: string | null;
   user_type: UserType;
   created_at: string;
 }
@@ -28,7 +31,7 @@ interface UserKeywords {
   variants: string[] | null;
   google_alert_rss_url: string | null;
   google_alerts_enabled: boolean;
-  user_email: string;
+  user_full_name: string;
 }
 
 interface FlaggedMention {
@@ -40,7 +43,7 @@ interface FlaggedMention {
   sentiment: number;
   flagged: boolean;
   created_at: string;
-  user_email: string;
+  user_full_name: string;
 }
 
 export function ModeratorPanel() {
@@ -48,6 +51,8 @@ export function ModeratorPanel() {
   const [userKeywords, setUserKeywords] = useState<UserKeywords[]>([]);
   const [flaggedMentions, setFlaggedMentions] = useState<FlaggedMention[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userDetailOpen, setUserDetailOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -61,24 +66,31 @@ export function ModeratorPanel() {
       // Fetch all users with their roles
       const { data: usersData, error: usersError } = await supabase
         .from("user_roles")
-        .select(`
-          user_id,
-          user_type,
-          created_at
-        `);
+        .select("user_id, user_type, created_at");
 
       if (usersError) throw usersError;
 
-      // Get user emails from auth.users via a function call (since we can't query auth.users directly)
-      const userEmails: Record<string, string> = {};
-      for (const user of usersData || []) {
-        // For now, we'll show user IDs. In production, you'd want to create a profiles table
-        userEmails[user.user_id] = user.user_id;
-      }
+      // Fetch all profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, phone_number");
+
+      if (profilesError) throw profilesError;
+
+      // Create a map of profiles by user_id
+      const profilesMap: Record<string, { full_name: string; phone_number: string | null }> = {};
+      profilesData?.forEach(profile => {
+        profilesMap[profile.user_id] = {
+          full_name: profile.full_name,
+          phone_number: profile.phone_number
+        };
+      });
 
       const formattedUsers: User[] = (usersData || []).map(user => ({
         id: user.user_id,
-        email: userEmails[user.user_id] || 'Unknown',
+        email: `${user.user_id.slice(0, 8)}...@email.com`, // Placeholder since we can't fetch emails from client
+        full_name: profilesMap[user.user_id]?.full_name || 'Unknown User',
+        phone_number: profilesMap[user.user_id]?.phone_number || null,
         user_type: user.user_type,
         created_at: user.created_at
       }));
@@ -86,35 +98,19 @@ export function ModeratorPanel() {
       // Fetch user keywords with brand info
       const { data: keywordsData, error: keywordsError } = await supabase
         .from("keywords")
-        .select(`
-          id,
-          user_id,
-          brand_name,
-          variants,
-          google_alert_rss_url,
-          google_alerts_enabled
-        `);
+        .select("id, user_id, brand_name, variants, google_alert_rss_url, google_alerts_enabled");
 
       if (keywordsError) throw keywordsError;
 
       const formattedKeywords: UserKeywords[] = (keywordsData || []).map(keyword => ({
         ...keyword,
-        user_email: userEmails[keyword.user_id] || 'Unknown'
+        user_full_name: profilesMap[keyword.user_id]?.full_name || 'Unknown User'
       }));
 
       // Fetch flagged mentions
       const { data: mentionsData, error: mentionsError } = await supabase
         .from("mentions")
-        .select(`
-          id,
-          user_id,
-          source_url,
-          source_name,
-          content_snippet,
-          sentiment,
-          flagged,
-          created_at
-        `)
+        .select("id, user_id, source_url, source_name, content_snippet, sentiment, flagged, created_at")
         .eq("flagged", true)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -123,7 +119,7 @@ export function ModeratorPanel() {
 
       const formattedMentions: FlaggedMention[] = (mentionsData || []).map(mention => ({
         ...mention,
-        user_email: userEmails[mention.user_id] || 'Unknown'
+        user_full_name: profilesMap[mention.user_id]?.full_name || 'Unknown User'
       }));
 
       setUsers(formattedUsers);
@@ -247,7 +243,7 @@ export function ModeratorPanel() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User ID</TableHead>
+                    <TableHead>User Name</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Actions</TableHead>
@@ -256,7 +252,18 @@ export function ModeratorPanel() {
                 <TableBody>
                   {users.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-mono text-sm">{user.id.slice(0, 8)}...</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-medium"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setUserDetailOpen(true);
+                          }}
+                        >
+                          {user.full_name}
+                        </Button>
+                      </TableCell>
                       <TableCell>
                         <Badge variant={user.user_type === 'moderator' ? 'default' : 'secondary'}>
                           {user.user_type.replace('_', ' ')}
@@ -311,7 +318,7 @@ export function ModeratorPanel() {
                     </div>
                     <p className="text-sm">{mention.content_snippet}</p>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>User: {mention.user_email}</span>
+                      <span>User: {mention.user_full_name}</span>
                       <a 
                         href={mention.source_url} 
                         target="_blank" 
@@ -360,6 +367,50 @@ export function ModeratorPanel() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* User Details Dialog */}
+      <Dialog open={userDetailOpen} onOpenChange={setUserDetailOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+            <DialogDescription>
+              Detailed information for {selectedUser?.full_name}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                <div>
+                  <Label className="text-sm font-medium">Full Name</Label>
+                  <p className="text-sm text-muted-foreground">{selectedUser.full_name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Email</Label>
+                  <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Phone Number</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedUser.phone_number || 'Not provided'}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Role</Label>
+                  <Badge variant={selectedUser.user_type === 'moderator' ? 'default' : 'secondary'}>
+                    {selectedUser.user_type.replace('_', ' ')}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Member Since</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(selectedUser.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -392,7 +443,7 @@ function BrandEditor({ keyword, onUpdate }: BrandEditorProps) {
       <div className="flex items-center justify-between">
         <div>
           <h4 className="font-medium">Brand: {keyword.brand_name}</h4>
-          <p className="text-sm text-muted-foreground">User: {keyword.user_email}</p>
+          <p className="text-sm text-muted-foreground">User: {keyword.user_full_name}</p>
         </div>
         <div className="flex gap-2">
           {!isEditing ? (
