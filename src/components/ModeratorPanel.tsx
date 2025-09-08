@@ -453,13 +453,12 @@ export function ModeratorPanel() {
                            <SelectTrigger className="w-32">
                              <SelectValue />
                            </SelectTrigger>
-                           <SelectContent>
-                             <SelectItem value="basic_user">Basic User</SelectItem>
-                             <SelectItem value="pr_user">PR User</SelectItem>
-                             <SelectItem value="legal_user">Legal User</SelectItem>
-                             <SelectItem value="moderator">Moderator</SelectItem>
-                             <SelectItem value="admin">Admin</SelectItem>
-                           </SelectContent>
+                            <SelectContent>
+                              <SelectItem value="basic_user">Basic User</SelectItem>
+                              <SelectItem value="pr_user">PR User</SelectItem>
+                              <SelectItem value="legal_user">Legal User</SelectItem>
+                              <SelectItem value="moderator">Moderator</SelectItem>
+                            </SelectContent>
                          </Select>
                        </TableCell>
                     </TableRow>
