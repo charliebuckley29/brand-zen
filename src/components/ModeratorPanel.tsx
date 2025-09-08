@@ -72,6 +72,17 @@ export function ModeratorPanel() {
     return userType === 'basic_user' || userType === 'pr_user';
   };
 
+  // Helper function to get badge variant for user types
+  const getUserBadgeVariant = (userType: UserType) => {
+    switch (userType) {
+      case 'admin': return 'destructive';
+      case 'moderator': return 'default';
+      case 'legal_user': return 'secondary';
+      case 'pr_user': return 'outline';
+      default: return 'secondary';
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -401,20 +412,16 @@ export function ModeratorPanel() {
                            </span>
                          )}
                        </TableCell>
-                       <TableCell>
-                         <Badge variant={
-                           user.user_type === 'admin' ? 'destructive' :
-                           user.user_type === 'moderator' ? 'default' : 
-                           'secondary'
-                         }>
-                           {user.user_type.replace('_', ' ')}
-                         </Badge>
-                         {!canEditUser(user.user_type) && (
-                           <span className="text-xs text-muted-foreground ml-2">
-                             (Protected)
-                           </span>
-                         )}
-                       </TableCell>
+                        <TableCell>
+                          <Badge variant={getUserBadgeVariant(user.user_type)}>
+                            {user.user_type.replace('_', ' ')}
+                          </Badge>
+                          {!canEditUser(user.user_type) && (
+                            <span className="text-xs text-muted-foreground ml-2">
+                              (Protected)
+                            </span>
+                          )}
+                        </TableCell>
                       <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                        <TableCell>
                          <div className="flex items-center gap-2">
@@ -451,6 +458,7 @@ export function ModeratorPanel() {
                              <SelectItem value="pr_user">PR User</SelectItem>
                              <SelectItem value="legal_user">Legal User</SelectItem>
                              <SelectItem value="moderator">Moderator</SelectItem>
+                             <SelectItem value="admin">Admin</SelectItem>
                            </SelectContent>
                          </Select>
                        </TableCell>
