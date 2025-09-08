@@ -44,7 +44,7 @@ export function AutomationStatus({ className }: AutomationStatusProps) {
     setIsManualFetching(true);
     try {
       const { data, error } = await supabase.functions.invoke('automated-mention-fetch', {
-        body: { manual: true }
+        body: { check_frequencies: false }
       });
 
       if (error) {
