@@ -91,26 +91,9 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <AutomationStatus />
+        <AutomationStatus onMentionsUpdated={onMentionsUpdated} />
         
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button 
-            onClick={handleRefreshMentions}
-            disabled={isRefreshing}
-            className="w-full sm:w-auto"
-          >
-            {isRefreshing ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Refreshing...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh mentions
-              </>
-            )}
-          </Button>
           <Button 
             variant="outline"
             onClick={() => setExclusionsOpen(true)}

@@ -9,9 +9,10 @@ import { useFetchFrequency } from "@/hooks/useFetchFrequency";
 
 interface AutomationStatusProps {
   className?: string;
+  onMentionsUpdated?: () => void;
 }
 
-export function AutomationStatus({ className }: AutomationStatusProps) {
+export function AutomationStatus({ className, onMentionsUpdated }: AutomationStatusProps) {
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
   const [isManualFetching, setIsManualFetching] = useState(false);
   const [automationEnabled, setAutomationEnabled] = useState(true);
@@ -43,25 +44,31 @@ export function AutomationStatus({ className }: AutomationStatusProps) {
   const triggerManualFetch = async () => {
     setIsManualFetching(true);
     try {
-      const { data, error } = await supabase.functions.invoke('automated-mention-fetch', {
-        body: { check_frequencies: false }
-      });
-
-      if (error) {
-        throw error;
+      const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
+      const googleAlertsEnabled = (typeof window !== 'undefined') ? localStorage.getItem('google_alerts_enabled') !== 'false' : true;
+      
+      const calls = [supabase.functions.invoke('aggregate-sources', { body: {} })];
+      if (rssEnabled) calls.push(supabase.functions.invoke('monitor-news', { body: {} }));
+      if (googleAlertsEnabled) calls.push(supabase.functions.invoke('google-alerts', { body: {} }));
+      
+      await Promise.allSettled(calls as any);
+      
+      // Update mentions display if callback provided
+      if (onMentionsUpdated) {
+        await onMentionsUpdated();
       }
 
       toast({
-        title: "Manual fetch triggered",
-        description: `Processing ${data?.processed_keywords || 0} keywords for new mentions`,
+        title: "Mentions refreshed",
+        description: "Fetched latest mentions from all sources",
       });
 
       setLastFetch(new Date());
     } catch (error: any) {
       console.error('Manual fetch error:', error);
       toast({
-        title: "Fetch failed",
-        description: error.message || "Failed to trigger manual fetch",
+        title: "Refresh failed",
+        description: error.message || "Could not fetch new mentions",
         variant: "destructive",
       });
     } finally {
