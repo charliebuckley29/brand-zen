@@ -10,7 +10,8 @@ import {
   Bell,
   Menu,
   X,
-  Shield
+  Shield,
+  HelpCircle
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useUserRole } from "@/hooks/use-user-role";
@@ -47,6 +48,12 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
       label: "Settings",
       icon: Settings
     },
+    {
+      id: "help",
+      label: "Help & Support",
+      icon: HelpCircle,
+      isExternal: true
+    },
     ...(isModerator ? [{
       id: "moderator",
       label: "Moderator Panel",
@@ -54,25 +61,33 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
     }] : [])
   ];
 
-  const NavButton = ({ item, className = "" }: { item: typeof navItems[0], className?: string }) => (
-    <Button
-      key={item.id}
-      variant={currentView === item.id ? "default" : "ghost"}
-      onClick={() => {
+  const NavButton = ({ item, className = "" }: { item: typeof navItems[0], className?: string }) => {
+    const handleClick = () => {
+      if (item.isExternal) {
+        window.location.href = '/help';
+      } else {
         onViewChange(item.id);
         setIsMobileMenuOpen(false);
-      }}
-      className={cn("justify-start", className)}
-    >
-      <item.icon className="h-4 w-4 mr-2" />
-      {item.label}
-      {item.badge && (
-        <Badge variant="destructive" className="ml-auto">
-          {item.badge}
-        </Badge>
-      )}
-    </Button>
-  );
+      }
+    };
+
+    return (
+      <Button
+        key={item.id}
+        variant={currentView === item.id ? "default" : "ghost"}
+        onClick={handleClick}
+        className={cn("justify-start", className)}
+      >
+        <item.icon className="h-4 w-4 mr-2" />
+        {item.label}
+        {item.badge && (
+          <Badge variant="destructive" className="ml-auto">
+            {item.badge}
+          </Badge>
+        )}
+      </Button>
+    );
+  };
 
   return (
     <>
