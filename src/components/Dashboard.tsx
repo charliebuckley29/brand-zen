@@ -10,7 +10,6 @@ import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw, Trash2 
 import { useToast } from "@/hooks/use-toast";
 import { excludeMention } from "@/lib/monitoring";
 import { useSourcePreferences } from "@/hooks/useSourcePreferences";
-import { AutomationStatus } from "@/components/AutomationStatus";
 import { RealtimeIndicator } from "@/components/RealtimeIndicator";
 
 interface Mention {
@@ -223,7 +222,7 @@ export function Dashboard() {
       </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium">Total Mentions</CardTitle>
@@ -273,8 +272,6 @@ export function Dashboard() {
               <div className="text-lg sm:text-2xl font-bold text-warning">{stats.flagged}</div>
             </CardContent>
           </Card>
-
-          <AutomationStatus />
         </div>
 
         {/* Monitoring Controls */}
