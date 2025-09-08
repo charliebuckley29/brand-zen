@@ -86,18 +86,23 @@ export default function AdminPanel() {
   };
 
   const getApiStatus = (keyConfig: ApiKey) => {
-    const hasKey = !!keyConfig.api_key;
-    const hasAdditionalConfig = Object.keys(keyConfig.additional_config || {}).some(key => 
-      keyConfig.additional_config[key] !== null && keyConfig.additional_config[key] !== ""
-    );
+    const hasKey = keyConfig.api_key === 'configured_in_secrets' || !!keyConfig.api_key;
+    
+    // Check additional config requirements
+    let hasAdditionalConfig = true;
+    if (keyConfig.source_name === 'google_cse') {
+      hasAdditionalConfig = keyConfig.additional_config?.cx_id === 'configured_in_secrets' || !!keyConfig.additional_config?.cx_id;
+    } else if (keyConfig.source_name === 'reddit') {
+      hasAdditionalConfig = keyConfig.additional_config?.client_secret === 'configured_in_secrets' || !!keyConfig.additional_config?.client_secret;
+    } else if (keyConfig.source_name === 'x_twitter') {
+      hasAdditionalConfig = keyConfig.additional_config?.bearer_token === 'configured_in_secrets' || !!keyConfig.additional_config?.bearer_token;
+    }
     
     if (!hasKey) {
       return { status: "missing", label: "No API Key", color: "destructive" as const };
     }
     
-    // Check if additional config is required but missing
-    const sourceRequiresAdditional = keyConfig.source_name === 'google_cse' || keyConfig.source_name === 'reddit';
-    if (sourceRequiresAdditional && !hasAdditionalConfig) {
+    if (!hasAdditionalConfig) {
       return { status: "incomplete", label: "Incomplete Config", color: "secondary" as const };
     }
     
