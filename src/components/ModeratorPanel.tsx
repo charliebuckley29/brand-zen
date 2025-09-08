@@ -53,6 +53,17 @@ export function ModeratorPanel() {
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userDetailOpen, setUserDetailOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editingProfile, setEditingProfile] = useState({
+    full_name: '',
+    email: '',
+    phone_number: '',
+    brand_name: '',
+    variants: '',
+    google_alert_rss_url: ''
+  });
+  const [selectedUserKeywords, setSelectedUserKeywords] = useState<UserKeywords | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -203,6 +214,68 @@ export function ModeratorPanel() {
     }
   };
 
+  const updateUserProfile = async (userId: string, profileData: typeof editingProfile) => {
+    try {
+      setIsUpdating(true);
+
+      // Update profile information
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          full_name: profileData.full_name,
+          phone_number: profileData.phone_number || null
+        })
+        .eq("user_id", userId);
+
+      if (profileError) throw profileError;
+
+      // Update or create keywords if brand information is provided
+      if (profileData.brand_name) {
+        const variantsArray = profileData.variants.split(',').map(v => v.trim()).filter(v => v);
+        
+        const { error: keywordError } = await supabase
+          .from("keywords")
+          .upsert({
+            user_id: userId,
+            brand_name: profileData.brand_name,
+            variants: variantsArray,
+            google_alert_rss_url: profileData.google_alert_rss_url || null
+          }, {
+            onConflict: 'user_id'
+          });
+
+        if (keywordError) throw keywordError;
+      }
+
+      // Update email if it has changed
+      if (profileData.email !== selectedUser?.email) {
+        // Note: This would require admin privileges or a custom function
+        // For now, we'll skip email updates and inform the user
+        toast({
+          title: "Profile Updated",
+          description: "Profile updated successfully. Email changes require direct admin access.",
+        });
+      } else {
+        toast({
+          title: "Profile Updated",
+          description: "User profile updated successfully"
+        });
+      }
+
+      setEditMode(false);
+      fetchData(); // Refresh data
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update user profile",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -268,6 +341,17 @@ export function ModeratorPanel() {
                           className="p-0 h-auto font-medium"
                           onClick={() => {
                             setSelectedUser(user);
+                            const userKeyword = userKeywords.find(k => k.user_id === user.id);
+                            setSelectedUserKeywords(userKeyword || null);
+                            setEditingProfile({
+                              full_name: user.full_name,
+                              email: user.email,
+                              phone_number: user.phone_number || '',
+                              brand_name: userKeyword?.brand_name || '',
+                              variants: userKeyword?.variants?.join(', ') || '',
+                              google_alert_rss_url: userKeyword?.google_alert_rss_url || ''
+                            });
+                            setEditMode(false);
                             setUserDetailOpen(true);
                           }}
                         >
@@ -380,43 +464,167 @@ export function ModeratorPanel() {
 
       {/* User Details Dialog */}
       <Dialog open={userDetailOpen} onOpenChange={setUserDetailOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>User Details</DialogTitle>
+            <DialogTitle>
+              {editMode ? 'Edit User Profile' : 'User Details'}
+            </DialogTitle>
             <DialogDescription>
-              Detailed information for {selectedUser?.full_name}
+              {editMode 
+                ? `Edit profile information for ${selectedUser?.full_name}`
+                : `Detailed information for ${selectedUser?.full_name}`
+              }
             </DialogDescription>
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-4">
-              <div className="grid gap-3">
-                <div>
-                  <Label className="text-sm font-medium">Full Name</Label>
-                  <p className="text-sm text-muted-foreground">{selectedUser.full_name}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Email</Label>
-                  <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Phone Number</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedUser.phone_number || 'Not provided'}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Role</Label>
-                  <Badge variant={selectedUser.user_type === 'moderator' ? 'default' : 'secondary'}>
-                    {selectedUser.user_type.replace('_', ' ')}
-                  </Badge>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Member Since</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(selectedUser.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
+              {!editMode ? (
+                <>
+                  <div className="grid gap-3">
+                    <div>
+                      <Label className="text-sm font-medium">Full Name</Label>
+                      <p className="text-sm text-muted-foreground">{selectedUser.full_name}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Email</Label>
+                      <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Phone Number</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedUser.phone_number || 'Not provided'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Role</Label>
+                      <Badge variant={selectedUser.user_type === 'moderator' ? 'default' : 'secondary'}>
+                        {selectedUser.user_type.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                    {selectedUserKeywords && (
+                      <>
+                        <div>
+                          <Label className="text-sm font-medium">Brand Name</Label>
+                          <p className="text-sm text-muted-foreground">{selectedUserKeywords.brand_name}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">Brand Variants</Label>
+                          <p className="text-sm text-muted-foreground">
+                            {selectedUserKeywords.variants?.join(', ') || 'None'}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">Google Alert RSS URL</Label>
+                          <p className="text-sm text-muted-foreground break-all">
+                            {selectedUserKeywords.google_alert_rss_url || 'Not configured'}
+                          </p>
+                        </div>
+                      </>
+                    )}
+                    <div>
+                      <Label className="text-sm font-medium">Member Since</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(selectedUser.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setUserDetailOpen(false)}>
+                      Close
+                    </Button>
+                    <Button onClick={() => setEditMode(true)}>
+                      Edit Profile
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid gap-4">
+                    <div>
+                      <Label htmlFor="edit-fullname">Full Name</Label>
+                      <Input
+                        id="edit-fullname"
+                        value={editingProfile.full_name}
+                        onChange={(e) => setEditingProfile(prev => ({ ...prev, full_name: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-email">Email</Label>
+                      <Input
+                        id="edit-email"
+                        type="email"
+                        value={editingProfile.email}
+                        onChange={(e) => setEditingProfile(prev => ({ ...prev, email: e.target.value }))}
+                        disabled
+                        className="opacity-50"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Email changes require admin access</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-phone">Phone Number</Label>
+                      <Input
+                        id="edit-phone"
+                        type="tel"
+                        value={editingProfile.phone_number}
+                        onChange={(e) => setEditingProfile(prev => ({ ...prev, phone_number: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-brand">Brand Name</Label>
+                      <Input
+                        id="edit-brand"
+                        value={editingProfile.brand_name}
+                        onChange={(e) => setEditingProfile(prev => ({ ...prev, brand_name: e.target.value }))}
+                        placeholder="Enter brand name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-variants">Brand Variants (comma-separated)</Label>
+                      <Input
+                        id="edit-variants"
+                        value={editingProfile.variants}
+                        onChange={(e) => setEditingProfile(prev => ({ ...prev, variants: e.target.value }))}
+                        placeholder="variant1, variant2, variant3"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-rss">Google Alert RSS URL</Label>
+                      <Textarea
+                        id="edit-rss"
+                        value={editingProfile.google_alert_rss_url}
+                        onChange={(e) => setEditingProfile(prev => ({ ...prev, google_alert_rss_url: e.target.value }))}
+                        placeholder="https://www.google.com/alerts/feeds/..."
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setEditMode(false);
+                        setEditingProfile({
+                          full_name: selectedUser.full_name,
+                          email: selectedUser.email,
+                          phone_number: selectedUser.phone_number || '',
+                          brand_name: selectedUserKeywords?.brand_name || '',
+                          variants: selectedUserKeywords?.variants?.join(', ') || '',
+                          google_alert_rss_url: selectedUserKeywords?.google_alert_rss_url || ''
+                        });
+                      }}
+                      disabled={isUpdating}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={() => updateUserProfile(selectedUser.id, editingProfile)}
+                      disabled={isUpdating || !editingProfile.full_name.trim()}
+                    >
+                      {isUpdating ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </DialogContent>
