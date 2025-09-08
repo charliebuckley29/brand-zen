@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Eye, EyeOff, Save, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Save, ArrowLeft, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SOURCES } from "@/config/sources";
 
 type ApiKey = {
   id: string;
@@ -83,7 +85,34 @@ export default function AdminPanel() {
     });
   };
 
+  const getApiStatus = (keyConfig: ApiKey) => {
+    const hasKey = !!keyConfig.api_key;
+    const hasAdditionalConfig = Object.keys(keyConfig.additional_config || {}).some(key => 
+      keyConfig.additional_config[key] !== null && keyConfig.additional_config[key] !== ""
+    );
+    
+    if (!hasKey) {
+      return { status: "missing", label: "No API Key", color: "destructive" as const };
+    }
+    
+    // Check if additional config is required but missing
+    const sourceRequiresAdditional = keyConfig.source_name === 'google_cse' || keyConfig.source_name === 'reddit';
+    if (sourceRequiresAdditional && !hasAdditionalConfig) {
+      return { status: "incomplete", label: "Incomplete Config", color: "secondary" as const };
+    }
+    
+    if (!keyConfig.is_active) {
+      return { status: "inactive", label: "Configured (Inactive)", color: "secondary" as const };
+    }
+    
+    return { status: "active", label: "Active & Configured", color: "default" as const };
+  };
+
   const formatSourceName = (name: string) => {
+    const sourceKey = name.toLowerCase().replace('_', '') as keyof typeof SOURCES;
+    if (SOURCES[sourceKey]) {
+      return SOURCES[sourceKey].name;
+    }
     return name.split('_').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
@@ -139,10 +168,21 @@ export default function AdminPanel() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {apiKeys.map((keyConfig) => (
+          {apiKeys.map((keyConfig) => {
+            const apiStatus = getApiStatus(keyConfig);
+            return (
             <div key={keyConfig.id} className="border rounded-lg p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{formatSourceName(keyConfig.source_name)}</h3>
+                <div className="flex items-center gap-3">
+                  <h3 className="font-semibold">{formatSourceName(keyConfig.source_name)}</h3>
+                  <Badge variant={apiStatus.color} className="flex items-center gap-1">
+                    {apiStatus.status === "active" && <CheckCircle className="h-3 w-3" />}
+                    {apiStatus.status === "inactive" && <AlertCircle className="h-3 w-3" />}
+                    {apiStatus.status === "missing" && <XCircle className="h-3 w-3" />}
+                    {apiStatus.status === "incomplete" && <AlertCircle className="h-3 w-3" />}
+                    {apiStatus.label}
+                  </Badge>
+                </div>
                 <div className="flex items-center space-x-2">
                   <Switch
                     checked={keyConfig.is_active}
@@ -252,6 +292,45 @@ export default function AdminPanel() {
                   </div>
                 )}
 
+                {keyConfig.source_name === 'x_twitter' && (
+                  <div>
+                    <Label htmlFor={`bearer-${keyConfig.id}`}>Bearer Token</Label>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        id={`bearer-${keyConfig.id}`}
+                        type={visibleKeys.has(`${keyConfig.id}-bearer`) ? "text" : "password"}
+                        value={keyConfig.additional_config?.bearer_token || ""}
+                        onChange={(e) => {
+                          setApiKeys(prev => prev.map(key =>
+                            key.id === keyConfig.id 
+                              ? { 
+                                  ...key, 
+                                  additional_config: { 
+                                    ...key.additional_config, 
+                                    bearer_token: e.target.value 
+                                  }
+                                }
+                              : key
+                          ));
+                        }}
+                        placeholder="Enter X API Bearer Token..."
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleKeyVisibility(`${keyConfig.id}-bearer`)}
+                      >
+                        {visibleKeys.has(`${keyConfig.id}-bearer`) ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <Button
                   onClick={() => updateApiKey(keyConfig.id, {
                     api_key: keyConfig.api_key,
@@ -265,7 +344,8 @@ export default function AdminPanel() {
                 </Button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
     </div>

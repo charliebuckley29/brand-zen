@@ -124,6 +124,27 @@ export const SOURCES: Record<SourceType, SourceConfig> = {
       "Limited by Google CSE quotas",
       "May not index all web content immediately"
     ]
+  },
+  x: {
+    id: "x",
+    name: "X (Twitter)",
+    category: "social",
+    description: "Posts, replies, and mentions from X (formerly Twitter)",
+    examples: [
+      "Brand mentions in tweets",
+      "Customer complaints and feedback",
+      "Product discussions",
+      "Trending topics and hashtags",
+      "User-generated content"
+    ],
+    implemented: true,
+    apiProvider: "X API v2",
+    implementationNotes: "Monitors public posts and replies for brand mentions",
+    limitations: [
+      "500,000 tweets per month on Basic tier",
+      "Public content only",
+      "Rate limited by X API"
+    ]
   }
 };
 
@@ -146,14 +167,6 @@ export const getAllSourceTypes = (): SourceType[] => {
 
 // For future expansion - sources we're planning to implement
 export const PLANNED_SOURCES: Partial<Record<string, Omit<SourceConfig, 'id' | 'implemented'>>> = {
-  twitter: {
-    name: "Twitter/X",
-    category: "social",
-    description: "Tweets and Twitter conversations",
-    examples: ["Public tweets", "Twitter threads", "Hashtag mentions"],
-    apiProvider: "Twitter API v2",
-    limitations: ["Requires Twitter API access", "Rate limited"]
-  },
   linkedin: {
     name: "LinkedIn", 
     category: "social",
