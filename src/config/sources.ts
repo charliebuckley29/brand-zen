@@ -1,3 +1,5 @@
+import { Globe, MessageSquare, Youtube, FileText, Twitter } from "lucide-react";
+
 export type SourceType = "web" | "news" | "reddit" | "youtube" | "x";
 
 export type SourceCategory = "news" | "social" | "web" | "video";
@@ -12,6 +14,13 @@ export interface SourceConfig {
   implementationNotes?: string;
   apiProvider?: string;
   limitations?: string[];
+  icon?: any; // Lucide React icon component
+  configFields?: Array<{
+    name: string;
+    label: string;
+    placeholder?: string;
+    type?: string;
+  }>;
 }
 
 export interface SourceCategoryConfig {
@@ -64,7 +73,16 @@ export const SOURCES: Record<SourceType, SourceConfig> = {
     ],
     implemented: true,
     apiProvider: "GNews API",
-    implementationNotes: "Covers major news sources globally with real-time updates"
+    implementationNotes: "Covers major news sources globally with real-time updates",
+    icon: FileText,
+    configFields: [
+      {
+        name: "country",
+        label: "Country Code",
+        placeholder: "e.g., us, gb, ca",
+        type: "text"
+      }
+    ]
   },
   reddit: {
     id: "reddit",
@@ -84,6 +102,15 @@ export const SOURCES: Record<SourceType, SourceConfig> = {
     limitations: [
       "Rate limited by Reddit API",
       "May miss some private subreddits"
+    ],
+    icon: MessageSquare,
+    configFields: [
+      {
+        name: "user_agent",
+        label: "User Agent",
+        placeholder: "e.g., YourApp/1.0",
+        type: "text"
+      }
     ]
   },
   youtube: {
@@ -103,7 +130,8 @@ export const SOURCES: Record<SourceType, SourceConfig> = {
     limitations: [
       "Limited by YouTube API quotas",
       "Cannot access private videos or comments"
-    ]
+    ],
+    icon: Youtube
   },
   web: {
     id: "web",
@@ -123,6 +151,15 @@ export const SOURCES: Record<SourceType, SourceConfig> = {
     limitations: [
       "Limited by Google CSE quotas",
       "May not index all web content immediately"
+    ],
+    icon: Globe,
+    configFields: [
+      {
+        name: "search_engine_id",
+        label: "Custom Search Engine ID",
+        placeholder: "Your Google CSE ID",
+        type: "text"
+      }
     ]
   },
   x: {
@@ -144,7 +181,8 @@ export const SOURCES: Record<SourceType, SourceConfig> = {
       "500,000 tweets per month on Basic tier",
       "Public content only",
       "Rate limited by X API"
-    ]
+    ],
+    icon: Twitter
   }
 };
 
