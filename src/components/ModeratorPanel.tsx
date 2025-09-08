@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Flag, Settings as SettingsIcon, AlertTriangle } from "lucide-react";
 import type { UserType } from "@/hooks/use-user-role";
+import { GlobalSettingSwitch } from "@/components/GlobalSettingSwitch";
 
 interface User {
   id: string;
@@ -335,25 +336,25 @@ export function ModeratorPanel() {
         <TabsContent value="brands" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Brand Management</CardTitle>
+              <CardTitle>Global Settings</CardTitle>
               <CardDescription>
-                Manage user brand names, variants, and Google Alert RSS URLs
+                Configure global application settings that affect all users
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {userKeywords.map((keyword) => (
-                  <BrandEditor
-                    key={keyword.id}
-                    keyword={keyword}
-                    onUpdate={updateUserBrand}
-                  />
-                ))}
-                {userKeywords.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No brand keywords found
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-base font-medium">Allow users to change brand names</Label>
+                    <p className="text-sm text-muted-foreground">
+                      When disabled, basic users cannot modify their brand names or variants
+                    </p>
                   </div>
-                )}
+                  <GlobalSettingSwitch 
+                    settingKey="usersCanChangeBrandName"
+                    onUpdate={fetchData}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

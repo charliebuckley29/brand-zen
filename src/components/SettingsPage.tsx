@@ -6,13 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X, Globe, Newspaper, Youtube, MessageSquare, Rss } from "lucide-react";
+import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X, Globe, Newspaper, Youtube, MessageSquare, Rss, AlertCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { startMonitoring } from "@/lib/monitoring";
 import { Switch } from "@/components/ui/switch";
 import { useSourcePreferences } from "@/hooks/useSourcePreferences";
+import { useGlobalSettings } from "@/hooks/useGlobalSettings";
+import { useUserRole } from "@/hooks/use-user-role";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 interface SettingsPageProps {
   onSignOut: () => void;
 }
@@ -43,10 +46,17 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [isCreatingBrand, setIsCreatingBrand] = useState(false);
   
   const { toast } = useToast();
+  const { userType } = useUserRole();
+  const { getSetting, loading: globalSettingsLoading } = useGlobalSettings();
 
   const { loading: prefsLoading, prefs, setPref, setAllForSource } = useSourcePreferences();
   const [rssEnabled, setRssEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('rss_news_ingestion') !== 'false' : true));
   const [googleAlertsEnabled, setGoogleAlertsEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('google_alerts_enabled') !== 'false' : true));
+
+  // Check if user can change brand name
+  const canChangeBrandName = globalSettingsLoading 
+    ? true // Show enabled while loading to prevent flicker
+    : getSetting('usersCanChangeBrandName', true) || userType === 'moderator';
 
   useEffect(() => {
     fetchBrandData();
@@ -350,6 +360,14 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {!canChangeBrandName && userType !== 'moderator' && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Brand name editing is currently disabled. Please contact support to change your brand name.
+                </AlertDescription>
+              </Alert>
+            )}
             {brandData ? (
               <>
                 {/* Brand Name */}
@@ -360,7 +378,12 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   </div>
                   <Dialog open={brandDialogOpen} onOpenChange={setBrandDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        disabled={!canChangeBrandName}
+                        className={!canChangeBrandName ? "opacity-50 cursor-not-allowed" : ""}
+                      >
                         Edit Brand
                       </Button>
                     </DialogTrigger>
@@ -423,7 +446,12 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   </div>
                   <Dialog open={variantsDialogOpen} onOpenChange={setVariantsDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        disabled={!canChangeBrandName}
+                        className={!canChangeBrandName ? "opacity-50 cursor-not-allowed" : ""}
+                      >
                         Edit Variants
                       </Button>
                     </DialogTrigger>

@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      global_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       keywords: {
         Row: {
           brand_name: string
@@ -252,6 +279,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_global_setting: {
+        Args: { _setting_key: string }
+        Returns: Json
+      }
       get_user_type: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["user_type"]
