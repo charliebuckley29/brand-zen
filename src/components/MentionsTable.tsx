@@ -11,6 +11,7 @@ interface Mention {
   id: string;
   source_name: string;
   source_url: string;
+  source_type: string;
   published_at: string;
   content_snippet: string;
   full_text: string | null;

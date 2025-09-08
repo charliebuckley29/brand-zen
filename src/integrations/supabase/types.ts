@@ -358,6 +358,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      trigger_mention_fetch: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_user_email_by_moderator: {
         Args: { new_email: string; target_user_id: string }
         Returns: boolean

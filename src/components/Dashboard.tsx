@@ -10,11 +10,13 @@ import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw, Trash2 
 import { useToast } from "@/hooks/use-toast";
 import { excludeMention } from "@/lib/monitoring";
 import { useSourcePreferences } from "@/hooks/useSourcePreferences";
+import { AutomationStatus } from "@/components/AutomationStatus";
 
 interface Mention {
   id: string;
   source_name: string;
   source_url: string;
+  source_type: string;
   published_at: string;
   content_snippet: string;
   full_text: string | null;
@@ -48,6 +50,40 @@ export function Dashboard() {
   useEffect(() => {
     fetchMentions();
   }, [enabledMentions, currentPage, pageSize]);
+
+  // Set up realtime subscription for new mentions
+  useEffect(() => {
+    const channel = supabase
+      .channel('mentions-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'mentions'
+        },
+        (payload) => {
+          console.log('New mention received via realtime:', payload.new);
+          
+          // Add the new mention to the existing list if it passes filters
+          const newMention = payload.new as Mention;
+          if (enabledMentions.includes(newMention.source_type as any)) {
+            setMentions(prev => [newMention, ...prev.slice(0, pageSize - 1)]);
+            
+            // Show toast notification for new mention
+            toast({
+              title: "New mention found!",
+              description: `From ${newMention.source_name}: ${newMention.content_snippet.slice(0, 100)}...`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [enabledMentions, pageSize, toast]);
 
   const fetchMentions = async () => {
   console.log('FETCH MENTIONS CALLED');
@@ -185,7 +221,7 @@ export function Dashboard() {
       </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium">Total Mentions</CardTitle>
@@ -235,6 +271,8 @@ export function Dashboard() {
               <div className="text-lg sm:text-2xl font-bold text-warning">{stats.flagged}</div>
             </CardContent>
           </Card>
+
+          <AutomationStatus />
         </div>
 
         {/* Monitoring Controls */}

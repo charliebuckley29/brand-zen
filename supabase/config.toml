@@ -64,6 +64,9 @@ verify_jwt = true
 [functions.notify-n8n-new-mention]
 enabled = true
 verify_jwt = true
+
+[functions.automated-mention-fetch]
+verify_jwt = false
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/notify-n8n-new-mention/*.html" ]
