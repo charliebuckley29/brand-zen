@@ -56,7 +56,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   // Check if user can change brand name
   const canChangeBrandName = globalSettingsLoading 
     ? true // Show enabled while loading to prevent flicker
-    : getSetting('usersCanChangeBrandName', true) || userType === 'moderator';
+    : getSetting('usersCanChangeBrandName', true);
 
   useEffect(() => {
     fetchBrandData();
@@ -360,7 +360,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {!canChangeBrandName && userType !== 'moderator' && (
+            {!canChangeBrandName && (
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
