@@ -25,20 +25,17 @@ Deno.serve(async (req) => {
 
     console.log('🔄 Starting automated mention fetch...');
 
-    // Get all active keywords for all users with their fetch frequencies
-    const { data: usersWithKeywords, error: keywordsError } = await supabase
+    // Get all active keywords
+    const { data: keywords, error: keywordsError } = await supabase
       .from('keywords')
-      .select(`
-        *,
-        profiles!inner(fetch_frequency_minutes)
-      `);
+      .select('*');
 
     if (keywordsError) {
-      console.error('Error fetching keywords with profiles:', keywordsError);
+      console.error('Error fetching keywords:', keywordsError);
       throw keywordsError;
     }
 
-    if (!usersWithKeywords || usersWithKeywords.length === 0) {
+    if (!keywords || keywords.length === 0) {
       console.log('No keywords found for monitoring');
       return new Response(JSON.stringify({ 
         success: true, 
@@ -48,6 +45,30 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    // Get user profiles with fetch frequencies
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('user_id, fetch_frequency_minutes');
+
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
+      throw profilesError;
+    }
+
+    // Create a map of user_id to fetch frequency
+    const userFrequencies = new Map();
+    if (profiles) {
+      for (const profile of profiles) {
+        userFrequencies.set(profile.user_id, profile.fetch_frequency_minutes || 15);
+      }
+    }
+
+    // Add frequency data to keywords
+    const usersWithKeywords = keywords.map(keyword => ({
+      ...keyword,
+      fetch_frequency_minutes: userFrequencies.get(keyword.user_id) || 15
+    }));
 
     let eligibleKeywords = usersWithKeywords;
 
@@ -72,7 +93,7 @@ Deno.serve(async (req) => {
 
       // Filter keywords based on frequency
       eligibleKeywords = usersWithKeywords.filter(keyword => {
-        const userFrequency = keyword.profiles?.fetch_frequency_minutes || 15;
+        const userFrequency = keyword.fetch_frequency_minutes || 15;
         const lastFetch = userLastFetch.get(keyword.user_id);
         
         if (!lastFetch) {
@@ -109,7 +130,7 @@ Deno.serve(async (req) => {
     const results = await Promise.allSettled(
       eligibleKeywords.map(async (keyword) => {
         try {
-          console.log(`🔍 Fetching mentions for keyword: ${keyword.brand_name} (freq: ${keyword.profiles?.fetch_frequency_minutes || 15}min)`);
+          console.log(`🔍 Fetching mentions for keyword: ${keyword.brand_name} (freq: ${keyword.fetch_frequency_minutes || 15}min)`);
           
           // Use service key to make authenticated requests
           const response = await fetch(`${supabaseUrl}/functions/v1/aggregate-sources`, {
