@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { useSourcePreferences } from "@/hooks/useSourcePreferences";
 import { useGlobalSettings } from "@/hooks/useGlobalSettings";
 import { useUserRole } from "@/hooks/use-user-role";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 interface SettingsPageProps {
   onSignOut: () => void;
@@ -49,6 +50,12 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   
+  // Profile management state
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [profileFullName, setProfileFullName] = useState("");
+  const [profilePhoneNumber, setProfilePhoneNumber] = useState("");
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  
   // Brand management state
   const [brandData, setBrandData] = useState<{ id: string; brand_name: string; variants: string[] } | null>(null);
   const [newBrandName, setNewBrandName] = useState("");
@@ -67,6 +74,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const { toast } = useToast();
   const { userType } = useUserRole();
   const { getSetting, loading: globalSettingsLoading } = useGlobalSettings();
+  const { profileData, loading: profileLoading, updateProfile } = useProfileCompletion();
 
   const { loading: prefsLoading, prefs, setPref, setAllForSource } = useSourcePreferences();
   const [rssEnabled, setRssEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('rss_news_ingestion') !== 'false' : true));
@@ -80,6 +88,14 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   useEffect(() => {
     fetchBrandData();
   }, []);
+
+  // Update profile form when profile data changes
+  useEffect(() => {
+    if (profileData) {
+      setProfileFullName(profileData.full_name || "");
+      setProfilePhoneNumber(profileData.phone_number || "");
+    }
+  }, [profileData]);
   const fetchBrandData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -333,6 +349,41 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       setIsUpdatingPassword(false);
     }
   };
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profileFullName.trim()) {
+      toast({
+        title: "Name required",
+        description: "Please enter your full name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdatingProfile(true);
+    try {
+      const result = await updateProfile(profileFullName, profilePhoneNumber);
+      
+      if (result.success) {
+        setProfileDialogOpen(false);
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been successfully updated.",
+        });
+      } else {
+        throw new Error("Failed to update profile");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error updating profile",
+        description: error.message || "Failed to update profile.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
   return (
     <div className="space-y-6">
       <div>
@@ -364,6 +415,105 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
               </div>
               <ThemeToggle />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Profile */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Profile Information
+            </CardTitle>
+            <CardDescription>
+              Manage your personal information and contact details
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {profileLoading ? (
+              <div className="text-sm text-muted-foreground">Loading profile...</div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium">Full Name</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {profileData?.full_name || "Not set"}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium">Phone Number</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {profileData?.phone_number || "Not set"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        Edit Profile
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Edit Profile</DialogTitle>
+                        <DialogDescription>
+                          Update your personal information and contact details.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleProfileUpdate} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="fullName">Full Name *</Label>
+                          <Input
+                            id="fullName"
+                            type="text"
+                            placeholder="Enter your full name"
+                            value={profileFullName}
+                            onChange={(e) => setProfileFullName(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="phoneNumber">Phone Number</Label>
+                          <Input
+                            id="phoneNumber"
+                            type="tel"
+                            placeholder="Enter your phone number (optional)"
+                            value={profilePhoneNumber}
+                            onChange={(e) => setProfilePhoneNumber(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => {
+                              setProfileDialogOpen(false);
+                              // Reset form to current data
+                              setProfileFullName(profileData?.full_name || "");
+                              setProfilePhoneNumber(profileData?.phone_number || "");
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            type="submit" 
+                            disabled={isUpdatingProfile || !profileFullName.trim()}
+                          >
+                            {isUpdatingProfile ? "Updating..." : "Update Profile"}
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
