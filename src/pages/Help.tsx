@@ -37,15 +37,15 @@ const Help = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
+        <div className="container max-w-7xl mx-auto px-4 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <HelpCircle className="h-6 w-6 text-primary" />
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-primary/10">
+                <HelpCircle className="h-4 w-4 sm:h-6 sm:w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Help & Documentation</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-2xl sm:text-3xl font-bold">Help & Documentation</h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
                   Complete guide to using your brand monitoring platform
                 </p>
               </div>
@@ -53,7 +53,7 @@ const Help = () => {
             <Button 
               variant="outline" 
               onClick={() => window.location.href = '/'}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 w-full sm:w-auto"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to App
@@ -63,57 +63,76 @@ const Help = () => {
       </div>
 
       {/* Content */}
-      <div className="container max-w-7xl mx-auto px-4 py-8">
-        <Tabs defaultValue="getting-started" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
-            <TabsTrigger value="getting-started">Getting Started</TabsTrigger>
-            <TabsTrigger value="features">Features</TabsTrigger>
-            <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
-            <TabsTrigger value="admin">Administration</TabsTrigger>
-            <TabsTrigger value="support">Support</TabsTrigger>
-          </TabsList>
+      <div className="container max-w-7xl mx-auto px-4 py-6 sm:py-8">
+        <Tabs defaultValue="getting-started" className="space-y-4 sm:space-y-6">
+          <div className="block sm:hidden">
+            <TabsList className="grid w-full grid-cols-1 gap-1 h-auto p-1">
+              <TabsTrigger value="getting-started" className="text-xs px-2 py-1.5 h-auto">
+                Getting Started
+              </TabsTrigger>
+              <TabsTrigger value="features" className="text-xs px-2 py-1.5 h-auto">Features</TabsTrigger>
+              <TabsTrigger value="monitoring" className="text-xs px-2 py-1.5 h-auto">
+                Monitoring
+              </TabsTrigger>
+              <TabsTrigger value="admin" className="text-xs px-2 py-1.5 h-auto">Administration</TabsTrigger>
+              <TabsTrigger value="support" className="text-xs px-2 py-1.5 h-auto">Support</TabsTrigger>
+            </TabsList>
+          </div>
+          <div className="hidden sm:block">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 gap-1 h-auto p-1">
+              <TabsTrigger value="getting-started" className="text-sm px-3 py-2 h-auto">
+                Getting Started
+              </TabsTrigger>
+              <TabsTrigger value="features" className="text-sm px-3 py-2 h-auto">Features</TabsTrigger>
+              <TabsTrigger value="monitoring" className="text-sm px-3 py-2 h-auto">
+                Monitoring
+              </TabsTrigger>
+              <TabsTrigger value="admin" className="text-sm px-3 py-2 h-auto">Administration</TabsTrigger>
+              <TabsTrigger value="support" className="text-sm px-3 py-2 h-auto">Support</TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Getting Started */}
-          <TabsContent value="getting-started" className="space-y-6">
+          <TabsContent value="getting-started" className="space-y-4 sm:space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <User className="h-4 w-4 sm:h-5 sm:w-5" />
                   Getting Started
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   Welcome to your brand monitoring platform. Follow these steps to get started.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-6">
-                  <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">1. Complete Your Profile</h3>
-                    <p className="text-muted-foreground">
+              <CardContent className="space-y-4 sm:space-y-6">
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="space-y-2 sm:space-y-3">
+                    <h3 className="text-base sm:text-lg font-semibold">1. Complete Your Profile</h3>
+                    <p className="text-sm sm:text-base text-muted-foreground">
                       After signing up, you'll be prompted to complete your profile with your full name and phone number. 
                       This information helps our support team assist you effectively.
                     </p>
                   </div>
 
-                  <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">2. Set Up Brand Monitoring</h3>
-                    <p className="text-muted-foreground">
+                  <div className="space-y-2 sm:space-y-3">
+                    <h3 className="text-base sm:text-lg font-semibold">2. Set Up Brand Monitoring</h3>
+                    <p className="text-sm sm:text-base text-muted-foreground">
                       Configure your brand name and variants (alternative names or spellings) that you want to monitor across the web. 
                       This forms the foundation of your monitoring setup.
                     </p>
                   </div>
 
-                  <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">3. Configure Source Preferences</h3>
-                    <p className="text-muted-foreground">
+                  <div className="space-y-2 sm:space-y-3">
+                    <h3 className="text-base sm:text-lg font-semibold">3. Configure Source Preferences</h3>
+                    <p className="text-sm sm:text-base text-muted-foreground">
                       Choose which types of sources you want to monitor and how they appear in your mentions, analytics, and reports. 
                       You can always adjust these settings later.
                     </p>
                   </div>
 
-                  <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">4. Set Up Google Alerts (Optional)</h3>
-                    <p className="text-muted-foreground">
+                  <div className="space-y-2 sm:space-y-3">
+                    <h3 className="text-base sm:text-lg font-semibold">4. Set Up Google Alerts (Optional)</h3>
+                    <p className="text-sm sm:text-base text-muted-foreground">
                       Connect your Google Alerts RSS feed to significantly expand your monitoring coverage. 
                       This integration brings in mentions that Google discovers across the web.
                     </p>
@@ -124,16 +143,16 @@ const Help = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <Building2 className="h-4 w-4 sm:h-5 sm:w-5" />
                   Account Setup
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-semibold mb-2">User Roles</h3>
-                    <ul className="space-y-1 text-sm text-muted-foreground">
+                    <h3 className="font-semibold mb-2 text-sm sm:text-base">User Roles</h3>
+                    <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground">
                       <li>• <strong>Basic User:</strong> Monitor brands, view mentions, and generate reports</li>
                       <li>• <strong>PR User:</strong> All basic features plus advanced PR management tools</li>
                       <li>• <strong>Legal User:</strong> All features plus legal escalation management</li>
@@ -146,17 +165,17 @@ const Help = () => {
           </TabsContent>
 
           {/* Features */}
-          <TabsContent value="features" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
+          <TabsContent value="features" className="space-y-4 sm:space-y-6">
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Eye className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                     Mentions Overview
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2 text-sm">
+                  <ul className="space-y-2 text-xs sm:text-sm">
                     <li>• View detailed mention information</li>
                     <li>• Flag important mentions for review</li>
                     <li>• Add internal notes and escalation types</li>
@@ -168,13 +187,13 @@ const Help = () => {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
                     Reports
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2 text-sm">
+                  <ul className="space-y-2 text-xs sm:text-sm">
                     <li>• Monthly automated reports</li>
                     <li>• Sentiment breakdown analysis</li>
                     <li>• Top sources identification</li>
@@ -184,15 +203,15 @@ const Help = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="md:col-span-2">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Filter className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
                     Source Preferences
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2 text-sm">
+                  <ul className="space-y-2 text-xs sm:text-sm">
                     <li>• Control which sources appear in mentions</li>
                     <li>• Toggle sources for reports and analytics</li>
                     <li>• Customize data visibility by source type</li>
@@ -204,27 +223,27 @@ const Help = () => {
           </TabsContent>
 
           {/* Monitoring */}
-          <TabsContent value="monitoring" className="space-y-6">
+          <TabsContent value="monitoring" className="space-y-4 sm:space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Search className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <Search className="h-4 w-4 sm:h-5 sm:w-5" />
                   How Monitoring Works
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 sm:space-y-6">
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-semibold mb-2">Brand Keywords</h3>
-                    <p className="text-muted-foreground text-sm">
+                    <h3 className="font-semibold mb-2 text-sm sm:text-base">Brand Keywords</h3>
+                    <p className="text-muted-foreground text-xs sm:text-sm">
                       Our system monitors the web for mentions of your brand name and its variants. 
                       Set up multiple variants to catch different spellings, abbreviations, or common misspellings.
                     </p>
                   </div>
 
                   <div>
-                    <h3 className="font-semibold mb-2">Source Coverage</h3>
-                    <div className="grid gap-3 text-sm">
+                    <h3 className="font-semibold mb-2 text-sm sm:text-base">Source Coverage</h3>
+                    <div className="space-y-3 text-xs sm:text-sm">
                       {Object.values(SOURCE_CATEGORIES).map(category => {
                         const sources = getSourcesByCategory(category.id);
                         const implementedSources = sources.filter(s => s.implemented);
@@ -237,19 +256,21 @@ const Help = () => {
                         
                         return (
                           <div key={category.id} className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="flex items-center gap-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                              <Badge variant="outline" className="flex items-center gap-1 w-fit">
                                 <IconComponent className="h-3 w-3" />
                                 {category.name}
                               </Badge>
-                              <span className="text-muted-foreground">{category.description}</span>
+                              <span className="text-muted-foreground text-xs sm:text-sm">{category.description}</span>
                             </div>
-                            <div className="ml-6 space-y-1">
+                            <div className="ml-0 sm:ml-6 space-y-1">
                               {implementedSources.map(source => (
-                                <div key={source.id} className="flex items-center gap-2 text-xs">
-                                  <div className="w-2 h-2 bg-green-500 rounded-full" />
-                                  <span className="font-medium">{source.name}</span>
-                                  <span className="text-muted-foreground">- {source.description}</span>
+                                <div key={source.id} className="flex items-start gap-2 text-xs">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full mt-1 flex-shrink-0" />
+                                  <div className="min-w-0">
+                                    <span className="font-medium">{source.name}</span>
+                                    <span className="text-muted-foreground"> - {source.description}</span>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -500,15 +521,15 @@ const Help = () => {
           </TabsContent>
 
           {/* Support */}
-          <TabsContent value="support" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
+          <TabsContent value="support" className="space-y-4 sm:space-y-6">
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <Mail className="h-4 w-4 sm:h-5 sm:w-5" />
                     Get Help
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-sm">
                     Need assistance? Our support team is here to help.
                   </CardDescription>
                 </CardHeader>
@@ -520,7 +541,7 @@ const Help = () => {
                     <Mail className="h-4 w-4" />
                     Contact Support
                   </Button>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Email us at <strong>help@reputations.io</strong> for general support, 
                     account questions, or feature requests.
                   </p>
@@ -529,11 +550,11 @@ const Help = () => {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Bug className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <Bug className="h-4 w-4 sm:h-5 sm:w-5" />
                     Report Issues
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-sm">
                     Found a bug or technical issue? Let us know.
                   </CardDescription>
                 </CardHeader>
@@ -546,7 +567,7 @@ const Help = () => {
                     <Bug className="h-4 w-4" />
                     Report Bug
                   </Button>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Email us at <strong>bugs@reputation.io</strong> to report technical issues, 
                     bugs, or system errors.
                   </p>
@@ -557,15 +578,15 @@ const Help = () => {
             {/* FAQ Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <HelpCircle className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                   Frequently Asked Questions
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 sm:space-y-6">
                 <div>
-                  <h3 className="font-semibold mb-2">How often are mentions updated?</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-semibold mb-2 text-sm sm:text-base">How often are mentions updated?</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Our system continuously monitors for new mentions. Most sources are checked multiple times per day, 
                     with some high-priority sources monitored in near real-time.
                   </p>
@@ -574,8 +595,8 @@ const Help = () => {
                 <Separator />
 
                 <div>
-                  <h3 className="font-semibold mb-2">Can I customize which sources to monitor?</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-semibold mb-2 text-sm sm:text-base">Can I customize which sources to monitor?</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Yes! Use the Source Preferences feature to control which types of sources appear in your mentions, 
                     reports, and analytics. You can toggle individual source types on or off.
                   </p>
@@ -584,8 +605,8 @@ const Help = () => {
                 <Separator />
 
                 <div>
-                  <h3 className="font-semibold mb-2">What happens to flagged mentions?</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-semibold mb-2 text-sm sm:text-base">What happens to flagged mentions?</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Flagged mentions are highlighted in your dashboard and can be categorized by escalation type 
                     (legal, PR, customer service). This helps ensure important mentions get proper attention.
                   </p>
@@ -594,8 +615,8 @@ const Help = () => {
                 <Separator />
 
                 <div>
-                  <h3 className="font-semibold mb-2">How do I set up Google Alerts integration?</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-semibold mb-2 text-sm sm:text-base">How do I set up Google Alerts integration?</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Create Google Alerts for your brand keywords, then copy the RSS feed URL from your Google Alerts settings. 
                     Paste this URL in your brand monitoring configuration to automatically import Google's findings.
                   </p>
@@ -604,8 +625,8 @@ const Help = () => {
                 <Separator />
 
                 <div>
-                  <h3 className="font-semibold mb-2">Can I export my data?</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-semibold mb-2 text-sm sm:text-base">Can I export my data?</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Yes, you can export mentions, reports, and analytics data. 
                     Look for export options in the respective sections of the application.
                   </p>
