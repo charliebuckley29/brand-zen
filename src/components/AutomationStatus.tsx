@@ -91,13 +91,35 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
     try {
       console.log('AutomationStatus: Starting manual fetch...');
       
-      // First try the automated-mention-fetch function directly
+      // Get current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
+      // First try the automated-mention-fetch function for this user only
       const { data: automatedData, error: automatedError } = await supabase.functions.invoke('automated-mention-fetch', { 
-        body: { manual: true } 
+        body: { 
+          check_frequencies: false, 
+          manual: true,
+          user_id: user.id
+        } 
       });
       
       if (automatedError) {
         console.warn('Automated fetch failed, falling back to individual functions:', automatedError);
+        
+        // Let's test aggregate-sources directly with no keyword filter
+        console.log('Testing aggregate-sources directly...');
+        const { data: testData, error: testError } = await supabase.functions.invoke('aggregate-sources', { 
+          body: {} 
+        });
+        
+        if (testError) {
+          console.error('Direct aggregate-sources test failed:', testError);
+        } else {
+          console.log('Direct aggregate-sources test succeeded:', testData);
+        }
         
         // Fallback to individual functions
         const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
@@ -119,6 +141,24 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
         });
       } else {
         console.log('AutomationStatus: Automated fetch successful:', automatedData);
+        console.log('AutomationStatus: Full response details:', JSON.stringify(automatedData, null, 2));
+        
+        // Check if we have any failed fetches and log them
+        if (automatedData?.failed_fetches > 0) {
+          console.error(`AutomationStatus: ${automatedData.failed_fetches} out of ${automatedData.total_keywords} keyword fetches failed`);
+          
+          // Let's test aggregate-sources directly to see if it works without automation
+          console.log('Testing aggregate-sources directly due to failures...');
+          const { data: testData, error: testError } = await supabase.functions.invoke('aggregate-sources', { 
+            body: {} 
+          });
+          
+          if (testError) {
+            console.error('Direct aggregate-sources test failed:', testError);
+          } else {
+            console.log('Direct aggregate-sources test succeeded:', testData);
+          }
+        }
       }
       
       // Update mentions display if callback provided

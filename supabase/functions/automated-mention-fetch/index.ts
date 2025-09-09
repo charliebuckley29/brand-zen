@@ -20,12 +20,17 @@ Deno.serve(async (req)=>{
         persistSession: false
       }
     });
-    const { check_frequencies } = await req.json().catch(()=>({
-        check_frequencies: false
+    const { check_frequencies, user_id } = await req.json().catch(()=>({
+        check_frequencies: false,
+        user_id: null
       }));
-    console.log('🔄 Starting automated mention fetch...');
-    // Get all active keywords
-    const { data: keywords, error: keywordsError } = await supabase.from('keywords').select('*');
+    console.log('🔄 Starting automated mention fetch...', { check_frequencies, user_id });
+    // Get keywords (filtered by user_id if provided)
+    let keywordQuery = supabase.from('keywords').select('*');
+    if (user_id) {
+      keywordQuery = keywordQuery.eq('user_id', user_id);
+    }
+    const { data: keywords, error: keywordsError } = await keywordQuery;
     if (keywordsError) {
       console.error('Error fetching keywords:', keywordsError);
       throw keywordsError;
@@ -107,7 +112,7 @@ Deno.serve(async (req)=>{
         }
       });
     }
-    console.log(`📊 Processing ${eligibleKeywords.length} eligible keywords for automated fetch`);
+    console.log(`📊 Processing ${eligibleKeywords.length} eligible keywords for ${user_id ? 'user ' + user_id : 'automated fetch'}`);
     // Trigger aggregate-sources function for each eligible keyword
     const results = await Promise.allSettled(eligibleKeywords.map(async (keyword)=>{
       try {
@@ -120,12 +125,14 @@ Deno.serve(async (req)=>{
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            keyword_id: keyword.id,
+            keywordId: keyword.id,
             automated: true
           })
         });
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+          const errorText = await response.text();
+          console.error(`aggregate-sources failed for keyword ${keyword.brand_name}: ${response.status} ${response.statusText} - ${errorText}`);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
         const data = await response.json();
         return {
@@ -134,6 +141,8 @@ Deno.serve(async (req)=>{
         };
       } catch (err) {
         console.error(`Failed to process keyword ${keyword.brand_name}:`, err);
+        console.error(`Error details: ${err.message || 'Unknown error'}`);
+        console.error(`Stack trace:`, err.stack);
         throw err;
       }
     }));
@@ -141,6 +150,25 @@ Deno.serve(async (req)=>{
     const successful = results.filter((r)=>r.status === 'fulfilled').length;
     const failed = results.filter((r)=>r.status === 'rejected').length;
     console.log(`✅ Automated fetch completed: ${successful} successful, ${failed} failed`);
+
+    // Update global_settings to track the last fetch time
+    try {
+      const { error: settingsError } = await supabase
+        .from('global_settings')
+        .upsert({
+          setting_key: 'last_global_fetch',
+          setting_value: new Date().toISOString(),
+          description: 'Last time automated mention fetch was executed'
+        });
+      
+      if (settingsError) {
+        console.error('Failed to update global_settings:', settingsError);
+      } else {
+        console.log('✅ Updated global_settings with last fetch time');
+      }
+    } catch (settingsErr) {
+      console.error('Error updating global_settings:', settingsErr);
+    }
     // Also trigger Google Alerts RSS fetch if any users are due
     if (!check_frequencies || eligibleKeywords.length > 0) {
       try {
