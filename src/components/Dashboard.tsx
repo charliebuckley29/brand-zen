@@ -241,11 +241,11 @@ export function Dashboard() {
         title: "Fetch started", 
         description: "Checking all sources for new mentions. Results will appear shortly." 
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Dashboard: Error during manual fetch:", err);
       toast({ 
         title: "Fetch failed", 
-        description: "Could not fetch new mentions. Please try again.", 
+        description: err.message || "Could not fetch new mentions. Please try again.", 
         variant: "destructive" 
       });
     } finally {
