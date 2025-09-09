@@ -20,6 +20,31 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
   const { frequency, loading } = useFetchFrequency();
 
   useEffect(() => {
+    // Load initial last fetch time from global settings
+    const loadLastFetch = async () => {
+      try {
+        const { data } = await supabase
+          .from('global_settings')
+          .select('setting_value')
+          .eq('setting_key', 'last_global_fetch')
+          .maybeSingle();
+
+        if (data?.setting_value) {
+          const timeString = typeof data.setting_value === 'string' 
+            ? data.setting_value.replace(/"/g, '') 
+            : String(data.setting_value).replace(/"/g, '');
+          const lastFetchTime = new Date(timeString);
+          if (!isNaN(lastFetchTime.getTime())) {
+            setLastFetch(lastFetchTime);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading last fetch time:', error);
+      }
+    };
+
+    loadLastFetch();
+
     // Set up realtime subscription to track mention insertions
     const channel = supabase
       .channel('automation-tracking')
@@ -34,6 +59,26 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
           setLastFetch(new Date());
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'global_settings',
+          filter: 'setting_key=eq.last_global_fetch'
+        },
+        (payload) => {
+          if (payload.new?.setting_value) {
+            const timeString = typeof payload.new.setting_value === 'string' 
+              ? payload.new.setting_value.replace(/"/g, '') 
+              : String(payload.new.setting_value).replace(/"/g, '');
+            const lastFetchTime = new Date(timeString);
+            if (!isNaN(lastFetchTime.getTime())) {
+              setLastFetch(lastFetchTime);
+            }
+          }
+        }
+      )
       .subscribe();
 
     return () => {
@@ -44,25 +89,37 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
   const triggerManualFetch = async () => {
     setIsManualFetching(true);
     try {
-      const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
-      const googleAlertsEnabled = (typeof window !== 'undefined') ? localStorage.getItem('google_alerts_enabled') !== 'false' : true;
+      console.log('AutomationStatus: Starting manual fetch...');
       
-      console.log('AutomationStatus: Starting manual fetch...', { rssEnabled, googleAlertsEnabled });
-      
-      const calls = [supabase.functions.invoke('aggregate-sources', { body: {} })];
-      if (rssEnabled) calls.push(supabase.functions.invoke('monitor-news', { body: {} }));
-      if (googleAlertsEnabled) calls.push(supabase.functions.invoke('google-alerts', { body: {} }));
-      
-      const results = await Promise.allSettled(calls as any);
-      
-      // Log results for debugging
-      results.forEach((result, index) => {
-        const functionName = index === 0 ? 'aggregate-sources' : (index === 1 ? 'monitor-news' : 'google-alerts');
-        console.log(`AutomationStatus: ${functionName} result:`, result);
-        if (result.status === 'rejected') {
-          console.error(`AutomationStatus: ${functionName} failed:`, result.reason);
-        }
+      // First try the automated-mention-fetch function directly
+      const { data: automatedData, error: automatedError } = await supabase.functions.invoke('automated-mention-fetch', { 
+        body: { manual: true } 
       });
+      
+      if (automatedError) {
+        console.warn('Automated fetch failed, falling back to individual functions:', automatedError);
+        
+        // Fallback to individual functions
+        const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
+        const googleAlertsEnabled = (typeof window !== 'undefined') ? localStorage.getItem('google_alerts_enabled') !== 'false' : true;
+        
+        const calls = [supabase.functions.invoke('aggregate-sources', { body: {} })];
+        if (rssEnabled) calls.push(supabase.functions.invoke('monitor-news', { body: {} }));
+        if (googleAlertsEnabled) calls.push(supabase.functions.invoke('google-alerts', { body: {} }));
+        
+        const results = await Promise.allSettled(calls as any);
+        
+        // Log results for debugging
+        results.forEach((result, index) => {
+          const functionName = index === 0 ? 'aggregate-sources' : (index === 1 ? 'monitor-news' : 'google-alerts');
+          console.log(`AutomationStatus: ${functionName} result:`, result);
+          if (result.status === 'rejected') {
+            console.error(`AutomationStatus: ${functionName} failed:`, result.reason);
+          }
+        });
+      } else {
+        console.log('AutomationStatus: Automated fetch successful:', automatedData);
+      }
       
       // Update mentions display if callback provided
       if (onMentionsUpdated) {
