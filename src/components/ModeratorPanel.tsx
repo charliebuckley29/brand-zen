@@ -346,7 +346,24 @@ export function ModeratorPanel() {
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        {/* Mobile tabs - single column */}
+        <TabsList className="grid w-full grid-cols-1 gap-2 h-auto md:hidden">
+          <TabsTrigger value="users" className="flex items-center gap-2 justify-start">
+            <Users className="h-4 w-4" />
+            Users ({users.length})
+          </TabsTrigger>
+          <TabsTrigger value="mentions" className="flex items-center gap-2 justify-start">
+            <Flag className="h-4 w-4" />
+            Flagged Mentions ({flaggedMentions.length})
+          </TabsTrigger>
+          <TabsTrigger value="brands" className="flex items-center gap-2 justify-start">
+            <SettingsIcon className="h-4 w-4" />
+            Brand Management ({userKeywords.length})
+          </TabsTrigger>
+        </TabsList>
+        
+        {/* Desktop tabs - horizontal layout */}
+        <TabsList className="hidden md:grid w-full grid-cols-3">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Users ({users.length})
@@ -370,101 +387,204 @@ export function ModeratorPanel() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User Name</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Fetch Frequency</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                       <TableCell>
-                         {canEditUser(user.user_type) ? (
-                           <Button
-                             variant="link"
-                             className="p-0 h-auto font-medium"
-                             onClick={() => {
-                               setSelectedUser(user);
-                               const userKeyword = userKeywords.find(k => k.user_id === user.id);
-                               setSelectedUserKeywords(userKeyword || null);
-                               setEditingProfile({
-                                 full_name: user.full_name,
-                                 email: user.email,
-                                 phone_number: user.phone_number || '',
-                                 brand_name: userKeyword?.brand_name || '',
-                                 variants: userKeyword?.variants?.join(', ') || '',
-                                 google_alert_rss_url: userKeyword?.google_alert_rss_url || ''
-                               });
-                               setEditMode(false);
-                               setUserDetailOpen(true);
-                             }}
-                           >
-                             {user.full_name}
-                           </Button>
-                         ) : (
-                           <span className="font-medium text-muted-foreground cursor-not-allowed" title="Cannot edit moderators or admins">
-                             {user.full_name}
-                           </span>
-                         )}
-                       </TableCell>
-                        <TableCell>
-                          <Badge variant={getUserBadgeVariant(user.user_type)}>
-                            {user.user_type.replace('_', ' ')}
-                          </Badge>
-                          {!canEditUser(user.user_type) && (
-                            <span className="text-xs text-muted-foreground ml-2">
-                              (Protected)
-                            </span>
-                          )}
-                        </TableCell>
-                      <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-                       <TableCell>
-                         <div className="flex items-center gap-2">
+              {/* Desktop table view */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User Name</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Fetch Frequency</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((user) => (
+                      <TableRow key={user.id}>
+                         <TableCell>
+                           {canEditUser(user.user_type) ? (
+                             <Button
+                               variant="link"
+                               className="p-0 h-auto font-medium"
+                               onClick={() => {
+                                 setSelectedUser(user);
+                                 const userKeyword = userKeywords.find(k => k.user_id === user.id);
+                                 setSelectedUserKeywords(userKeyword || null);
+                                 setEditingProfile({
+                                   full_name: user.full_name,
+                                   email: user.email,
+                                   phone_number: user.phone_number || '',
+                                   brand_name: userKeyword?.brand_name || '',
+                                   variants: userKeyword?.variants?.join(', ') || '',
+                                   google_alert_rss_url: userKeyword?.google_alert_rss_url || ''
+                                 });
+                                 setEditMode(false);
+                                 setUserDetailOpen(true);
+                               }}
+                             >
+                               {user.full_name}
+                             </Button>
+                           ) : (
+                             <span className="font-medium text-muted-foreground cursor-not-allowed" title="Cannot edit moderators or admins">
+                               {user.full_name}
+                             </span>
+                           )}
+                         </TableCell>
+                          <TableCell>
+                            <Badge variant={getUserBadgeVariant(user.user_type)}>
+                              {user.user_type.replace('_', ' ')}
+                            </Badge>
+                            {!canEditUser(user.user_type) && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                (Protected)
+                              </span>
+                            )}
+                          </TableCell>
+                        <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                         <TableCell>
+                           <div className="flex items-center gap-2">
+                             <Select 
+                               value={user.fetch_frequency_minutes.toString()} 
+                               onValueChange={(value: string) => updateUserFetchFrequency(user.id, parseInt(value))}
+                               disabled={!canEditUser(user.user_type)}
+                             >
+                               <SelectTrigger className="w-24">
+                                 <SelectValue />
+                               </SelectTrigger>
+                               <SelectContent>
+                                 <SelectItem value="5">5min</SelectItem>
+                                 <SelectItem value="10">10min</SelectItem>
+                                 <SelectItem value="15">15min</SelectItem>
+                                 <SelectItem value="30">30min</SelectItem>
+                                 <SelectItem value="60">1hr</SelectItem>
+                                 <SelectItem value="120">2hr</SelectItem>
+                               </SelectContent>
+                             </Select>
+                           </div>
+                         </TableCell>
+                         <TableCell>
                            <Select 
-                             value={user.fetch_frequency_minutes.toString()} 
-                             onValueChange={(value: string) => updateUserFetchFrequency(user.id, parseInt(value))}
+                             value={user.user_type} 
+                             onValueChange={(value: UserType) => updateUserRole(user.id, value)}
                              disabled={!canEditUser(user.user_type)}
                            >
-                             <SelectTrigger className="w-24">
+                             <SelectTrigger className="w-32">
                                <SelectValue />
                              </SelectTrigger>
-                             <SelectContent>
-                               <SelectItem value="5">5min</SelectItem>
-                               <SelectItem value="10">10min</SelectItem>
-                               <SelectItem value="15">15min</SelectItem>
-                               <SelectItem value="30">30min</SelectItem>
-                               <SelectItem value="60">1hr</SelectItem>
-                               <SelectItem value="120">2hr</SelectItem>
-                             </SelectContent>
+                              <SelectContent>
+                                <SelectItem value="basic_user">Basic User</SelectItem>
+                                <SelectItem value="pr_user">PR User</SelectItem>
+                                <SelectItem value="legal_user">Legal User</SelectItem>
+                                <SelectItem value="moderator">Moderator</SelectItem>
+                              </SelectContent>
                            </Select>
-                         </div>
-                       </TableCell>
-                       <TableCell>
-                         <Select 
-                           value={user.user_type} 
-                           onValueChange={(value: UserType) => updateUserRole(user.id, value)}
-                           disabled={!canEditUser(user.user_type)}
-                         >
-                           <SelectTrigger className="w-32">
-                             <SelectValue />
-                           </SelectTrigger>
+                         </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile card view */}
+              <div className="md:hidden space-y-4">
+                {users.map((user) => (
+                  <Card key={user.id} className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          {canEditUser(user.user_type) ? (
+                            <Button
+                              variant="link"
+                              className="p-0 h-auto font-medium text-left"
+                              onClick={() => {
+                                setSelectedUser(user);
+                                const userKeyword = userKeywords.find(k => k.user_id === user.id);
+                                setSelectedUserKeywords(userKeyword || null);
+                                setEditingProfile({
+                                  full_name: user.full_name,
+                                  email: user.email,
+                                  phone_number: user.phone_number || '',
+                                  brand_name: userKeyword?.brand_name || '',
+                                  variants: userKeyword?.variants?.join(', ') || '',
+                                  google_alert_rss_url: userKeyword?.google_alert_rss_url || ''
+                                });
+                                setEditMode(false);
+                                setUserDetailOpen(true);
+                              }}
+                            >
+                              {user.full_name}
+                            </Button>
+                          ) : (
+                            <span className="font-medium text-muted-foreground" title="Cannot edit moderators or admins">
+                              {user.full_name}
+                            </span>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <Badge variant={getUserBadgeVariant(user.user_type)} className="text-xs">
+                              {user.user_type.replace('_', ' ')}
+                            </Badge>
+                            {!canEditUser(user.user_type) && (
+                              <span className="text-xs text-muted-foreground">
+                                (Protected)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right text-sm text-muted-foreground">
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-3">
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Fetch Frequency
+                          </label>
+                          <Select 
+                            value={user.fetch_frequency_minutes.toString()} 
+                            onValueChange={(value: string) => updateUserFetchFrequency(user.id, parseInt(value))}
+                            disabled={!canEditUser(user.user_type)}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="5">5 minutes</SelectItem>
+                              <SelectItem value="10">10 minutes</SelectItem>
+                              <SelectItem value="15">15 minutes</SelectItem>
+                              <SelectItem value="30">30 minutes</SelectItem>
+                              <SelectItem value="60">1 hour</SelectItem>
+                              <SelectItem value="120">2 hours</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Role
+                          </label>
+                          <Select 
+                            value={user.user_type} 
+                            onValueChange={(value: UserType) => updateUserRole(user.id, value)}
+                            disabled={!canEditUser(user.user_type)}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="basic_user">Basic User</SelectItem>
                               <SelectItem value="pr_user">PR User</SelectItem>
                               <SelectItem value="legal_user">Legal User</SelectItem>
                               <SelectItem value="moderator">Moderator</SelectItem>
                             </SelectContent>
-                         </Select>
-                       </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
