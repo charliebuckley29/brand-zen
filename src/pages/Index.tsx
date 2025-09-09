@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/button";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { NavigationProvider } from "@/contexts/NavigationContext";
 
 const Index = () => {
   return (
     <NotificationProvider>
-      <IndexContent />
+      <NavigationProvider>
+        <IndexContent />
+      </NavigationProvider>
     </NotificationProvider>
   );
 };

@@ -135,6 +135,12 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     if (!silent) setLoading(true);
     try {
       const fetchedNotifications = await getUserNotifications(false, 100);
+      console.log('NotificationProvider: Raw notifications data:', fetchedNotifications.map(n => ({ 
+        id: n.id, 
+        type: n.type, 
+        data: n.data, 
+        title: n.title 
+      })));
       setNotifications(fetchedNotifications);
       
       // Count unread notifications

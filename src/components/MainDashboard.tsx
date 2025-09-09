@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { startMonitoring } from "@/lib/monitoring";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
+import { useNavigation } from "@/contexts/NavigationContext";
 
 interface MainDashboardProps {
   onSignOut: () => void;
@@ -19,11 +20,12 @@ interface MainDashboardProps {
 }
 
 export function MainDashboard({ onSignOut, hasKeywords, onKeywordsUpdated, unreadCount }: MainDashboardProps) {
-  const [currentView, setCurrentView] = useState("dashboard");
   const { isModerator } = useUserRole();
+  const { currentView } = useNavigation();
 
   // Debug logging
   console.log('MainDashboard: Received unreadCount:', unreadCount);
+  console.log('MainDashboard: Current view from context:', currentView);
 
   // Note: unreadCount is now passed as prop from Index.tsx
 
@@ -51,8 +53,6 @@ export function MainDashboard({ onSignOut, hasKeywords, onKeywordsUpdated, unrea
   return (
     <div className="min-h-screen bg-background">
       <Navigation 
-        currentView={currentView} 
-        onViewChange={setCurrentView}
         unreadCount={unreadCount}
       />
       

@@ -12,6 +12,7 @@ import { showToastWithStorage } from "@/lib/notifications";
 import { excludeMention } from "@/lib/monitoring";
 import { useSourcePreferences } from "@/hooks/useSourcePreferences";
 import { RealtimeIndicator } from "@/components/RealtimeIndicator";
+import { useNavigation } from "@/contexts/NavigationContext";
 
 interface Mention {
   id: string;
@@ -47,10 +48,28 @@ export function Dashboard() {
   const [isClearing, setIsClearing] = useState(false);
   const { toast } = useToast();
   const { enabledMentions } = useSourcePreferences();
+  const { selectedMentionId, clearSelectedMention } = useNavigation();
 
   useEffect(() => {
     fetchMentions();
   }, [enabledMentions, currentPage, pageSize]);
+
+  // Handle navigation to specific mention from notifications
+  useEffect(() => {
+    if (selectedMentionId && mentions.length > 0) {
+      console.log('Dashboard: Looking for mention with ID:', selectedMentionId);
+      const mention = mentions.find(m => m.id === selectedMentionId);
+      if (mention) {
+        console.log('Dashboard: Found mention, opening modal:', mention);
+        setSelectedMention(mention);
+        clearSelectedMention(); // Clear the navigation state
+      } else {
+        // If mention not found in current page, fetch it specifically
+        console.log('Dashboard: Mention not found in current page, fetching specifically');
+        fetchSpecificMention(selectedMentionId);
+      }
+    }
+  }, [selectedMentionId, mentions]);
 
   // Set up realtime subscription for new mentions
   useEffect(() => {
@@ -161,6 +180,34 @@ export function Dashboard() {
       console.error("Error fetching mentions:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchSpecificMention = async (mentionId: string) => {
+    try {
+      console.log('Dashboard: Fetching specific mention:', mentionId);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("mentions")
+        .select("*")
+        .eq('user_id', user.id)
+        .eq('id', mentionId)
+        .single();
+
+      if (error) {
+        console.error('Dashboard: Error fetching specific mention:', error);
+        return;
+      }
+
+      if (data) {
+        console.log('Dashboard: Found specific mention, opening modal:', data);
+        setSelectedMention(data);
+        clearSelectedMention(); // Clear the navigation state
+      }
+    } catch (error) {
+      console.error("Error fetching specific mention:", error);
     }
   };
   const handleRefreshMentions = async () => {
@@ -334,7 +381,10 @@ export function Dashboard() {
         {selectedMention && (
           <MentionModal
             mention={selectedMention}
-            onClose={() => setSelectedMention(null)}
+            onClose={() => {
+              setSelectedMention(null);
+              clearSelectedMention();
+            }}
             onUpdate={fetchMentions}
             getSentimentEmoji={getSentimentEmoji}
           />

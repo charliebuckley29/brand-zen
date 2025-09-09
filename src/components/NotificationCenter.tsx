@@ -6,10 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bell, Check, CheckCheck, MessageCircle } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useNavigation } from '@/contexts/NavigationContext';
 import { formatDistanceToNow } from 'date-fns';
 
 export function NotificationCenter() {
   const { notifications, unreadCount, markAsRead, markAllAsReadLocal } = useNotifications();
+  const { navigateToMention } = useNavigation();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleMarkAllAsRead = async () => {
@@ -101,6 +103,13 @@ export function NotificationCenter() {
                         if (!notification.read) {
                           console.log('NotificationCenter: Marking notification as read:', notification.id);
                           markAsRead(notification.id);
+                        }
+                        
+                        // If this is a mention notification and has mention_id data, navigate to it
+                        if (notification.type === 'mention' && notification.data?.mention_id) {
+                          console.log('NotificationCenter: Navigating to mention:', notification.data.mention_id);
+                          navigateToMention(notification.data.mention_id);
+                          setIsOpen(false); // Close the notification popup
                         }
                       }}
                     >

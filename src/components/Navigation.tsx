@@ -18,16 +18,17 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useNavigation } from "@/contexts/NavigationContext";
 
 interface NavigationProps {
-  currentView: string;
-  onViewChange: (view: string) => void;
+  // Navigation state is now managed by NavigationContext
   unreadCount?: number; // Keep as optional since we're using context
 }
 
-export function Navigation({ currentView, onViewChange, unreadCount: propUnreadCount = 0 }: NavigationProps) {
+export function Navigation({ unreadCount: propUnreadCount = 0 }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isModerator, isAdmin } = useUserRole();
+  const { currentView, setCurrentView } = useNavigation();
   
   // Get unread count directly from context as well for comparison
   const { unreadCount: contextUnreadCount } = useNotifications();
@@ -89,7 +90,7 @@ export function Navigation({ currentView, onViewChange, unreadCount: propUnreadC
           window.location.href = '/help';
         }
       } else {
-        onViewChange(item.id);
+        setCurrentView(item.id);
         setIsMobileMenuOpen(false);
       }
     };
