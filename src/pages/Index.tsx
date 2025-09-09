@@ -5,12 +5,23 @@ import { ProfileCompletion } from "@/components/ProfileCompletion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { useNotifications } from "@/contexts/NotificationContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 
 const Index = () => {
+  return (
+    <NotificationProvider>
+      <IndexContent />
+    </NotificationProvider>
+  );
+};
+
+const IndexContent = () => {
   const [user, setUser] = useState<any>(null);
   const [hasKeywords, setHasKeywords] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { profileData, isProfileComplete, loading: profileLoading, updateProfile } = useProfileCompletion();
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     // Check authentication status
@@ -91,6 +102,7 @@ const Index = () => {
       onSignOut={handleSignOut}
       hasKeywords={hasKeywords || false}
       onKeywordsUpdated={() => setHasKeywords(true)}
+      unreadCount={unreadCount}
     />
   );
 

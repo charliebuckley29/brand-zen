@@ -5,17 +5,16 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bell, Check, CheckCheck, MessageCircle } from 'lucide-react';
-import { useNotifications } from '@/hooks/use-notifications';
-import { markAllNotificationsAsRead } from '@/lib/notifications';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { formatDistanceToNow } from 'date-fns';
 
 export function NotificationCenter() {
-  const { notifications, unreadCount, markAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsReadLocal } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleMarkAllAsRead = async () => {
-    await markAllNotificationsAsRead();
-    // The hook will automatically update the state via real-time subscription
+    console.log('NotificationCenter: Marking all as read');
+    await markAllAsReadLocal();
   };
 
   const getNotificationIcon = (type: string) => {
@@ -100,6 +99,7 @@ export function NotificationCenter() {
                       }`}
                       onClick={() => {
                         if (!notification.read) {
+                          console.log('NotificationCenter: Marking notification as read:', notification.id);
                           markAsRead(notification.id);
                         }
                       }}
@@ -121,6 +121,7 @@ export function NotificationCenter() {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  console.log('NotificationCenter: Marking notification as read (button):', notification.id);
                                   markAsRead(notification.id);
                                 }}
                                 className="h-6 w-6 p-0 flex-shrink-0"

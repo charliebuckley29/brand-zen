@@ -1,9 +1,25 @@
-import { useState, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Notification, getUserNotifications, markNotificationAsRead } from '@/lib/notifications';
+import { Notification, getUserNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/lib/notifications';
 
-export function useNotifications() {
+interface NotificationContextType {
+  notifications: Notification[];
+  unreadCount: number;
+  loading: boolean;
+  markAsRead: (notificationId: string) => Promise<void>;
+  markAllAsReadLocal: () => void;
+  forceRefresh: () => void;
+  loadNotifications: (silent?: boolean) => Promise<void>;
+}
+
+const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+
+interface NotificationProviderProps {
+  children: ReactNode;
+}
+
+export function NotificationProvider({ children }: NotificationProviderProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -11,7 +27,7 @@ export function useNotifications() {
 
   // Debug logging for unread count changes
   useEffect(() => {
-    console.log('Unread count changed to:', unreadCount);
+    console.log('NotificationProvider: Unread count changed to:', unreadCount);
   }, [unreadCount]);
 
   // Load initial notifications
@@ -124,6 +140,7 @@ export function useNotifications() {
       // Count unread notifications
       const unread = fetchedNotifications.filter(n => !n.read).length;
       setUnreadCount(unread);
+      console.log('NotificationProvider: Loaded notifications, unread count:', unread);
     } catch (error) {
       console.error('Error loading notifications:', error);
     } finally {
@@ -132,45 +149,61 @@ export function useNotifications() {
   };
 
   const markAsRead = async (notificationId: string) => {
-    console.log('Marking notification as read:', notificationId);
+    console.log('NotificationProvider: Marking notification as read:', notificationId);
     const success = await markNotificationAsRead(notificationId);
     if (success) {
       setNotifications(prev => {
         const updated = prev.map(n => n.id === notificationId ? { ...n, read: true } : n);
-        console.log('Updated notifications:', updated.filter(n => !n.read).length, 'unread');
+        console.log('NotificationProvider: Updated notifications:', updated.filter(n => !n.read).length, 'unread');
         return updated;
       });
       setUnreadCount(prev => {
         const newCount = Math.max(0, prev - 1);
-        console.log('Updated unread count from', prev, 'to', newCount);
+        console.log('NotificationProvider: Updated unread count from', prev, 'to', newCount);
         return newCount;
       });
     }
   };
 
-  const markAllAsReadLocal = () => {
-    console.log('Marking all notifications as read locally');
-    // Mark all notifications as read in local state
-    setNotifications(prev => {
-      const updated = prev.map(n => ({ ...n, read: true }));
-      console.log('All notifications marked as read locally');
-      return updated;
-    });
+  const markAllAsReadLocal = async () => {
+    console.log('NotificationProvider: Marking all notifications as read locally');
+    
+    // Update local state immediately
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     setUnreadCount(0);
-    console.log('Unread count set to 0');
+    
+    // Update database
+    await markAllNotificationsAsRead();
+    
+    console.log('NotificationProvider: All notifications marked as read');
   };
 
   const forceRefresh = () => {
-    loadNotifications();
+    console.log('NotificationProvider: Force refreshing notifications');
+    loadNotifications(true);
   };
 
-  return {
+  const value: NotificationContextType = {
     notifications,
     unreadCount,
     loading,
-    loadNotifications,
     markAsRead,
     markAllAsReadLocal,
     forceRefresh,
+    loadNotifications,
   };
+
+  return (
+    <NotificationContext.Provider value={value}>
+      {children}
+    </NotificationContext.Provider>
+  );
+}
+
+export function useNotifications() {
+  const context = useContext(NotificationContext);
+  if (context === undefined) {
+    throw new Error('useNotifications must be used within a NotificationProvider');
+  }
+  return context;
 }

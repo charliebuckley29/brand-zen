@@ -17,23 +17,33 @@ import {
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { useUserRole } from "@/hooks/use-user-role";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 interface NavigationProps {
   currentView: string;
   onViewChange: (view: string) => void;
-  unreadCount?: number;
+  unreadCount?: number; // Keep as optional since we're using context
 }
 
-export function Navigation({ currentView, onViewChange, unreadCount = 0 }: NavigationProps) {
+export function Navigation({ currentView, onViewChange, unreadCount: propUnreadCount = 0 }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isModerator, isAdmin } = useUserRole();
+  
+  // Get unread count directly from context as well for comparison
+  const { unreadCount: contextUnreadCount } = useNotifications();
+  
+  // Use context unread count to ensure real-time updates
+  const unreadCount = contextUnreadCount;
+
+  // Debug logging
+  console.log('Navigation: Prop unreadCount:', propUnreadCount, 'Context unreadCount:', contextUnreadCount, 'Using:', unreadCount);
 
   const navItems = [
     {
       id: "dashboard",
       label: "Dashboard",
       icon: Home,
-      badge: unreadCount > 0 ? unreadCount : undefined
+      badge: unreadCount > 0 ? (unreadCount > 99 ? 99 : unreadCount) : undefined
     },
     {
       id: "analytics",
@@ -95,7 +105,7 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
         {item.label}
         {item.badge && (
           <Badge variant="destructive" className="ml-auto">
-            {item.badge}
+            {item.badge > 99 ? '99+' : item.badge}
           </Badge>
         )}
       </Button>
@@ -110,10 +120,20 @@ export function Navigation({ currentView, onViewChange, unreadCount = 0 }: Navig
           variant="outline"
           size="sm"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="h-10 w-10 p-0"
+          className="h-10 w-10 p-0 relative"
         >
           {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
         </Button>
+        
+        {/* Mobile notification badge */}
+        {unreadCount > 0 && (
+          <Badge 
+            variant="destructive" 
+            className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+          >
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </Badge>
+        )}
       </div>
 
       {/* Mobile Menu Overlay */}

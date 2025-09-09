@@ -10,20 +10,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { startMonitoring } from "@/lib/monitoring";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
-import { useNotifications } from "@/hooks/use-notifications";
 
 interface MainDashboardProps {
   onSignOut: () => void;
   hasKeywords: boolean;
   onKeywordsUpdated: () => void;
+  unreadCount: number;
 }
 
-export function MainDashboard({ onSignOut, hasKeywords, onKeywordsUpdated }: MainDashboardProps) {
+export function MainDashboard({ onSignOut, hasKeywords, onKeywordsUpdated, unreadCount }: MainDashboardProps) {
   const [currentView, setCurrentView] = useState("dashboard");
   const { isModerator } = useUserRole();
-  const { unreadCount } = useNotifications();
 
-  // Note: unreadCount is now managed by useNotifications hook
+  // Debug logging
+  console.log('MainDashboard: Received unreadCount:', unreadCount);
+
+  // Note: unreadCount is now passed as prop from Index.tsx
 
   const renderCurrentView = () => {
     if (!hasKeywords) {
