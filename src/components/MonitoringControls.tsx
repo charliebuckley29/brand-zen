@@ -14,32 +14,10 @@ interface MonitoringControlsProps {
 }
 
 export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProps) {
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [exclusionsOpen, setExclusionsOpen] = useState(false);
   const [alsoDeleteRemovedMentions, setAlsoDeleteRemovedMentions] = useState(false);
   const { toast } = useToast();
-
-  const handleRefreshMentions = async () => {
-    try {
-      setIsRefreshing(true);
-      const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
-      const googleAlertsEnabled = (typeof window !== 'undefined') ? localStorage.getItem('google_alerts_enabled') !== 'false' : true;
-      
-      const calls = [supabase.functions.invoke('aggregate-sources', { body: {} })];
-      if (rssEnabled) calls.push(supabase.functions.invoke('monitor-news', { body: {} }));
-      if (googleAlertsEnabled) calls.push(supabase.functions.invoke('google-alerts', { body: {} }));
-      
-      await Promise.allSettled(calls as any);
-      await onMentionsUpdated();
-      toast({ title: 'Mentions refreshed', description: 'Fetched latest mentions.' });
-    } catch (err) {
-      console.error('Error refreshing mentions:', err);
-      toast({ title: 'Refresh failed', description: 'Could not fetch new mentions.', variant: 'destructive' });
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
 
   const handleClearMentions = async () => {
     try {
@@ -97,7 +75,7 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
           <Button 
             variant="outline"
             onClick={() => setExclusionsOpen(true)}
-            className="w-full sm:w-auto"
+            className="w-full sm:flex-1"
           >
             <History className="w-4 h-4 mr-2" />
             See removed mentions
@@ -107,7 +85,7 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
               <Button 
                 variant="destructive"
                 disabled={isClearing}
-                className="w-full sm:w-auto"
+                className="w-full sm:flex-1"
               >
                 {isClearing ? (
                   <>

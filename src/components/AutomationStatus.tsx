@@ -47,28 +47,41 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
       const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
       const googleAlertsEnabled = (typeof window !== 'undefined') ? localStorage.getItem('google_alerts_enabled') !== 'false' : true;
       
+      console.log('AutomationStatus: Starting manual fetch...', { rssEnabled, googleAlertsEnabled });
+      
       const calls = [supabase.functions.invoke('aggregate-sources', { body: {} })];
       if (rssEnabled) calls.push(supabase.functions.invoke('monitor-news', { body: {} }));
       if (googleAlertsEnabled) calls.push(supabase.functions.invoke('google-alerts', { body: {} }));
       
-      await Promise.allSettled(calls as any);
+      const results = await Promise.allSettled(calls as any);
+      
+      // Log results for debugging
+      results.forEach((result, index) => {
+        const functionName = index === 0 ? 'aggregate-sources' : (index === 1 ? 'monitor-news' : 'google-alerts');
+        console.log(`AutomationStatus: ${functionName} result:`, result);
+        if (result.status === 'rejected') {
+          console.error(`AutomationStatus: ${functionName} failed:`, result.reason);
+        }
+      });
       
       // Update mentions display if callback provided
       if (onMentionsUpdated) {
-        await onMentionsUpdated();
+        setTimeout(async () => {
+          await onMentionsUpdated();
+        }, 2000);
       }
 
       toast({
-        title: "Mentions refreshed",
-        description: "Fetched latest mentions from all sources",
+        title: "Fetch started",
+        description: "Checking all sources for new mentions. Results will appear shortly.",
       });
 
       setLastFetch(new Date());
     } catch (error: any) {
-      console.error('Manual fetch error:', error);
+      console.error('AutomationStatus: Manual fetch error:', error);
       toast({
-        title: "Refresh failed",
-        description: error.message || "Could not fetch new mentions",
+        title: "Fetch failed",
+        description: error.message || "Could not fetch new mentions. Please try again.",
         variant: "destructive",
       });
     } finally {

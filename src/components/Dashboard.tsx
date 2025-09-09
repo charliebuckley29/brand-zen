@@ -45,7 +45,6 @@ export function Dashboard() {
     flagged: 0
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isClearing, setIsClearing] = useState(false);
   const { toast } = useToast();
   const { enabledMentions } = useSourcePreferences();
   const { selectedMentionId, clearSelectedMention } = useNavigation();
@@ -216,41 +215,41 @@ export function Dashboard() {
       const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
       const googleAlertsEnabled = (typeof window !== 'undefined') ? localStorage.getItem('google_alerts_enabled') !== 'false' : true;
       
+      console.log('Dashboard: Starting manual fetch...', { rssEnabled, googleAlertsEnabled });
+      
       const calls = [supabase.functions.invoke('aggregate-sources', { body: {} })];
       if (rssEnabled) calls.push(supabase.functions.invoke('monitor-news', { body: {} }));
       if (googleAlertsEnabled) calls.push(supabase.functions.invoke('google-alerts', { body: {} }));
       
-      await Promise.allSettled(calls as any);
-      await fetchMentions();
-      toast({ title: "Mentions refreshed", description: "Fetched latest mentions." });
+      const results = await Promise.allSettled(calls as any);
+      
+      // Log results for debugging
+      results.forEach((result, index) => {
+        const functionName = index === 0 ? 'aggregate-sources' : (index === 1 ? 'monitor-news' : 'google-alerts');
+        console.log(`Dashboard: ${functionName} result:`, result);
+        if (result.status === 'rejected') {
+          console.error(`Dashboard: ${functionName} failed:`, result.reason);
+        }
+      });
+      
+      // Wait a moment for mentions to be processed, then refresh
+      setTimeout(async () => {
+        await fetchMentions();
+      }, 2000);
+      
+      toast({ 
+        title: "Fetch started", 
+        description: "Checking all sources for new mentions. Results will appear shortly." 
+      });
     } catch (err) {
-      console.error("Error refreshing mentions:", err);
-      toast({ title: "Refresh failed", description: "Could not fetch new mentions.", variant: "destructive" });
+      console.error("Dashboard: Error during manual fetch:", err);
+      toast({ 
+        title: "Fetch failed", 
+        description: "Could not fetch new mentions. Please try again.", 
+        variant: "destructive" 
+      });
     } finally {
       setIsRefreshing(false);
-    }
-  };
-
-  const handleClearMentions = async () => {
-    try {
-      setIsClearing(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({ title: "Not signed in", description: "Please sign in to clear mentions.", variant: "destructive" });
-        return;
-      }
-      const { error } = await supabase
-        .from('mentions')
-        .delete()
-        .eq('user_id', user.id);
-      if (error) throw error;
-      await fetchMentions();
-      toast({ title: "Mentions cleared", description: "All your mentions were removed." });
-    } catch (err) {
-      console.error("Error clearing mentions:", err);
-      toast({ title: "Clear failed", description: "Could not delete mentions.", variant: "destructive" });
-    } finally {
-      setIsClearing(false);
     }
   };
 
@@ -352,7 +351,9 @@ export function Dashboard() {
 
 
         {/* Monitoring Controls */}
-        <MonitoringControls onMentionsUpdated={fetchMentions} />
+        <MonitoringControls 
+          onMentionsUpdated={fetchMentions}
+        />
 
         {/* Mentions Table */}
         <Card>
