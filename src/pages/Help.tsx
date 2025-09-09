@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { BugReportModal } from "@/components/BugReportModal";
+import { UserBugReportsModal } from "@/components/UserBugReportsModal";
 import { 
   HelpCircle, 
   User, 
@@ -22,15 +25,23 @@ import {
   Filter,
   ArrowLeft,
   Newspaper,
-  Video
+  Video,
+  History
 } from "lucide-react";
 import { SOURCE_CATEGORIES, SOURCES, getSourcesByCategory, getImplementedSources } from "@/config/sources";
 
 const Help = () => {
+  const [bugReportModalOpen, setBugReportModalOpen] = useState(false);
+  const [userBugReportsModalOpen, setUserBugReportsModalOpen] = useState(false);
+
   const handleSupportEmail = (type: 'help' | 'bug') => {
-    const email = type === 'help' ? 'help@reputations.io' : 'bugs@reputation.io';
-    const subject = type === 'help' ? 'Support Request' : 'Bug Report';
-    window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+    if (type === 'bug') {
+      setBugReportModalOpen(true);
+    } else {
+      const email = 'help@reputations.io';
+      const subject = 'Support Request';
+      window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+    }
   };
 
   return (
@@ -559,18 +570,37 @@ const Help = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Button 
-                    onClick={() => handleSupportEmail('bug')}
-                    variant="outline"
-                    className="w-full flex items-center gap-2"
-                  >
-                    <Bug className="h-4 w-4" />
-                    Report Bug
-                  </Button>
+                  <div className="space-y-2">
+                    <Button 
+                      onClick={() => handleSupportEmail('bug')}
+                      variant="outline"
+                      className="w-full flex items-center gap-2"
+                    >
+                      <Bug className="h-4 w-4" />
+                      Report New Bug
+                    </Button>
+                    <Button 
+                      onClick={() => setUserBugReportsModalOpen(true)}
+                      variant="secondary"
+                      className="w-full flex items-center gap-2"
+                    >
+                      <History className="h-4 w-4" />
+                      View My Bug Reports
+                    </Button>
+                  </div>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    Email us at <strong>bugs@reputation.io</strong> to report technical issues, 
-                    bugs, or system errors.
+                    Our comprehensive bug reporting system helps you submit detailed reports with screenshots, 
+                    browser information, and console logs. Reports are tracked and managed by our development team.
                   </p>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p><strong>What to include:</strong></p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Clear description of the issue</li>
+                      <li>Steps to reproduce the problem</li>
+                      <li>Screenshots or screen recordings</li>
+                      <li>Browser console logs (if applicable)</li>
+                    </ul>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -636,6 +666,18 @@ const Help = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Bug Report Modal */}
+      <BugReportModal 
+        open={bugReportModalOpen} 
+        onOpenChange={setBugReportModalOpen} 
+      />
+
+      {/* User Bug Reports Modal */}
+      <UserBugReportsModal 
+        open={userBugReportsModalOpen} 
+        onOpenChange={setUserBugReportsModalOpen} 
+      />
     </div>
   );
 };
