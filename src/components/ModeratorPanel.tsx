@@ -333,14 +333,14 @@ export function ModeratorPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Moderator Panel</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold">Moderator Panel</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Manage users, monitor flagged mentions, and configure brand settings
           </p>
         </div>
-        <Button onClick={fetchData} variant="outline">
+        <Button onClick={fetchData} variant="outline" className="w-full sm:w-auto">
           Refresh Data
         </Button>
       </div>
@@ -645,7 +645,7 @@ export function ModeratorPanel() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="space-y-0.5">
                     <Label className="text-base font-medium">Allow users to change brand names</Label>
                     <p className="text-sm text-muted-foreground">
@@ -660,12 +660,37 @@ export function ModeratorPanel() {
               </div>
             </CardContent>
           </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Brand Management</CardTitle>
+              <CardDescription>
+                Manage user brand configurations and Google Alert integrations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {userKeywords.map((keyword) => (
+                  <BrandEditor 
+                    key={keyword.id} 
+                    keyword={keyword} 
+                    onUpdate={updateUserBrand} 
+                  />
+                ))}
+                {userKeywords.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No brand configurations found
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
       {/* User Details Dialog */}
       <Dialog open={userDetailOpen} onOpenChange={setUserDetailOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editMode ? 'Edit User Profile' : 'User Details'}
@@ -688,7 +713,7 @@ export function ModeratorPanel() {
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Email</Label>
-                      <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                      <p className="text-sm text-muted-foreground break-all">{selectedUser.email}</p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Phone Number</Label>
@@ -729,12 +754,12 @@ export function ModeratorPanel() {
                       </p>
                     </div>
                   </div>
-                   <div className="flex justify-end gap-2">
-                     <Button variant="outline" onClick={() => setUserDetailOpen(false)}>
+                   <div className="flex flex-col sm:flex-row justify-end gap-2">
+                     <Button variant="outline" onClick={() => setUserDetailOpen(false)} className="w-full sm:w-auto">
                        Close
                      </Button>
                      {canEditUser(selectedUser.user_type) && (
-                       <Button onClick={() => setEditMode(true)}>
+                       <Button onClick={() => setEditMode(true)} className="w-full sm:w-auto">
                          Edit Profile
                        </Button>
                      )}
@@ -798,7 +823,7 @@ export function ModeratorPanel() {
                       />
                     </div>
                   </div>
-                  <div className="flex justify-end gap-2">
+                  <div className="flex flex-col sm:flex-row justify-end gap-2">
                     <Button 
                       variant="outline" 
                       onClick={() => {
@@ -813,12 +838,14 @@ export function ModeratorPanel() {
                         });
                       }}
                       disabled={isUpdating}
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>
                     <Button 
                       onClick={() => updateUserProfile(selectedUser.id, editingProfile)}
                       disabled={isUpdating || !editingProfile.full_name.trim()}
+                      className="w-full sm:w-auto"
                     >
                       {isUpdating ? 'Saving...' : 'Save Changes'}
                     </Button>
@@ -858,22 +885,22 @@ function BrandEditor({ keyword, onUpdate }: BrandEditorProps) {
 
   return (
     <div className="border rounded-lg p-4 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h4 className="font-medium">Brand: {keyword.brand_name}</h4>
+          <h4 className="font-medium">{keyword.brand_name}</h4>
           <p className="text-sm text-muted-foreground">User: {keyword.user_full_name}</p>
         </div>
         <div className="flex gap-2">
           {!isEditing ? (
-            <Button size="sm" onClick={() => setIsEditing(true)}>
+            <Button size="sm" onClick={() => setIsEditing(true)} className="w-full sm:w-auto">
               Edit
             </Button>
           ) : (
             <>
-              <Button size="sm" variant="outline" onClick={handleCancel}>
+              <Button size="sm" variant="outline" onClick={handleCancel} className="flex-1 sm:flex-none">
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleSave}>
+              <Button size="sm" onClick={handleSave} className="flex-1 sm:flex-none">
                 Save
               </Button>
             </>
@@ -925,7 +952,7 @@ function BrandEditor({ keyword, onUpdate }: BrandEditorProps) {
                   href={keyword.google_alert_rss_url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline"
+                  className="text-primary hover:underline break-all"
                 >
                   Configured
                 </a>
