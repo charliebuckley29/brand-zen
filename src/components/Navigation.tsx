@@ -44,7 +44,7 @@ export function Navigation({ unreadCount: propUnreadCount = 0 }: NavigationProps
       id: "dashboard",
       label: "Dashboard",
       icon: Home,
-      badge: unreadCount > 0 ? (unreadCount > 99 ? 99 : unreadCount) : undefined
+      badge: unreadCount > 0 ? unreadCount : undefined
     },
     {
       id: "analytics",
@@ -161,7 +161,7 @@ export function Navigation({ unreadCount: propUnreadCount = 0 }: NavigationProps
                   <div className="flex items-center gap-2 text-destructive">
                     <Bell className="h-4 w-4" />
                     <span className="text-sm font-medium">
-                      {unreadCount} new mention{unreadCount !== 1 ? 's' : ''}
+                      {unreadCount > 99 ? '99+' : unreadCount} new mention{unreadCount !== 1 ? 's' : ''}
                     </span>
                   </div>
                 </div>
@@ -195,7 +195,7 @@ export function Navigation({ unreadCount: propUnreadCount = 0 }: NavigationProps
               <div className="flex items-center gap-2 text-destructive">
                 <Bell className="h-4 w-4" />
                 <span className="text-sm font-medium">
-                  {unreadCount} new mention{unreadCount !== 1 ? 's' : ''}
+                  {unreadCount > 99 ? '99+' : unreadCount} new mention{unreadCount !== 1 ? 's' : ''}
                 </span>
               </div>
             </div>
