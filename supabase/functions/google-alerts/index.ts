@@ -33,12 +33,49 @@ async function fetchGoogleAlertsRSS(rssUrl: string): Promise<GoogleAlertItem[]> 
     const rssText = await response.text();
     console.log(`📝 RSS content length: ${rssText.length} characters`);
 
-    // Parse RSS XML (basic parser)
+    // Parse RSS XML (Google Alerts uses a specific format)
     const items: GoogleAlertItem[] = [];
-    const itemMatches = rssText.match(/<item[^>]*>[\s\S]*?<\/item>/gi);
+    
+    // Google Alerts RSS often uses <entry> tags instead of <item>
+    let itemMatches = rssText.match(/<item[^>]*>[\s\S]*?<\/item>/gi);
+    if (!itemMatches) {
+      itemMatches = rssText.match(/<entry[^>]*>[\s\S]*?<\/entry>/gi);
+    }
+    
+    // Also try parsing as Atom feed entries
+    if (!itemMatches) {
+      // Google Alerts sometimes uses a different format - try to extract from the raw content
+      console.log('📝 Trying alternative parsing for Google Alerts format...');
+      
+      // Look for URL patterns in the content
+      const urlPattern = /https:\/\/www\.google\.com\/url\?[^"'\s]+/g;
+      const urls = rssText.match(urlPattern);
+      
+      // Look for title patterns
+      const titlePattern = /<b>(.*?)<\/b>/g;
+      const titles = [];
+      let match;
+      while ((match = titlePattern.exec(rssText)) !== null) {
+        titles.push(match[1]);
+      }
+      
+      if (urls && urls.length > 0) {
+        console.log(`📰 Found ${urls.length} URLs in alternative format`);
+        for (let i = 0; i < Math.min(urls.length, titles.length); i++) {
+          items.push({
+            title: titles[i] || 'Google Alert Item',
+            link: urls[i],
+            description: titles[i] || '',
+            pubDate: new Date().toISOString()
+          });
+        }
+        return items;
+      }
+    }
     
     if (!itemMatches) {
-      console.log('⚠️ No RSS items found in response');
+      console.log('⚠️ No RSS items found in response - trying raw content extraction...');
+      console.log(`📝 Sample content: ${rssText.substring(0, 500)}`);
       return [];
     }
 
@@ -170,18 +207,30 @@ Deno.serve(async (req) => {
             continue; // Skip duplicates
           }
 
+          // Check for brand name mismatch (indicating moderator assignment)
+          const contentLower = (item.title + ' ' + item.description).toLowerCase();
+          const brandLower = keyword.brand_name.toLowerCase();
+          const isBrandMismatch = !contentLower.includes(brandLower) && 
+                                 !brandLower.includes(contentLower.split(' ')[0]);
+
+          let internalNote = '';
+          if (isBrandMismatch) {
+            internalNote = `Note: This Google Alert RSS feed appears to be for different content than the keyword "${keyword.brand_name}". This may have been assigned by a moderator for monitoring purposes.`;
+          }
+
           mentionsToInsert.push({
             keyword_id: keyword.id,
             user_id: keyword.user_id,
-            source_name: item.source || 'Google Alerts',
+            source_name: `Google Alerts${isBrandMismatch ? ' (Moderator Assigned)' : ''}`,
             source_url: item.link,
             published_at: new Date(item.pubDate).toISOString(),
             content_snippet: item.description || item.title,
             full_text: `${item.title}\n\n${item.description}`.trim(),
-            source_type: 'rss',
-            flagged: false,
+            source_type: 'google_alert',
+            flagged: isBrandMismatch, // Flag mismatched content for review
             sentiment: null,
-            escalation_type: 'none'
+            escalation_type: 'none',
+            internal_notes: internalNote
           });
         }
 
