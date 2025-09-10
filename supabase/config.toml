@@ -10,3 +10,9 @@ verify_jwt = false
 
 [functions.aggregate-sources]
 verify_jwt = false
+
+[functions.google-alerts]
+verify_jwt = false
+
+[functions.monitor-news]
+verify_jwt = false
