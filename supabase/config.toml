@@ -16,3 +16,13 @@ verify_jwt = false
 
 [functions.monitor-news]
 verify_jwt = false
+
+# New frequency-based schedulers for better performance
+[functions.high-frequency-scheduler]
+verify_jwt = false
+
+[functions.medium-frequency-scheduler]
+verify_jwt = false
+
+[functions.low-frequency-scheduler]
+verify_jwt = false
