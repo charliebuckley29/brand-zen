@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Zap, Clock } from "lucide-react";
+import { useUserFetchStatus } from "@/hooks/useUserFetchStatus";
 
 export function RealtimeIndicator() {
   const [isConnected, setIsConnected] = useState(false);
   const [lastActivity, setLastActivity] = useState<Date | null>(null);
+  const { frequency } = useUserFetchStatus();
 
   useEffect(() => {
     // Set up realtime connection status monitoring
@@ -61,7 +63,7 @@ export function RealtimeIndicator() {
       
       <Badge variant="secondary" className="text-xs">
         <Clock className="h-3 w-3 mr-1" />
-        Auto: 15min
+        Auto: {frequency || 15}min
       </Badge>
     </div>
   );

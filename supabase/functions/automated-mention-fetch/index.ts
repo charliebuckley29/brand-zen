@@ -202,16 +202,30 @@ Deno.serve(async (req)=>{
 
     // Update global_settings to track the last fetch time
     try {
-      const { error: settingsError } = await supabase
+      // First try to update the existing record
+      const { error: updateError } = await supabase
         .from('global_settings')
-        .upsert({
-          setting_key: 'last_global_fetch',
+        .update({
           setting_value: new Date().toISOString(),
-          description: 'Last time automated mention fetch was executed'
-        });
+          updated_at: new Date().toISOString()
+        })
+        .eq('setting_key', 'last_global_fetch');
       
-      if (settingsError) {
-        console.error('Failed to update global_settings:', settingsError);
+      // If update didn't affect any rows, insert a new one
+      if (updateError || updateError?.code === 'PGRST116') {
+        const { error: insertError } = await supabase
+          .from('global_settings')
+          .insert({
+            setting_key: 'last_global_fetch',
+            setting_value: new Date().toISOString(),
+            description: 'Last time automated mention fetch was executed'
+          });
+        
+        if (insertError) {
+          console.error('Failed to insert global_settings:', insertError);
+        } else {
+          console.log('✅ Inserted new global_settings with last fetch time');
+        }
       } else {
         console.log('✅ Updated global_settings with last fetch time');
       }
