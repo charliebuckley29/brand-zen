@@ -389,6 +389,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          automation_enabled: boolean
           created_at: string
           fetch_frequency_minutes: number | null
           full_name: string
@@ -398,6 +399,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          automation_enabled?: boolean
           created_at?: string
           fetch_frequency_minutes?: number | null
           full_name: string
@@ -407,6 +409,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          automation_enabled?: boolean
           created_at?: string
           fetch_frequency_minutes?: number | null
           full_name?: string

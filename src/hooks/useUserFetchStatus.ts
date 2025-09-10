@@ -7,15 +7,19 @@ interface UserFetchStatus {
   frequency: number;
   lastFetchTime: Date | null;
   loading: boolean;
+  automationEnabled: boolean;
+  updateAutomationEnabled: (enabled: boolean) => Promise<void>;
 }
 
 export function useUserFetchStatus(): UserFetchStatus {
   const [status, setStatus] = useState<UserFetchStatus>({
-    canFetch: true,
+    canFetch: false,
     minutesUntilNextFetch: 0,
     frequency: 15,
     lastFetchTime: null,
-    loading: true
+    loading: true,
+    automationEnabled: false,
+    updateAutomationEnabled: async () => {},
   });
 
   useEffect(() => {
@@ -28,14 +32,15 @@ export function useUserFetchStatus(): UserFetchStatus {
           return;
         }
 
-        // Get user's fetch frequency
+        // Get user's fetch frequency and automation settings
         const { data: profile } = await supabase
           .from('profiles')
-          .select('fetch_frequency_minutes')
+          .select('fetch_frequency_minutes, automation_enabled')
           .eq('user_id', user.id)
           .maybeSingle();
 
         const frequency = profile?.fetch_frequency_minutes || 15;
+        const automationEnabled = profile?.automation_enabled || false;
 
         // Check if user can fetch now
         const { data: canFetch } = await supabase.rpc('can_user_fetch', { 
@@ -56,12 +61,32 @@ export function useUserFetchStatus(): UserFetchStatus {
           .limit(1)
           .maybeSingle();
 
+        const updateAutomationEnabled = async (enabled: boolean) => {
+          const { error } = await supabase
+            .from('profiles')
+            .update({ automation_enabled: enabled })
+            .eq('user_id', user.id);
+
+          if (error) {
+            console.error('Failed to update automation setting:', error);
+            throw error;
+          }
+
+          // Update local state
+          setStatus(prev => ({ 
+            ...prev, 
+            automationEnabled: enabled 
+          }));
+        };
+
         setStatus({
           canFetch: !!canFetch,
           minutesUntilNextFetch: minutesUntil || 0,
           frequency,
           lastFetchTime: lastFetch?.started_at ? new Date(lastFetch.started_at) : null,
-          loading: false
+          loading: false,
+          automationEnabled,
+          updateAutomationEnabled,
         });
 
       } catch (error) {

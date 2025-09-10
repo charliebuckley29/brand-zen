@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { RefreshCw, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { RefreshCw, Clock, CheckCircle, AlertCircle, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserFetchStatus } from "@/hooks/useUserFetchStatus";
@@ -13,75 +13,58 @@ interface AutomationStatusProps {
 }
 
 export function AutomationStatus({ className, onMentionsUpdated }: AutomationStatusProps) {
-  const [isManualFetching, setIsManualFetching] = useState(false);
-  const [automationEnabled, setAutomationEnabled] = useState(true);
+  const [isEnabling, setIsEnabling] = useState(false);
   const { toast } = useToast();
-  const { canFetch, minutesUntilNextFetch, frequency, lastFetchTime, loading } = useUserFetchStatus();
+  const { canFetch, minutesUntilNextFetch, frequency, lastFetchTime, loading, automationEnabled, updateAutomationEnabled } = useUserFetchStatus();
 
-  const triggerManualFetch = async () => {
-    if (!canFetch) {
-      toast({
-        title: "Rate limit exceeded",
-        description: `Please wait ${minutesUntilNextFetch} more minutes before fetching again.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsManualFetching(true);
+  const handleAutomationToggle = async (enabled: boolean) => {
+    setIsEnabling(true);
     try {
-      console.log('AutomationStatus: Starting manual fetch...');
+      await updateAutomationEnabled(enabled);
       
-      // Get current user ID
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-      
-      // Try the automated-mention-fetch function for this user only
-      const { data: automatedData, error: automatedError } = await supabase.functions.invoke('automated-mention-fetch', { 
-        body: { 
-          check_frequencies: false, 
-          manual: true,
-          user_id: user.id
-        } 
-      });
-      
-      if (automatedError) {
-        if (automatedError.message?.includes('Rate limit exceeded')) {
-          toast({
-            title: "Rate limit exceeded",
-            description: automatedError.message,
-            variant: "destructive",
+      if (enabled) {
+        // Trigger immediate fetch when automation is enabled
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: automatedData, error: automatedError } = await supabase.functions.invoke('automated-mention-fetch', { 
+            body: { 
+              check_frequencies: false, 
+              manual: true,
+              user_id: user.id
+            } 
           });
-          return;
+
+          if (automatedError) {
+            console.error('Initial automation fetch error:', automatedError);
+          } else {
+            console.log('Automation enabled, initial fetch successful:', automatedData);
+            if (onMentionsUpdated) {
+              setTimeout(async () => {
+                await onMentionsUpdated();
+              }, 2000);
+            }
+          }
         }
-        throw automatedError;
-      }
-      
-      console.log('AutomationStatus: Manual fetch successful:', automatedData);
-      
-      // Update mentions display if callback provided
-      if (onMentionsUpdated) {
-        setTimeout(async () => {
-          await onMentionsUpdated();
-        }, 2000);
-      }
 
-      toast({
-        title: "Fetch completed",
-        description: `Successfully fetched mentions for ${automatedData?.successful_fetches || 0} keywords.`,
-      });
-
+        toast({
+          title: "Automation enabled",
+          description: `Your mentions will now be fetched automatically every ${frequency} minutes.`,
+        });
+      } else {
+        toast({
+          title: "Automation disabled",
+          description: "Automatic mention fetching has been turned off.",
+        });
+      }
     } catch (error: any) {
-      console.error('AutomationStatus: Manual fetch error:', error);
+      console.error('Failed to toggle automation:', error);
       toast({
-        title: "Fetch failed",
-        description: error.message || "Could not fetch new mentions. Please try again.",
+        title: "Failed to update automation",
+        description: error.message || "Could not update automation setting. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsManualFetching(false);
+      setIsEnabling(false);
     }
   };
 
@@ -121,10 +104,11 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
     return <AlertCircle className="h-4 w-4 text-red-500" />;
   };
 
-  const getButtonText = () => {
-    if (isManualFetching) return "Fetching...";
-    if (!canFetch) return `Wait ${minutesUntilNextFetch}m`;
-    return "Fetch Now";
+  const getAutomationStatusText = () => {
+    if (automationEnabled) {
+      return `Fetching every ${frequency} minutes`;
+    }
+    return "Manual fetching only";
   };
 
   if (loading) {
@@ -149,11 +133,11 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
           <div>
             <CardTitle className="text-sm font-medium">Automation Status</CardTitle>
             <CardDescription className="text-xs">
-              Automated fetching every {frequency} minutes
+              {getAutomationStatusText()}
             </CardDescription>
           </div>
           <Badge variant={automationEnabled ? "default" : "secondary"}>
-            {automationEnabled ? "Active" : "Paused"}
+            {automationEnabled ? "Active" : "Manual"}
           </Badge>
         </div>
       </CardHeader>
@@ -167,29 +151,26 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
           </div>
         </div>
         
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={triggerManualFetch}
-          disabled={isManualFetching || !canFetch}
-          className="w-full"
-        >
-          {isManualFetching ? (
-            <>
-              <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
-              Fetching...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="h-3 w-3 mr-2" />
-              {getButtonText()}
-            </>
-          )}
-        </Button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Zap className={`h-4 w-4 ${automationEnabled ? 'text-green-500' : 'text-muted-foreground'}`} />
+            <span className="text-sm font-medium">
+              {automationEnabled ? 'Fetching On' : 'Fetching Off'}
+            </span>
+          </div>
+          <Switch 
+            checked={automationEnabled}
+            onCheckedChange={handleAutomationToggle}
+            disabled={isEnabling}
+          />
+        </div>
         
-        {!canFetch && minutesUntilNextFetch > 0 && (
+        {automationEnabled && (
           <p className="text-xs text-muted-foreground text-center">
-            Rate limited. Next fetch available in {minutesUntilNextFetch} minutes.
+            {!canFetch && minutesUntilNextFetch > 0 
+              ? `Rate limited. Next fetch in ${minutesUntilNextFetch} minutes.`
+              : `Next automatic fetch in ${Math.max(0, frequency - Math.floor((Date.now() - (lastFetchTime?.getTime() || 0)) / (1000 * 60)))} minutes.`
+            }
           </p>
         )}
       </CardContent>
