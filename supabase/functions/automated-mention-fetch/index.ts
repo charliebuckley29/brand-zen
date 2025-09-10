@@ -176,23 +176,32 @@ Deno.serve(async (req)=>{
         throw err;
       }
     }));
-    // Count successful and failed fetches
+    // Count successful and failed fetches, and total terms processed
     const successful = results.filter((r)=>r.status === 'fulfilled').length;
     const failed = results.filter((r)=>r.status === 'rejected').length;
-    console.log(`✅ Automated fetch completed: ${successful} successful, ${failed} failed`);
+    
+    // Count total search terms processed from successful results
+    const totalTermsProcessed = results
+      .filter((r) => r.status === 'fulfilled')
+      .reduce((total, r) => {
+        const data = r.value?.result;
+        return total + (data?.terms_processed || 1); // fallback to 1 if not available
+      }, 0);
+    
+    console.log(`✅ Automated fetch completed: ${successful} successful, ${failed} failed, ${totalTermsProcessed} terms processed`);
 
     // Record fetch history for both manual and automated fetches
     if (user_id) {
       try {
         if (manual) {
           // For manual fetches, update the existing record that was created at the start
-          const { error: updateError } = await supabase
-            .from('user_fetch_history')
-            .update({
-              completed_at: new Date().toISOString(),
-              successful_keywords: successful,
-              failed_keywords: failed
-            })
+            const { error: updateError } = await supabase
+              .from('user_fetch_history')
+              .update({
+                completed_at: new Date().toISOString(),
+                successful_keywords: totalTermsProcessed,
+                failed_keywords: failed
+              })
             .eq('user_id', user_id)
             .eq('fetch_type', 'manual')
             .is('completed_at', null)
@@ -206,16 +215,16 @@ Deno.serve(async (req)=>{
           }
         } else {
           // For automated fetches, insert a new complete record
-          const { error: insertError } = await supabase
-            .from('user_fetch_history')
-            .insert({
-              user_id: user_id,
-              fetch_type: 'automated',
-              started_at: new Date().toISOString(),
-              completed_at: new Date().toISOString(),
-              successful_keywords: successful,
-              failed_keywords: failed
-            });
+            const { error: insertError } = await supabase
+              .from('user_fetch_history')
+              .insert({
+                user_id: user_id,
+                fetch_type: 'automated',
+                started_at: new Date().toISOString(),
+                completed_at: new Date().toISOString(),
+                successful_keywords: totalTermsProcessed,
+                failed_keywords: failed
+              });
           
           if (insertError) {
             console.error('Failed to insert automated fetch history:', insertError);
@@ -285,6 +294,7 @@ Deno.serve(async (req)=>{
       eligible_keywords: eligibleKeywords.length,
       successful_fetches: successful,
       failed_fetches: failed,
+      total_terms_processed: totalTermsProcessed,
       frequency_check_enabled: check_frequencies,
       timestamp: new Date().toISOString()
     }), {

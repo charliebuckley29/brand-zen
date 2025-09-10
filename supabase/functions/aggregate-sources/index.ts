@@ -541,9 +541,17 @@ Deno.serve(async (req)=>{
         }
       }
     }
+    
+    // Calculate total terms processed
+    const totalTermsProcessed = keywords.reduce((total, kw) => {
+      const terms = unique([kw.brand_name, ...kw.variants || []]).filter(Boolean).slice(0, 5);
+      return total + terms.length;
+    }, 0);
+    
     const bodyOut = {
       inserted: upserted,
       totalPrepared: mentionsToUpsert.length,
+      terms_processed: totalTermsProcessed,
       perSource: perSourceCounts
     };
     return new Response(JSON.stringify(bodyOut), {
