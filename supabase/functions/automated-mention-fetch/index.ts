@@ -273,6 +273,11 @@ Deno.serve(async (req)=>{
     if (!check_frequencies || eligibleKeywords.length > 0) {
       try {
         console.log('🔔 Triggering Google Alerts RSS fetch...');
+        console.log('📊 Supabase client configured with:', {
+          url: supabaseUrl ? 'configured' : 'missing',
+          key: supabaseServiceKey ? 'configured' : 'missing'
+        });
+        
         const { data: alertsData, error: alertsError } = await supabase.functions.invoke('google-alerts', {
           body: {
             automated: true
@@ -280,12 +285,21 @@ Deno.serve(async (req)=>{
         });
         
         if (alertsError) {
-          console.log('⚠️ Google Alerts fetch failed:', alertsError);
+          console.error('⚠️ Google Alerts fetch failed:', {
+            message: alertsError.message,
+            details: alertsError.details,
+            hint: alertsError.hint,
+            code: alertsError.code
+          });
         } else {
-          console.log('✅ Google Alerts fetch completed');
+          console.log('✅ Google Alerts fetch completed:', alertsData);
         }
       } catch (alertsErr) {
-        console.error('Google Alerts fetch failed:', alertsErr);
+        console.error('Google Alerts fetch exception:', {
+          message: alertsErr.message,
+          stack: alertsErr.stack,
+          name: alertsErr.name
+        });
       }
     }
     return new Response(JSON.stringify({
