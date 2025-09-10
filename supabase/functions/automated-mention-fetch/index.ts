@@ -20,11 +20,47 @@ Deno.serve(async (req)=>{
         persistSession: false
       }
     });
-    const { check_frequencies, user_id } = await req.json().catch(()=>({
+    const { check_frequencies, user_id, manual } = await req.json().catch(()=>({
         check_frequencies: false,
-        user_id: null
+        user_id: null,
+        manual: false
       }));
-    console.log('🔄 Starting automated mention fetch...', { check_frequencies, user_id });
+    console.log('🔄 Starting automated mention fetch...', { check_frequencies, user_id, manual });
+
+    // If this is a manual fetch for a specific user, check frequency limits
+    if (manual && user_id) {
+      const { data: canFetch } = await supabase.rpc('can_user_fetch', { _user_id: user_id });
+      
+      if (!canFetch) {
+        const { data: minutesUntil } = await supabase.rpc('minutes_until_user_can_fetch', { _user_id: user_id });
+        
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Rate limit exceeded',
+          message: `Please wait ${minutesUntil} more minutes before fetching again`,
+          minutes_until_next_fetch: minutesUntil
+        }), {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
+
+      // Record the start of this fetch attempt
+      const { error: historyError } = await supabase
+        .from('user_fetch_history')
+        .insert({
+          user_id: user_id,
+          fetch_type: 'manual',
+          started_at: new Date().toISOString()
+        });
+      
+      if (historyError) {
+        console.error('Failed to record fetch start:', historyError);
+      }
+    }
     // Get keywords (filtered by user_id if provided)
     let keywordQuery = supabase.from('keywords').select('*');
     if (user_id) {
@@ -150,6 +186,25 @@ Deno.serve(async (req)=>{
     const successful = results.filter((r)=>r.status === 'fulfilled').length;
     const failed = results.filter((r)=>r.status === 'rejected').length;
     console.log(`✅ Automated fetch completed: ${successful} successful, ${failed} failed`);
+
+    // If this was a manual fetch, record completion
+    if (manual && user_id) {
+      const { error: updateError } = await supabase
+        .from('user_fetch_history')
+        .update({
+          completed_at: new Date().toISOString(),
+          successful_keywords: successful,
+          failed_keywords: failed
+        })
+        .eq('user_id', user_id)
+        .eq('fetch_type', 'manual')
+        .order('started_at', { ascending: false })
+        .limit(1);
+      
+      if (updateError) {
+        console.error('Failed to update fetch completion:', updateError);
+      }
+    }
 
     // Update global_settings to track the last fetch time
     try {

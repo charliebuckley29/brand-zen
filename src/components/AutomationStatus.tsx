@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useFetchFrequency } from "@/hooks/useFetchFrequency";
+import { useUserFetchStatus } from "@/hooks/useUserFetchStatus";
 
 interface AutomationStatusProps {
   className?: string;
@@ -13,80 +13,21 @@ interface AutomationStatusProps {
 }
 
 export function AutomationStatus({ className, onMentionsUpdated }: AutomationStatusProps) {
-  const [lastFetch, setLastFetch] = useState<Date | null>(null);
   const [isManualFetching, setIsManualFetching] = useState(false);
   const [automationEnabled, setAutomationEnabled] = useState(true);
   const { toast } = useToast();
-  const { frequency, loading } = useFetchFrequency();
-
-  useEffect(() => {
-    // Load initial last fetch time from global settings
-    const loadLastFetch = async () => {
-      try {
-        const { data } = await supabase
-          .from('global_settings')
-          .select('setting_value')
-          .eq('setting_key', 'last_global_fetch')
-          .maybeSingle();
-
-        if (data?.setting_value) {
-          const timeString = typeof data.setting_value === 'string' 
-            ? data.setting_value.replace(/"/g, '') 
-            : String(data.setting_value).replace(/"/g, '');
-          const lastFetchTime = new Date(timeString);
-          if (!isNaN(lastFetchTime.getTime())) {
-            setLastFetch(lastFetchTime);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading last fetch time:', error);
-      }
-    };
-
-    loadLastFetch();
-
-    // Set up realtime subscription to track mention insertions
-    const channel = supabase
-      .channel('automation-tracking')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'mentions'
-        },
-        () => {
-          setLastFetch(new Date());
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'global_settings',
-          filter: 'setting_key=eq.last_global_fetch'
-        },
-        (payload) => {
-          if (payload.new?.setting_value) {
-            const timeString = typeof payload.new.setting_value === 'string' 
-              ? payload.new.setting_value.replace(/"/g, '') 
-              : String(payload.new.setting_value).replace(/"/g, '');
-            const lastFetchTime = new Date(timeString);
-            if (!isNaN(lastFetchTime.getTime())) {
-              setLastFetch(lastFetchTime);
-            }
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const { canFetch, minutesUntilNextFetch, frequency, lastFetchTime, loading } = useUserFetchStatus();
 
   const triggerManualFetch = async () => {
+    if (!canFetch) {
+      toast({
+        title: "Rate limit exceeded",
+        description: `Please wait ${minutesUntilNextFetch} more minutes before fetching again.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsManualFetching(true);
     try {
       console.log('AutomationStatus: Starting manual fetch...');
@@ -97,7 +38,7 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
         throw new Error('User not authenticated');
       }
       
-      // First try the automated-mention-fetch function for this user only
+      // Try the automated-mention-fetch function for this user only
       const { data: automatedData, error: automatedError } = await supabase.functions.invoke('automated-mention-fetch', { 
         body: { 
           check_frequencies: false, 
@@ -107,59 +48,18 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
       });
       
       if (automatedError) {
-        console.warn('Automated fetch failed, falling back to individual functions:', automatedError);
-        
-        // Let's test aggregate-sources directly with no keyword filter
-        console.log('Testing aggregate-sources directly...');
-        const { data: testData, error: testError } = await supabase.functions.invoke('aggregate-sources', { 
-          body: {} 
-        });
-        
-        if (testError) {
-          console.error('Direct aggregate-sources test failed:', testError);
-        } else {
-          console.log('Direct aggregate-sources test succeeded:', testData);
-        }
-        
-        // Fallback to individual functions
-        const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
-        const googleAlertsEnabled = (typeof window !== 'undefined') ? localStorage.getItem('google_alerts_enabled') !== 'false' : true;
-        
-        const calls = [supabase.functions.invoke('aggregate-sources', { body: {} })];
-        if (rssEnabled) calls.push(supabase.functions.invoke('monitor-news', { body: {} }));
-        if (googleAlertsEnabled) calls.push(supabase.functions.invoke('google-alerts', { body: {} }));
-        
-        const results = await Promise.allSettled(calls as any);
-        
-        // Log results for debugging
-        results.forEach((result, index) => {
-          const functionName = index === 0 ? 'aggregate-sources' : (index === 1 ? 'monitor-news' : 'google-alerts');
-          console.log(`AutomationStatus: ${functionName} result:`, result);
-          if (result.status === 'rejected') {
-            console.error(`AutomationStatus: ${functionName} failed:`, result.reason);
-          }
-        });
-      } else {
-        console.log('AutomationStatus: Automated fetch successful:', automatedData);
-        console.log('AutomationStatus: Full response details:', JSON.stringify(automatedData, null, 2));
-        
-        // Check if we have any failed fetches and log them
-        if (automatedData?.failed_fetches > 0) {
-          console.error(`AutomationStatus: ${automatedData.failed_fetches} out of ${automatedData.total_keywords} keyword fetches failed`);
-          
-          // Let's test aggregate-sources directly to see if it works without automation
-          console.log('Testing aggregate-sources directly due to failures...');
-          const { data: testData, error: testError } = await supabase.functions.invoke('aggregate-sources', { 
-            body: {} 
+        if (automatedError.message?.includes('Rate limit exceeded')) {
+          toast({
+            title: "Rate limit exceeded",
+            description: automatedError.message,
+            variant: "destructive",
           });
-          
-          if (testError) {
-            console.error('Direct aggregate-sources test failed:', testError);
-          } else {
-            console.log('Direct aggregate-sources test succeeded:', testData);
-          }
+          return;
         }
+        throw automatedError;
       }
+      
+      console.log('AutomationStatus: Manual fetch successful:', automatedData);
       
       // Update mentions display if callback provided
       if (onMentionsUpdated) {
@@ -169,11 +69,10 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
       }
 
       toast({
-        title: "Fetch started",
-        description: "Checking all sources for new mentions. Results will appear shortly.",
+        title: "Fetch completed",
+        description: `Successfully fetched mentions for ${automatedData?.successful_fetches || 0} keywords.`,
       });
 
-      setLastFetch(new Date());
     } catch (error: any) {
       console.error('AutomationStatus: Manual fetch error:', error);
       toast({
@@ -187,10 +86,10 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
   };
 
   const getStatusColor = () => {
-    if (!lastFetch) return "secondary";
+    if (!lastFetchTime) return "secondary";
     
     const now = new Date();
-    const timeDiff = now.getTime() - lastFetch.getTime();
+    const timeDiff = now.getTime() - lastFetchTime.getTime();
     const minutesDiff = timeDiff / (1000 * 60);
     
     // Green if last fetch was within user's frequency + 5min buffer
@@ -202,10 +101,10 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
   };
 
   const getStatusText = () => {
-    if (!lastFetch) return "No recent activity";
+    if (!lastFetchTime) return "No recent activity";
     
     const now = new Date();
-    const timeDiff = now.getTime() - lastFetch.getTime();
+    const timeDiff = now.getTime() - lastFetchTime.getTime();
     const minutesDiff = Math.floor(timeDiff / (1000 * 60));
     
     if (minutesDiff < 1) return "Just now";
@@ -221,6 +120,27 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
     if (status === "secondary") return <Clock className="h-4 w-4 text-yellow-500" />;
     return <AlertCircle className="h-4 w-4 text-red-500" />;
   };
+
+  const getButtonText = () => {
+    if (isManualFetching) return "Fetching...";
+    if (!canFetch) return `Wait ${minutesUntilNextFetch}m`;
+    return "Fetch Now";
+  };
+
+  if (loading) {
+    return (
+      <Card className={className}>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-medium">Automation Status</CardTitle>
+              <CardDescription className="text-xs">Loading...</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <Card className={className}>
@@ -251,7 +171,7 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
           variant="outline" 
           size="sm" 
           onClick={triggerManualFetch}
-          disabled={isManualFetching}
+          disabled={isManualFetching || !canFetch}
           className="w-full"
         >
           {isManualFetching ? (
@@ -262,10 +182,16 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
           ) : (
             <>
               <RefreshCw className="h-3 w-3 mr-2" />
-              Fetch Now
+              {getButtonText()}
             </>
           )}
         </Button>
+        
+        {!canFetch && minutesUntilNextFetch > 0 && (
+          <p className="text-xs text-muted-foreground text-center">
+            Rate limited. Next fetch available in {minutesUntilNextFetch} minutes.
+          </p>
+        )}
       </CardContent>
     </Card>
   );
