@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { cleanHtmlContent } from "@/lib/contentUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Flag, Settings as SettingsIcon, AlertTriangle, Eye } from "lucide-react";
 import type { UserType } from "@/hooks/use-user-role";
@@ -604,14 +605,14 @@ export function ModeratorPanel() {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
                         <AlertTriangle className="h-4 w-4 text-destructive" />
-                        <span className="font-medium">{mention.source_name}</span>
+                        <span className="font-medium">{cleanHtmlContent(mention.source_name)}</span>
                         <Badge variant="destructive">Flagged</Badge>
                       </div>
                       <span className="text-sm text-muted-foreground">
                         {new Date(mention.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="text-sm">{mention.content_snippet}</p>
+                    <p className="text-sm">{cleanHtmlContent(mention.content_snippet)}</p>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <span>User: {mention.user_full_name}</span>
                       <a 

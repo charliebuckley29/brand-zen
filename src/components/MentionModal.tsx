@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ExternalLink, Scale, Users, Flag, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cleanHtmlContent } from "@/lib/contentUtils";
 
 interface Mention {
   id: string;
@@ -209,11 +210,11 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {mention.content_snippet}
+            {cleanHtmlContent(mention.content_snippet)}
             {flagged && <Flag className="h-4 w-4 text-orange-500" />}
           </DialogTitle>
           <DialogDescription>
-            Published on {formatDate(mention.published_at)} by {mention.source_name}
+            Published on {formatDate(mention.published_at)} by {cleanHtmlContent(mention.source_name)}
           </DialogDescription>
         </DialogHeader>
 
@@ -221,7 +222,7 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
           {/* Source and Link */}
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold">{mention.source_name}</h3>
+              <h3 className="font-semibold">{cleanHtmlContent(mention.source_name)}</h3>
               <p className="text-sm text-muted-foreground">{formatDate(mention.published_at)}</p>
             </div>
             <Button variant="outline" onClick={() => window.open(mention.source_url, '_blank', 'noopener,noreferrer')}>
@@ -286,7 +287,7 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
               )}
               {(resolvedText || mention.full_text) ? (
                 <p className="text-sm leading-relaxed whitespace-pre-line">
-                  {resolvedText || mention.full_text}
+                  {cleanHtmlContent(resolvedText || mention.full_text || '')}
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground">No article body available for this mention.</p>

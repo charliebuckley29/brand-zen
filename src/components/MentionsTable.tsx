@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ExternalLink, Flag, Clock, MessageCircle, UserX, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { useState, useEffect } from "react";
+import { cleanAndTruncate } from "@/lib/contentUtils";
 
 interface Mention {
   id: string;
@@ -241,7 +242,7 @@ export function MentionsTable({
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground tabular-nums">#{startIndex + index + 1}</span>
-                  <span className="font-medium text-sm">{mention.source_name}</span>
+                  <span className="font-medium text-sm">{cleanAndTruncate(mention.source_name, 60)}</span>
                   {mention.flagged && <Flag className="h-3 w-3 text-warning" />}
                 </div>
                 <div className="flex items-center gap-1">
@@ -273,7 +274,7 @@ export function MentionsTable({
               </div>
               
               <p className="text-sm text-foreground mb-3 line-clamp-2">
-                {mention.content_snippet}
+                {cleanAndTruncate(mention.content_snippet, 150)}
               </p>
               
               <div className="flex items-center justify-between mb-3">
@@ -362,12 +363,12 @@ export function MentionsTable({
                   </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
-                      <span className="truncate">{mention.source_name}</span>
+                      <span className="truncate">{cleanAndTruncate(mention.source_name, 60)}</span>
                       {mention.flagged && <Flag className="h-4 w-4 text-warning" />}
                     </div>
                   </TableCell>
                   <TableCell className="max-w-md">
-                    <p className="truncate">{mention.content_snippet}</p>
+                    <p className="truncate">{cleanAndTruncate(mention.content_snippet, 100)}</p>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={`text-xs ${getSentimentColor(mention.sentiment)}`}>
