@@ -1,1 +1,12 @@
 project_id = "sjypzdqelypxymzzxhxi"
+
+# Disable JWT verification for automated functions that need to be called by cron jobs
+# and other functions without user authentication
+[functions.automated-scheduler]
+verify_jwt = false
+
+[functions.automated-mention-fetch]
+verify_jwt = false
+
+[functions.aggregate-sources]
+verify_jwt = false
