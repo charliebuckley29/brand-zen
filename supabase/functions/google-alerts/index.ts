@@ -33,48 +33,19 @@ async function fetchGoogleAlertsRSS(rssUrl: string): Promise<GoogleAlertItem[]> 
     const rssText = await response.text();
     console.log(`📝 RSS content length: ${rssText.length} characters`);
 
-    // Parse RSS XML (Google Alerts uses a specific format)
+    // Parse RSS XML (Google Alerts uses Atom feed format)
     const items: GoogleAlertItem[] = [];
     
-    // Google Alerts RSS often uses <entry> tags instead of <item>
-    let itemMatches = rssText.match(/<item[^>]*>[\s\S]*?<\/item>/gi);
-    if (!itemMatches) {
-      itemMatches = rssText.match(/<entry[^>]*>[\s\S]*?<\/entry>/gi);
-    }
+    // Google Alerts RSS uses Atom format with <entry> tags
+    let itemMatches = rssText.match(/<entry[^>]*>[\s\S]*?<\/entry>/gi);
     
-    // Also try parsing as Atom feed entries
+    // Fallback to RSS <item> format if no entries found
     if (!itemMatches) {
-      // Google Alerts sometimes uses a different format - try to extract from the raw content
-      console.log('📝 Trying alternative parsing for Google Alerts format...');
-      
-      // Look for URL patterns in the content
-      const urlPattern = /https:\/\/www\.google\.com\/url\?[^"'\s]+/g;
-      const urls = rssText.match(urlPattern);
-      
-      // Look for title patterns
-      const titlePattern = /<b>(.*?)<\/b>/g;
-      const titles = [];
-      let match;
-      while ((match = titlePattern.exec(rssText)) !== null) {
-        titles.push(match[1]);
-      }
-      
-      if (urls && urls.length > 0) {
-        console.log(`📰 Found ${urls.length} URLs in alternative format`);
-        for (let i = 0; i < Math.min(urls.length, titles.length); i++) {
-          items.push({
-            title: titles[i] || 'Google Alert Item',
-            link: urls[i],
-            description: titles[i] || '',
-            pubDate: new Date().toISOString()
-          });
-        }
-        return items;
-      }
+      itemMatches = rssText.match(/<item[^>]*>[\s\S]*?<\/item>/gi);
     }
     
     if (!itemMatches) {
-      console.log('⚠️ No RSS items found in response - trying raw content extraction...');
+      console.log('⚠️ No RSS entries or items found in response');
       console.log(`📝 Sample content: ${rssText.substring(0, 500)}`);
       return [];
     }
@@ -83,17 +54,38 @@ async function fetchGoogleAlertsRSS(rssUrl: string): Promise<GoogleAlertItem[]> 
 
     for (const itemXml of itemMatches) {
       try {
-        const title = itemXml.match(/<title[^>]*><!\[CDATA\[(.*?)\]\]><\/title>/i)?.[1] || 
-                     itemXml.match(/<title[^>]*>(.*?)<\/title>/i)?.[1] || '';
+        // Handle both RSS <item> and Atom <entry> formats
+        const isAtom = itemXml.includes('<entry');
         
-        const link = itemXml.match(/<link[^>]*>(.*?)<\/link>/i)?.[1] || '';
+        let title, link, description, pubDate;
         
-        const description = itemXml.match(/<description[^>]*><!\[CDATA\[(.*?)\]\]><\/description>/i)?.[1] || 
-                           itemXml.match(/<description[^>]*>(.*?)<\/description>/i)?.[1] || '';
-        
-        const pubDate = itemXml.match(/<pubDate[^>]*>(.*?)<\/pubDate>/i)?.[1] || 
-                       itemXml.match(/<dc:date[^>]*>(.*?)<\/dc:date>/i)?.[1] || 
-                       new Date().toISOString();
+        if (isAtom) {
+          // Atom feed format (Google Alerts)
+          title = itemXml.match(/<title[^>]*type="html"[^>]*>(.*?)<\/title>/i)?.[1] ||
+                  itemXml.match(/<title[^>]*>(.*?)<\/title>/i)?.[1] || '';
+          
+          link = itemXml.match(/<link[^>]*href="([^"]*)"[^>]*>/i)?.[1] || '';
+          
+          description = itemXml.match(/<content[^>]*type="html"[^>]*>(.*?)<\/content>/i)?.[1] ||
+                       itemXml.match(/<summary[^>]*>(.*?)<\/summary>/i)?.[1] || '';
+          
+          pubDate = itemXml.match(/<published[^>]*>(.*?)<\/published>/i)?.[1] ||
+                   itemXml.match(/<updated[^>]*>(.*?)<\/updated>/i)?.[1] ||
+                   new Date().toISOString();
+        } else {
+          // RSS format
+          title = itemXml.match(/<title[^>]*><!\[CDATA\[(.*?)\]\]><\/title>/i)?.[1] || 
+                 itemXml.match(/<title[^>]*>(.*?)<\/title>/i)?.[1] || '';
+          
+          link = itemXml.match(/<link[^>]*>(.*?)<\/link>/i)?.[1] || '';
+          
+          description = itemXml.match(/<description[^>]*><!\[CDATA\[(.*?)\]\]><\/description>/i)?.[1] || 
+                       itemXml.match(/<description[^>]*>(.*?)<\/description>/i)?.[1] || '';
+          
+          pubDate = itemXml.match(/<pubDate[^>]*>(.*?)<\/pubDate>/i)?.[1] || 
+                   itemXml.match(/<dc:date[^>]*>(.*?)<\/dc:date>/i)?.[1] || 
+                   new Date().toISOString();
+        }
 
         if (title && link) {
           // Extract source from Google Alerts link
