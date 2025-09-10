@@ -153,24 +153,18 @@ Deno.serve(async (req)=>{
     const results = await Promise.allSettled(eligibleKeywords.map(async (keyword)=>{
       try {
         console.log(`🔍 Fetching mentions for keyword: ${keyword.brand_name} (freq: ${keyword.fetch_frequency_minutes || 15}min)`);
-        // Use service key to make authenticated requests
-        const response = await fetch(`${supabaseUrl}/functions/v1/aggregate-sources`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+        // Use Supabase client to invoke the function
+        const { data, error: invokeError } = await supabase.functions.invoke('aggregate-sources', {
+          body: {
             keywordId: keyword.id,
             automated: true
-          })
+          }
         });
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`aggregate-sources failed for keyword ${keyword.brand_name}: ${response.status} ${response.statusText} - ${errorText}`);
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        
+        if (invokeError) {
+          console.error(`aggregate-sources failed for keyword ${keyword.brand_name}:`, invokeError);
+          throw invokeError;
         }
-        const data = await response.json();
         return {
           keyword: keyword.brand_name,
           result: data
@@ -228,20 +222,16 @@ Deno.serve(async (req)=>{
     if (!check_frequencies || eligibleKeywords.length > 0) {
       try {
         console.log('🔔 Triggering Google Alerts RSS fetch...');
-        const alertsResponse = await fetch(`${supabaseUrl}/functions/v1/google-alerts`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+        const { data: alertsData, error: alertsError } = await supabase.functions.invoke('google-alerts', {
+          body: {
             automated: true
-          })
+          }
         });
-        if (alertsResponse.ok) {
-          console.log('✅ Google Alerts fetch completed');
+        
+        if (alertsError) {
+          console.log('⚠️ Google Alerts fetch failed:', alertsError);
         } else {
-          console.log('⚠️ Google Alerts fetch failed:', await alertsResponse.text());
+          console.log('✅ Google Alerts fetch completed');
         }
       } catch (alertsErr) {
         console.error('Google Alerts fetch failed:', alertsErr);
