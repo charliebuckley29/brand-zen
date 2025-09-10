@@ -184,42 +184,47 @@ Deno.serve(async (req)=>{
     // Record fetch history for both manual and automated fetches
     if (user_id) {
       try {
-        // First, insert a new fetch record
-        const { error: insertError } = await supabase
-          .from('user_fetch_history')
-          .insert({
-            user_id: user_id,
-            fetch_type: manual ? 'manual' : 'automated',
-            started_at: new Date().toISOString(),
-            completed_at: new Date().toISOString(),
-            successful_keywords: successful,
-            failed_keywords: failed
-          });
-        
-        if (insertError) {
-          console.error('Failed to insert fetch history:', insertError);
+        if (manual) {
+          // For manual fetches, update the existing record that was created at the start
+          const { error: updateError } = await supabase
+            .from('user_fetch_history')
+            .update({
+              completed_at: new Date().toISOString(),
+              successful_keywords: successful,
+              failed_keywords: failed
+            })
+            .eq('user_id', user_id)
+            .eq('fetch_type', 'manual')
+            .is('completed_at', null)
+            .order('started_at', { ascending: false })
+            .limit(1);
+          
+          if (updateError) {
+            console.error('Failed to update manual fetch completion:', updateError);
+          } else {
+            console.log(`✅ Updated manual fetch completion in history`);
+          }
         } else {
-          console.log(`✅ Recorded ${manual ? 'manual' : 'automated'} fetch in history`);
+          // For automated fetches, insert a new complete record
+          const { error: insertError } = await supabase
+            .from('user_fetch_history')
+            .insert({
+              user_id: user_id,
+              fetch_type: 'automated',
+              started_at: new Date().toISOString(),
+              completed_at: new Date().toISOString(),
+              successful_keywords: successful,
+              failed_keywords: failed
+            });
+          
+          if (insertError) {
+            console.error('Failed to insert automated fetch history:', insertError);
+          } else {
+            console.log(`✅ Recorded automated fetch in history`);
+          }
         }
       } catch (historyError) {
         console.error('Error recording fetch history:', historyError);
-      }
-    } else if (manual) {
-      // For manual fetches without user_id (shouldn't happen), try the old update method
-      const { error: updateError } = await supabase
-        .from('user_fetch_history')
-        .update({
-          completed_at: new Date().toISOString(),
-          successful_keywords: successful,
-          failed_keywords: failed
-        })
-        .eq('user_id', user_id)
-        .eq('fetch_type', 'manual')
-        .order('started_at', { ascending: false })
-        .limit(1);
-      
-      if (updateError) {
-        console.error('Failed to update fetch completion:', updateError);
       }
     }
 
