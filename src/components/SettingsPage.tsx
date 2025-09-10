@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X as XIcon, Globe, Newspaper, Youtube, MessageSquare, Rss, AlertCircle } from "lucide-react";
 import { SOURCES, type SourceType } from "@/config/sources";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { TimezoneSettings } from "@/components/TimezoneSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { startMonitoring } from "@/lib/monitoring";
@@ -429,6 +430,9 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
             </div>
           </CardContent>
         </Card>
+
+        {/* Timezone Settings */}
+        <TimezoneSettings />
 
         {/* Profile */}
         <Card>

@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { TimezoneProvider } from "@/contexts/TimezoneContext";
 import Index from "./pages/Index";
 import Help from "./pages/Help";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -17,22 +18,24 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/help" element={<Help />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/api" element={<AdminApiPanel />} />
-            <Route path="/admin/moderators" element={<AdminModeratorsPanel />} />
-            <Route path="/admin/bug-reports" element={<AdminBugReportsPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <TimezoneProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/help" element={<Help />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/api" element={<AdminApiPanel />} />
+              <Route path="/admin/moderators" element={<AdminModeratorsPanel />} />
+              <Route path="/admin/bug-reports" element={<AdminBugReportsPage />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </TimezoneProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

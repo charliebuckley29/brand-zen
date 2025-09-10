@@ -395,6 +395,7 @@ export type Database = {
           full_name: string
           id: string
           phone_number: string | null
+          timezone: string | null
           updated_at: string
           user_id: string
         }
@@ -405,6 +406,7 @@ export type Database = {
           full_name: string
           id?: string
           phone_number?: string | null
+          timezone?: string | null
           updated_at?: string
           user_id: string
         }
@@ -415,6 +417,7 @@ export type Database = {
           full_name?: string
           id?: string
           phone_number?: string | null
+          timezone?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -561,6 +564,10 @@ export type Database = {
       can_user_fetch: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      detect_user_timezone: {
+        Args: { _timezone: string; _user_id: string }
+        Returns: undefined
       }
       get_global_setting: {
         Args: { _setting_key: string }

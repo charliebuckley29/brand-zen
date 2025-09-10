@@ -6,6 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { supabase } from "@/integrations/supabase/client";
 import { FileText, ChevronDown, ChevronRight, Clock, CheckCircle, XCircle, Activity } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useTimezone } from "@/contexts/TimezoneContext";
 
 interface FetchLog {
   id: string;
@@ -21,6 +22,7 @@ export function FetchLogsModal() {
   const [logs, setLogs] = useState<FetchLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+  const { formatDateTime, formatRelativeTime } = useTimezone();
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -137,7 +139,7 @@ export function FetchLogsModal() {
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {formatDistanceToNow(new Date(log.started_at), { addSuffix: true })}
+                            {formatRelativeTime(log.started_at)}
                           </p>
                         </div>
                       </div>
@@ -170,7 +172,7 @@ export function FetchLogsModal() {
                         <div className="font-medium text-muted-foreground">Start Time</div>
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {new Date(log.started_at).toLocaleString()}
+                          {formatDateTime(log.started_at)}
                         </div>
                       </div>
                       
@@ -179,7 +181,7 @@ export function FetchLogsModal() {
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {log.completed_at 
-                            ? new Date(log.completed_at).toLocaleString()
+                            ? formatDateTime(log.completed_at)
                             : 'In progress...'
                           }
                         </div>
