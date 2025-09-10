@@ -1,6 +1,6 @@
 import { Globe, MessageSquare, Youtube, FileText, Twitter } from "lucide-react";
 
-export type SourceType = "web" | "news" | "reddit" | "youtube" | "x";
+export type SourceType = "web" | "news" | "reddit" | "youtube" | "x" | "google_alert";
 
 export type SourceCategory = "news" | "social" | "web" | "video";
 
@@ -183,6 +183,26 @@ export const SOURCES: Record<SourceType, SourceConfig> = {
       "Rate limited by X API"
     ],
     icon: Twitter
+  },
+  google_alert: {
+    id: "google_alert",
+    name: "Google Alerts",
+    category: "news",
+    description: "Mentions from Google Alerts RSS feeds",
+    examples: [
+      "News articles from Google Alerts",
+      "Blog posts and web content",
+      "Recent publications mentioning your brand",
+      "Real-time Google search results"
+    ],
+    implemented: true,
+    apiProvider: "Google Alerts RSS",
+    implementationNotes: "Monitors Google Alerts RSS feeds for real-time mentions",
+    limitations: [
+      "Requires manual setup of Google Alerts",
+      "Depends on Google's indexing speed"
+    ],
+    icon: Globe
   }
 };
 
