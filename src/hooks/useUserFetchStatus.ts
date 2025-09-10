@@ -52,14 +52,16 @@ export function useUserFetchStatus(): UserFetchStatus {
           _user_id: user.id 
         });
 
-        // Get last fetch time
+        // Get last fetch time (manual or automated)
         const { data: lastFetch } = await supabase
           .from('user_fetch_history')
-          .select('started_at')
+          .select('started_at, fetch_type')
           .eq('user_id', user.id)
           .order('started_at', { ascending: false })
           .limit(1)
           .maybeSingle();
+
+        console.log('Latest fetch from hook:', lastFetch);
 
         const updateAutomationEnabled = async (enabled: boolean) => {
           const { error } = await supabase
@@ -108,6 +110,7 @@ export function useUserFetchStatus(): UserFetchStatus {
           table: 'user_fetch_history'
         },
         () => {
+          console.log('Realtime: User fetch history changed, refreshing status...');
           checkUserFetchStatus();
         }
       )
