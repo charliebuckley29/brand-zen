@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RefreshCw, Trash2, History } from "lucide-react";
+import { RefreshCw, Trash2, History, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ExclusionsModal } from "./ExclusionsModal";
+import { FetchLogsModal } from "./FetchLogsModal";
 import { AutomationStatus } from "@/components/AutomationStatus";
 
 interface MonitoringControlsProps {
@@ -72,6 +73,7 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
         <AutomationStatus onMentionsUpdated={onMentionsUpdated} />
         
         <div className="flex flex-col gap-2 sm:flex-row">
+          <FetchLogsModal />
           <Button 
             variant="outline"
             onClick={() => setExclusionsOpen(true)}
