@@ -44,6 +44,146 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_heartbeat: {
+        Row: {
+          id: number
+          last_beat: string | null
+        }
+        Insert: {
+          id?: number
+          last_beat?: string | null
+        }
+        Update: {
+          id?: number
+          last_beat?: string | null
+        }
+        Relationships: []
+      }
+      automation_logs: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          error_details: Json | null
+          event_type: string
+          id: string
+          message: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          error_details?: Json | null
+          event_type: string
+          id?: string
+          message: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          error_details?: Json | null
+          event_type?: string
+          id?: string
+          message?: string
+        }
+        Relationships: []
+      }
+      bug_report_comments: {
+        Row: {
+          bug_report_id: string
+          comment: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          user_id: string
+        }
+        Insert: {
+          bug_report_id: string
+          comment: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          user_id: string
+        }
+        Update: {
+          bug_report_id?: string
+          comment?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bug_report_comments_bug_report_id_fkey"
+            columns: ["bug_report_id"]
+            isOneToOne: false
+            referencedRelation: "bug_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bug_reports: {
+        Row: {
+          actual_behavior: string | null
+          assigned_to: string | null
+          browser_info: Json | null
+          console_logs: string | null
+          created_at: string
+          description: string
+          expected_behavior: string | null
+          id: string
+          internal_notes: string[] | null
+          priority: string
+          resolved_at: string | null
+          screenshots: string[] | null
+          status: string
+          steps_to_reproduce: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_behavior?: string | null
+          assigned_to?: string | null
+          browser_info?: Json | null
+          console_logs?: string | null
+          created_at?: string
+          description: string
+          expected_behavior?: string | null
+          id?: string
+          internal_notes?: string[] | null
+          priority?: string
+          resolved_at?: string | null
+          screenshots?: string[] | null
+          status?: string
+          steps_to_reproduce?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_behavior?: string | null
+          assigned_to?: string | null
+          browser_info?: Json | null
+          console_logs?: string | null
+          created_at?: string
+          description?: string
+          expected_behavior?: string | null
+          id?: string
+          internal_notes?: string[] | null
+          priority?: string
+          resolved_at?: string | null
+          screenshots?: string[] | null
+          status?: string
+          steps_to_reproduce?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       global_settings: {
         Row: {
           created_at: string
@@ -349,6 +489,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_fetch_history: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          failed_keywords: number | null
+          fetch_type: string
+          id: string
+          started_at: string
+          successful_keywords: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          failed_keywords?: number | null
+          fetch_type?: string
+          id?: string
+          started_at?: string
+          successful_keywords?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          failed_keywords?: number | null
+          fetch_type?: string
+          id?: string
+          started_at?: string
+          successful_keywords?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -378,6 +551,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      beat_automation_heartbeat: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      can_user_fetch: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       get_global_setting: {
         Args: { _setting_key: string }
         Returns: Json
@@ -399,6 +580,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      minutes_until_user_can_fetch: {
+        Args: { _user_id: string }
+        Returns: number
+      }
+      trigger_automated_fetch: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       trigger_mention_fetch: {
         Args: Record<PropertyKey, never>
