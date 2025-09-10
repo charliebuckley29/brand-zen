@@ -181,8 +181,31 @@ Deno.serve(async (req)=>{
     const failed = results.filter((r)=>r.status === 'rejected').length;
     console.log(`✅ Automated fetch completed: ${successful} successful, ${failed} failed`);
 
-    // If this was a manual fetch, record completion
-    if (manual && user_id) {
+    // Record fetch history for both manual and automated fetches
+    if (user_id) {
+      try {
+        // First, insert a new fetch record
+        const { error: insertError } = await supabase
+          .from('user_fetch_history')
+          .insert({
+            user_id: user_id,
+            fetch_type: manual ? 'manual' : 'automated',
+            started_at: new Date().toISOString(),
+            completed_at: new Date().toISOString(),
+            successful_keywords: successful,
+            failed_keywords: failed
+          });
+        
+        if (insertError) {
+          console.error('Failed to insert fetch history:', insertError);
+        } else {
+          console.log(`✅ Recorded ${manual ? 'manual' : 'automated'} fetch in history`);
+        }
+      } catch (historyError) {
+        console.error('Error recording fetch history:', historyError);
+      }
+    } else if (manual) {
+      // For manual fetches without user_id (shouldn't happen), try the old update method
       const { error: updateError } = await supabase
         .from('user_fetch_history')
         .update({
