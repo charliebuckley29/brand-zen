@@ -18,7 +18,7 @@ import { useSourcePreferences } from "@/hooks/useSourcePreferences";
 import { useGlobalSettings } from "@/hooks/useGlobalSettings";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PhoneInputWithCountry } from "@/components/ui/phone-input-with-country";
 import { isValidPhoneNumber } from "react-phone-number-input";
 interface SettingsPageProps {
@@ -79,7 +79,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const { toast } = useToast();
   const { userType } = useUserRole();
   const { getSetting, loading: globalSettingsLoading } = useGlobalSettings();
-  const { profileData, loading: profileLoading, updateProfile } = useProfileCompletion();
+  const { profileData, loading: profileLoading, updateProfile, updateNotificationPreferences } = useProfileCompletion();
 
   const { loading: prefsLoading, prefs, setPref, setAllForSource } = useSourcePreferences();
   const [rssEnabled, setRssEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('rss_news_ingestion') !== 'false' : true));
@@ -453,6 +453,68 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
               </div>
               <ThemeToggle />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Notifications */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Notifications
+            </CardTitle>
+            <CardDescription>
+              Configure how you want to receive alerts for negative sentiment mentions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base">SMS Notifications</Label>
+                <div className="text-[0.8rem] text-muted-foreground">
+                  Receive SMS alerts for negative mentions
+                </div>
+              </div>
+              <Switch
+                checked={profileData?.notification_preferences?.sms || false}
+                onCheckedChange={(checked) => {
+                  const preferences = {
+                    ...profileData?.notification_preferences,
+                    sms: checked
+                  };
+                  updateNotificationPreferences(preferences);
+                }}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base">WhatsApp Notifications</Label>
+                <div className="text-[0.8rem] text-muted-foreground">
+                  Receive WhatsApp messages for negative mentions
+                </div>
+              </div>
+              <Switch
+                checked={profileData?.notification_preferences?.whatsapp || false}
+                onCheckedChange={(checked) => {
+                  const preferences = {
+                    ...profileData?.notification_preferences,
+                    whatsapp: checked
+                  };
+                  updateNotificationPreferences(preferences);
+                }}
+              />
+            </div>
+
+            {(profileData?.notification_preferences?.sms || profileData?.notification_preferences?.whatsapp) && !profileData?.phone_number && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Phone Number Required</AlertTitle>
+                <AlertDescription>
+                  Please add your phone number in the Profile section to receive notifications.
+                </AlertDescription>
+              </Alert>
+            )}
           </CardContent>
         </Card>
 

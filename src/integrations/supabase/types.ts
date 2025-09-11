@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_twilio_settings: {
+        Row: {
+          account_sid: string | null
+          auth_token: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          sms_from: string | null
+          updated_at: string
+          whatsapp_from: string | null
+        }
+        Insert: {
+          account_sid?: string | null
+          auth_token?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          sms_from?: string | null
+          updated_at?: string
+          whatsapp_from?: string | null
+        }
+        Update: {
+          account_sid?: string | null
+          auth_token?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          sms_from?: string | null
+          updated_at?: string
+          whatsapp_from?: string | null
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           additional_config: Json | null
@@ -401,6 +434,7 @@ export type Database = {
           full_name: string
           id: string
           legal_team_email: string | null
+          notification_preferences: Json | null
           phone_number: string | null
           pr_team_email: string | null
           timezone: string | null
@@ -414,6 +448,7 @@ export type Database = {
           full_name: string
           id?: string
           legal_team_email?: string | null
+          notification_preferences?: Json | null
           phone_number?: string | null
           pr_team_email?: string | null
           timezone?: string | null
@@ -427,6 +462,7 @@ export type Database = {
           full_name?: string
           id?: string
           legal_team_email?: string | null
+          notification_preferences?: Json | null
           phone_number?: string | null
           pr_team_email?: string | null
           timezone?: string | null

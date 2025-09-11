@@ -199,7 +199,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const { data: sent, error: sendError } = await resend.emails.send({
-      from: "Mention Alerts <onboarding@resend.dev>",
+      from: "Mention Alerts <noreply@reputations.io>",
       to: [teamEmail],
       subject: emailSubject,
       html: emailHtml,

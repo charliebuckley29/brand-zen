@@ -6,6 +6,10 @@ interface ProfileData {
   phone_number: string | null;
   pr_team_email: string | null;
   legal_team_email: string | null;
+  notification_preferences?: {
+    sms?: boolean;
+    whatsapp?: boolean;
+  };
 }
 
 export function useProfileCompletion() {
@@ -27,7 +31,7 @@ export function useProfileCompletion() {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("full_name, phone_number, pr_team_email, legal_team_email")
+        .select("full_name, phone_number, pr_team_email, legal_team_email, notification_preferences")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -38,7 +42,10 @@ export function useProfileCompletion() {
         return;
       }
 
-      setProfileData(profile);
+      setProfileData(profile ? {
+        ...profile,
+        notification_preferences: profile.notification_preferences ? profile.notification_preferences as { sms?: boolean; whatsapp?: boolean } : undefined
+      } : null);
 
       // Check if profile is complete (full_name is required, phone_number is optional but encouraged)
       const isComplete = profile && 
@@ -73,12 +80,13 @@ export function useProfileCompletion() {
 
       if (error) throw error;
 
-      setProfileData({
+      setProfileData(prev => ({
+        ...prev,
         full_name: fullName.trim(),
         phone_number: phoneNumber?.trim() || null,
         pr_team_email: prTeamEmail?.trim() || null,
         legal_team_email: legalTeamEmail?.trim() || null
-      });
+      }));
       setIsProfileComplete(true);
       
       return { success: true };
@@ -88,11 +96,38 @@ export function useProfileCompletion() {
     }
   };
 
+  const updateNotificationPreferences = async (preferences: { sms?: boolean; whatsapp?: boolean }) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          notification_preferences: preferences
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setProfileData(prev => prev ? ({
+        ...prev,
+        notification_preferences: preferences
+      }) : null);
+      
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating notification preferences:", error);
+      return { success: false, error };
+    }
+  };
+
   return {
     profileData,
     isProfileComplete,
     loading,
     updateProfile,
+    updateNotificationPreferences,
     refreshProfile: checkProfileCompletion
   };
 }
