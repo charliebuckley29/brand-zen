@@ -73,6 +73,7 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
   const handleEscalate = async (type: 'legal' | 'pr') => {
     setIsLoading(true);
     try {
+      // Update the mention in database
       const { error } = await supabase
         .from("mentions")
         .update({ 
@@ -84,12 +85,48 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
 
       if (error) throw error;
 
+      // Get current user and profile for email context
+      const { data: authUser } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", authUser.user?.id)
+        .single();
+
+      
+      // Send escalation email
+      try {
+        await supabase.functions.invoke('send-escalation-email', {
+          body: {
+            mentionId: mention.id,
+            escalationType: type,
+            mentionData: {
+              id: mention.id,
+              source_url: mention.source_url,
+              source_name: mention.source_name,
+              content_snippet: mention.content_snippet,
+              full_text: mention.full_text,
+              sentiment: mention.sentiment,
+              published_at: mention.published_at,
+              topics: mention.topics || [],
+              flagged: true,
+              internal_notes: internalNotes
+            },
+            userEmail: authUser.user?.email || 'Unknown',
+            userName: profile?.full_name || 'Unknown User'
+          }
+        });
+      } catch (emailError) {
+        console.error('Failed to send escalation email:', emailError);
+        // Don't fail the escalation if email fails
+      }
+
       setEscalationType(type);
       setFlagged(true);
       
       toast({
         title: "Mention escalated",
-        description: `This mention has been escalated to ${type.toUpperCase()} team.`,
+        description: `This mention has been escalated to ${type.toUpperCase()} team and notification email sent.`,
       });
 
       onUpdate();
