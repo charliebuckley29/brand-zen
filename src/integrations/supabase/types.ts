@@ -285,7 +285,9 @@ export type Database = {
           id: string
           internal_notes: string | null
           keyword_id: string
+          legal_escalated_at: string | null
           model_used: string | null
+          pr_escalated_at: string | null
           published_at: string
           sentiment: number | null
           source_name: string
@@ -306,7 +308,9 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           keyword_id: string
+          legal_escalated_at?: string | null
           model_used?: string | null
+          pr_escalated_at?: string | null
           published_at: string
           sentiment?: number | null
           source_name: string
@@ -327,7 +331,9 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           keyword_id?: string
+          legal_escalated_at?: string | null
           model_used?: string | null
+          pr_escalated_at?: string | null
           published_at?: string
           sentiment?: number | null
           source_name?: string

@@ -27,6 +27,8 @@ interface Mention {
   flagged: boolean;
   escalation_type: string;
   internal_notes: string | null;
+  legal_escalated_at: string | null;
+  pr_escalated_at: string | null;
 }
 
 export function Dashboard() {

@@ -24,6 +24,8 @@ interface Mention {
   flagged: boolean;
   escalation_type: string;
   internal_notes: string | null;
+  legal_escalated_at: string | null;
+  pr_escalated_at: string | null;
 }
 
 interface MentionModalProps {
@@ -41,6 +43,10 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
   const [resolvedText, setResolvedText] = useState<string | null>(null);
   const [isResolving, setIsResolving] = useState(false);
   const [userProfile, setUserProfile] = useState<{ pr_team_email: string | null; legal_team_email: string | null } | null>(null);
+  const [isLegalEscalated, setIsLegalEscalated] = useState(!!mention.legal_escalated_at);
+  const [isPrEscalated, setIsPrEscalated] = useState(!!mention.pr_escalated_at);
+  const [showLegalSpamWarning, setShowLegalSpamWarning] = useState(false);
+  const [showPrSpamWarning, setShowPrSpamWarning] = useState(false);
   const { toast } = useToast();
 
   const formatDate = (dateString: string) => {
@@ -388,25 +394,47 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
                   </div>
                 </div>
               )}
+
+              {/* Spam warning for legal */}
+              {showLegalSpamWarning && (
+                <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <Info className="h-4 w-4 text-yellow-600 mt-0.5" />
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-medium">Already escalated today</p>
+                    <p>This mention was already escalated to the legal team today. Only one email per day is sent to prevent spam.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Spam warning for PR */}
+              {showPrSpamWarning && (
+                <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <Info className="h-4 w-4 text-yellow-600 mt-0.5" />
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-medium">Already escalated today</p>
+                    <p>This mention was already escalated to the PR team today. Only one email per day is sent to prevent spam.</p>
+                  </div>
+                </div>
+              )}
               
               <div className="flex gap-2">
                 <Button
-                  variant={escalationType === 'legal' ? 'default' : 'outline'}
+                  variant={isLegalEscalated ? 'default' : 'outline'}
                   onClick={() => handleEscalate('legal')}
                   disabled={isLoading || !userProfile?.legal_team_email}
                   className="flex-1"
                 >
                   <Scale className="w-4 h-4 mr-2" />
-                  Escalate to Legal
+                  {isLegalEscalated ? 'Escalated to Legal' : 'Escalate to Legal'}
                 </Button>
                 <Button
-                  variant={escalationType === 'pr' ? 'default' : 'outline'}
+                  variant={isPrEscalated ? 'default' : 'outline'}
                   onClick={() => handleEscalate('pr')}
                   disabled={isLoading || !userProfile?.pr_team_email}
                   className="flex-1"
                 >
                   <Users className="w-4 h-4 mr-2" />
-                  Escalate to PR
+                  {isPrEscalated ? 'Escalated to PR' : 'Escalate to PR'}
                 </Button>
               </div>
             </div>
