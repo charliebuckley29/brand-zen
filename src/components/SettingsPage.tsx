@@ -378,6 +378,27 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       return;
     }
 
+    // Validate email formats if provided
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (profilePrTeamEmail && !emailRegex.test(profilePrTeamEmail.trim())) {
+      toast({
+        title: "Invalid PR team email",
+        description: "Please enter a valid email address for the PR team.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (profileLegalTeamEmail && !emailRegex.test(profileLegalTeamEmail.trim())) {
+      toast({
+        title: "Invalid legal team email", 
+        description: "Please enter a valid email address for the legal team.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUpdatingProfile(true);
     try {
       const result = await updateProfile(profileFullName, profilePhoneNumber, profilePrTeamEmail, profileLegalTeamEmail);
