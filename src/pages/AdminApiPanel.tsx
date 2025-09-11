@@ -202,9 +202,9 @@ export default function AdminApiPanel() {
 
         <div className="grid gap-6">
           {Object.values(SOURCES).map((source) => {
-            const dbSourceName = getDbSourceName(source.name);
+            const dbSourceName = getDbSourceName(source.id);
             const apiKey = apiKeys.find(key => key.source_name === dbSourceName);
-            const status = getSourceStatus(source.name);
+            const status = getSourceStatus(source.id);
             const category = SOURCE_CATEGORIES[source.category];
             const isExpanded = expandedSources.has(source.name);
 
@@ -298,7 +298,7 @@ export default function AdminApiPanel() {
                             <p className="text-sm text-muted-foreground mb-3">
                               No API key record exists for {source.name}
                             </p>
-                            <Button onClick={() => createApiKey(getDbSourceName(source.name))}>
+                            <Button onClick={() => createApiKey(getDbSourceName(source.id))}>
                               Create API Key Record
                             </Button>
                           </div>
