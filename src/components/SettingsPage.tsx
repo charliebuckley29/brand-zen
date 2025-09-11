@@ -57,6 +57,8 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [profileFullName, setProfileFullName] = useState("");
   const [profilePhoneNumber, setProfilePhoneNumber] = useState("");
+  const [profilePrTeamEmail, setProfilePrTeamEmail] = useState("");
+  const [profileLegalTeamEmail, setProfileLegalTeamEmail] = useState("");
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   
   // Brand management state
@@ -97,6 +99,8 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
     if (profileData) {
       setProfileFullName(profileData.full_name || "");
       setProfilePhoneNumber(profileData.phone_number || "");
+      setProfilePrTeamEmail(profileData.pr_team_email || "");
+      setProfileLegalTeamEmail(profileData.legal_team_email || "");
     }
   }, [profileData]);
   const fetchBrandData = async () => {
@@ -376,7 +380,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
 
     setIsUpdatingProfile(true);
     try {
-      const result = await updateProfile(profileFullName, profilePhoneNumber);
+      const result = await updateProfile(profileFullName, profilePhoneNumber, profilePrTeamEmail, profileLegalTeamEmail);
       
       if (result.success) {
         setProfileDialogOpen(false);
@@ -459,14 +463,32 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-medium">Phone Number</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {profileData?.phone_number || "Not set"}
-                    </p>
-                  </div>
-                </div>
+                 <div className="flex items-center justify-between">
+                   <div>
+                     <h4 className="text-sm font-medium">Phone Number</h4>
+                     <p className="text-sm text-muted-foreground">
+                       {profileData?.phone_number || "Not set"}
+                     </p>
+                   </div>
+                 </div>
+
+                 <div className="flex items-center justify-between">
+                   <div>
+                     <h4 className="text-sm font-medium">PR Team Email</h4>
+                     <p className="text-sm text-muted-foreground">
+                       {profileData?.pr_team_email || "Not set"}
+                     </p>
+                   </div>
+                 </div>
+
+                 <div className="flex items-center justify-between">
+                   <div>
+                     <h4 className="text-sm font-medium">Legal Team Email</h4>
+                     <p className="text-sm text-muted-foreground">
+                       {profileData?.legal_team_email || "Not set"}
+                     </p>
+                   </div>
+                 </div>
 
                 <div className="pt-2">
                   <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
@@ -494,28 +516,56 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                             required
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="phoneNumber">Phone Number</Label>
-                          <PhoneInputWithCountry
-                            id="phoneNumber"
-                            placeholder="Enter your phone number (optional)"
-                            value={profilePhoneNumber}
-                            onChange={(value) => setProfilePhoneNumber(value || "")}
-                          />
-                        </div>
+                         <div className="space-y-2">
+                           <Label htmlFor="phoneNumber">Phone Number</Label>
+                           <PhoneInputWithCountry
+                             id="phoneNumber"
+                             placeholder="Enter your phone number (optional)"
+                             value={profilePhoneNumber}
+                             onChange={(value) => setProfilePhoneNumber(value || "")}
+                           />
+                         </div>
+                         <div className="space-y-2">
+                           <Label htmlFor="prTeamEmail">PR Team Email</Label>
+                           <Input
+                             id="prTeamEmail"
+                             type="email"
+                             placeholder="Enter PR team email (optional)"
+                             value={profilePrTeamEmail}
+                             onChange={(e) => setProfilePrTeamEmail(e.target.value)}
+                           />
+                           <p className="text-xs text-muted-foreground">
+                             Email address to notify when mentions are escalated to PR team
+                           </p>
+                         </div>
+                         <div className="space-y-2">
+                           <Label htmlFor="legalTeamEmail">Legal Team Email</Label>
+                           <Input
+                             id="legalTeamEmail"
+                             type="email"
+                             placeholder="Enter legal team email (optional)"
+                             value={profileLegalTeamEmail}
+                             onChange={(e) => setProfileLegalTeamEmail(e.target.value)}
+                           />
+                           <p className="text-xs text-muted-foreground">
+                             Email address to notify when mentions are escalated to legal team
+                           </p>
+                         </div>
                         <div className="flex justify-end gap-2">
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => {
-                              setProfileDialogOpen(false);
-                              // Reset form to current data
-                              setProfileFullName(profileData?.full_name || "");
-                              setProfilePhoneNumber(profileData?.phone_number || "");
-                            }}
-                          >
-                            Cancel
-                          </Button>
+                           <Button 
+                             type="button" 
+                             variant="outline" 
+                             onClick={() => {
+                               setProfileDialogOpen(false);
+                               // Reset form to current data
+                               setProfileFullName(profileData?.full_name || "");
+                               setProfilePhoneNumber(profileData?.phone_number || "");
+                               setProfilePrTeamEmail(profileData?.pr_team_email || "");
+                               setProfileLegalTeamEmail(profileData?.legal_team_email || "");
+                             }}
+                           >
+                             Cancel
+                           </Button>
                           <Button 
                             type="submit" 
                             disabled={isUpdatingProfile || !profileFullName.trim()}

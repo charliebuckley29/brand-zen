@@ -40,6 +40,7 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
   const [isLoading, setIsLoading] = useState(false);
   const [resolvedText, setResolvedText] = useState<string | null>(null);
   const [isResolving, setIsResolving] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ pr_team_email: string | null; legal_team_email: string | null } | null>(null);
   const { toast } = useToast();
 
   const formatDate = (dateString: string) => {
@@ -207,6 +208,31 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
   const genericTagline = 'Comprehensive, up-to-date news coverage, aggregated from sources all over the world by Google News.';
 
   useEffect(() => {
+    // Fetch user profile for escalation email settings
+    const fetchUserProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("pr_team_email, legal_team_email")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error fetching user profile:", error);
+          return;
+        }
+
+        setUserProfile(profile);
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      }
+    };
+
+    fetchUserProfile();
+
     const needsResolve = !mention.full_text || !mention.full_text.trim() || mention.full_text.trim() === genericTagline;
     if (!needsResolve) return;
 
@@ -351,25 +377,38 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
             </div>
 
             {/* Escalation Buttons */}
-            <div className="flex gap-2">
-              <Button
-                variant={escalationType === 'legal' ? 'default' : 'outline'}
-                onClick={() => handleEscalate('legal')}
-                disabled={isLoading}
-                className="flex-1"
-              >
-                <Scale className="w-4 h-4 mr-2" />
-                Escalate to Legal
-              </Button>
-              <Button
-                variant={escalationType === 'pr' ? 'default' : 'outline'}
-                onClick={() => handleEscalate('pr')}
-                disabled={isLoading}
-                className="flex-1"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Escalate to PR
-              </Button>
+            <div className="space-y-3">
+              {/* Info card if emails not configured */}
+              {(!userProfile?.pr_team_email || !userProfile?.legal_team_email) && (
+                <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+                  <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <div className="text-sm text-muted-foreground">
+                    <p className="font-medium">Configure team emails in settings</p>
+                    <p>Set PR and legal team emails in your profile settings to enable escalation notifications.</p>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex gap-2">
+                <Button
+                  variant={escalationType === 'legal' ? 'default' : 'outline'}
+                  onClick={() => handleEscalate('legal')}
+                  disabled={isLoading || !userProfile?.legal_team_email}
+                  className="flex-1"
+                >
+                  <Scale className="w-4 h-4 mr-2" />
+                  Escalate to Legal
+                </Button>
+                <Button
+                  variant={escalationType === 'pr' ? 'default' : 'outline'}
+                  onClick={() => handleEscalate('pr')}
+                  disabled={isLoading || !userProfile?.pr_team_email}
+                  className="flex-1"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Escalate to PR
+                </Button>
+              </div>
             </div>
 
             {/* Internal Notes */}

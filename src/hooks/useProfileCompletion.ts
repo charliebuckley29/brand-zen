@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 interface ProfileData {
   full_name: string | null;
   phone_number: string | null;
+  pr_team_email: string | null;
+  legal_team_email: string | null;
 }
 
 export function useProfileCompletion() {
@@ -25,7 +27,7 @@ export function useProfileCompletion() {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("full_name, phone_number")
+        .select("full_name, phone_number, pr_team_email, legal_team_email")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -52,7 +54,7 @@ export function useProfileCompletion() {
     }
   };
 
-  const updateProfile = async (fullName: string, phoneNumber?: string) => {
+  const updateProfile = async (fullName: string, phoneNumber?: string, prTeamEmail?: string, legalTeamEmail?: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
@@ -62,7 +64,9 @@ export function useProfileCompletion() {
         .upsert({
           user_id: user.id,
           full_name: fullName.trim(),
-          phone_number: phoneNumber?.trim() || null
+          phone_number: phoneNumber?.trim() || null,
+          pr_team_email: prTeamEmail?.trim() || null,
+          legal_team_email: legalTeamEmail?.trim() || null
         }, {
           onConflict: 'user_id'
         });
@@ -71,7 +75,9 @@ export function useProfileCompletion() {
 
       setProfileData({
         full_name: fullName.trim(),
-        phone_number: phoneNumber?.trim() || null
+        phone_number: phoneNumber?.trim() || null,
+        pr_team_email: prTeamEmail?.trim() || null,
+        legal_team_email: legalTeamEmail?.trim() || null
       });
       setIsProfileComplete(true);
       
