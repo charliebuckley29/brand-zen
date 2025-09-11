@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { Eye, EyeOff, Save, ArrowLeft, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Save, ArrowLeft, CheckCircle, XCircle, AlertCircle, ChevronDown, Info, Zap, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
-import { SOURCES } from "@/config/sources";
+import { SOURCES, SOURCE_CATEGORIES } from "@/config/sources";
 
 type ApiKey = {
   id: string;
@@ -26,6 +27,7 @@ export default function AdminApiPanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
+  const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!roleLoading && isAdmin) {
@@ -106,6 +108,18 @@ export default function AdminApiPanel() {
     });
   };
 
+  const toggleSourceExpanded = (sourceName: string) => {
+    setExpandedSources(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sourceName)) {
+        newSet.delete(sourceName);
+      } else {
+        newSet.add(sourceName);
+      }
+      return newSet;
+    });
+  };
+
   const getSourceStatus = (sourceName: string) => {
     const apiKey = apiKeys.find(key => key.source_name === sourceName);
     if (!apiKey) return { status: 'missing', message: 'Not configured' };
@@ -176,122 +190,214 @@ export default function AdminApiPanel() {
           {Object.values(SOURCES).map((source) => {
             const apiKey = apiKeys.find(key => key.source_name === source.name);
             const status = getSourceStatus(source.name);
+            const category = SOURCE_CATEGORIES[source.category];
+            const isExpanded = expandedSources.has(source.name);
 
             return (
               <Card key={source.name}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <source.icon className="w-4 h-4" />
+                <Collapsible open={isExpanded} onOpenChange={() => toggleSourceExpanded(source.name)}>
+                  <CardHeader className="pb-4">
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center justify-between cursor-pointer group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <source.icon className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <CardTitle className="text-lg">{source.name}</CardTitle>
+                              <Badge variant="outline" className="text-xs">
+                                {category.name}
+                              </Badge>
+                            </div>
+                            <CardDescription className="flex items-center gap-2">
+                              {source.description}
+                              <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(status.status)}
+                          <Badge variant={status.status === 'active' ? 'default' : 'secondary'}>
+                            {status.message}
+                          </Badge>
+                        </div>
                       </div>
-                      <div>
-                        <CardTitle className="text-lg">{source.name}</CardTitle>
-                        <CardDescription>{source.description}</CardDescription>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(status.status)}
-                      <Badge variant={status.status === 'active' ? 'default' : 'secondary'}>
-                        {status.message}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {!apiKey ? (
-                    <div className="text-center p-4 border rounded-lg bg-muted/20">
-                      <p className="text-sm text-muted-foreground mb-3">
-                        No API key record exists for {source.name}
-                      </p>
-                      <Button onClick={() => createApiKey(source.name)}>
-                        Create API Key Record
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor={`key-${apiKey.id}`}>API Key</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id={`key-${apiKey.id}`}
-                            type={visibleKeys.has(apiKey.id) ? 'text' : 'password'}
-                            value={apiKey.api_key || ''}
-                            onChange={(e) => {
-                              setApiKeys(prev => prev.map(key => 
-                                key.id === apiKey.id 
-                                  ? { ...key, api_key: e.target.value }
-                                  : key
-                              ));
-                            }}
-                            placeholder="Enter API key..."
-                          />
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => toggleKeyVisibility(apiKey.id)}
-                          >
-                            {visibleKeys.has(apiKey.id) ? 
-                              <EyeOff className="w-4 h-4" /> : 
-                              <Eye className="w-4 h-4" />
-                            }
-                          </Button>
-                          <Button
-                            onClick={() => updateApiKey(apiKey.id, { api_key: apiKey.api_key })}
-                            disabled={saving === apiKey.id}
-                          >
-                            {saving === apiKey.id ? (
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
-                                Saving...
-                              </div>
-                            ) : (
-                              <>
-                                <Save className="w-4 h-4 mr-2" />
-                                Save
-                              </>
+                    </CollapsibleTrigger>
+                  </CardHeader>
+
+                  <CollapsibleContent>
+                    <CardContent className="pt-0 space-y-6">
+                      {/* Source Information */}
+                      <div className="grid md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
+                        <div>
+                          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                            <Info className="w-3 h-3" />
+                            API Information
+                          </h4>
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            <p><span className="font-medium">Provider:</span> {source.apiProvider || 'Not specified'}</p>
+                            <p><span className="font-medium">Status:</span> {source.implemented ? 'Implemented' : 'Planned'}</p>
+                            {source.implementationNotes && (
+                              <p><span className="font-medium">Notes:</span> {source.implementationNotes}</p>
                             )}
-                          </Button>
+                          </div>
                         </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor={`active-${apiKey.id}`}>Active</Label>
-                        <Switch
-                          id={`active-${apiKey.id}`}
-                          checked={apiKey.is_active}
-                          onCheckedChange={(checked) => 
-                            updateApiKey(apiKey.id, { is_active: checked })
-                          }
-                        />
-                      </div>
-
-                      {source.configFields?.map((field) => (
-                        <div key={field.name}>
-                          <Label htmlFor={`${field.name}-${apiKey.id}`}>
-                            {field.label}
-                          </Label>
-                          <Input
-                            id={`${field.name}-${apiKey.id}`}
-                            value={apiKey.additional_config?.[field.name] || ''}
-                            onChange={(e) => {
-                              const newConfig = {
-                                ...apiKey.additional_config,
-                                [field.name]: e.target.value
-                              };
-                              setApiKeys(prev => prev.map(key => 
-                                key.id === apiKey.id 
-                                  ? { ...key, additional_config: newConfig }
-                                  : key
-                              ));
-                            }}
-                            placeholder={field.placeholder}
-                          />
+                        
+                        <div>
+                          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                            <Zap className="w-3 h-3" />
+                            Coverage Examples
+                          </h4>
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            {source.examples.slice(0, 3).map((example, idx) => (
+                              <p key={idx}>• {example}</p>
+                            ))}
+                            {source.examples.length > 3 && (
+                              <p className="text-xs opacity-70">+{source.examples.length - 3} more...</p>
+                            )}
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
+                        
+                        {source.limitations && (
+                          <div className="md:col-span-2">
+                            <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                              <AlertTriangle className="w-3 h-3" />
+                              Limitations
+                            </h4>
+                            <div className="space-y-1 text-sm text-muted-foreground">
+                              {source.limitations.map((limitation, idx) => (
+                                <p key={idx}>• {limitation}</p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {/* API Configuration */}
+                      <div className="space-y-4">
+                        <h4 className="font-medium text-sm border-b pb-2">API Configuration</h4>
+                        
+                        {!apiKey ? (
+                          <div className="text-center p-6 border-2 border-dashed rounded-lg bg-muted/20">
+                            <AlertCircle className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground mb-3">
+                              No API key record exists for {source.name}
+                            </p>
+                            <Button onClick={() => createApiKey(source.name)}>
+                              Create API Key Record
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor={`key-${apiKey.id}`} className="text-sm font-medium">
+                                API Key *
+                              </Label>
+                              <div className="flex gap-2 mt-1">
+                                <Input
+                                  id={`key-${apiKey.id}`}
+                                  type={visibleKeys.has(apiKey.id) ? 'text' : 'password'}
+                                  value={apiKey.api_key || ''}
+                                  onChange={(e) => {
+                                    setApiKeys(prev => prev.map(key => 
+                                      key.id === apiKey.id 
+                                        ? { ...key, api_key: e.target.value }
+                                        : key
+                                    ));
+                                  }}
+                                  placeholder={`Enter ${source.name} API key...`}
+                                  className="font-mono text-sm"
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => toggleKeyVisibility(apiKey.id)}
+                                  type="button"
+                                >
+                                  {visibleKeys.has(apiKey.id) ? 
+                                    <EyeOff className="w-4 h-4" /> : 
+                                    <Eye className="w-4 h-4" />
+                                  }
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 border rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <Label htmlFor={`active-${apiKey.id}`} className="text-sm font-medium">
+                                  Enable API Source
+                                </Label>
+                                <p className="text-xs text-muted-foreground">
+                                  {apiKey.is_active ? 'This source is active and will fetch data' : 'This source is disabled'}
+                                </p>
+                              </div>
+                              <Switch
+                                id={`active-${apiKey.id}`}
+                                checked={apiKey.is_active}
+                                onCheckedChange={(checked) => 
+                                  updateApiKey(apiKey.id, { is_active: checked })
+                                }
+                              />
+                            </div>
+
+                            {source.configFields && source.configFields.length > 0 && (
+                              <div className="space-y-3">
+                                <Label className="text-sm font-medium">Additional Configuration</Label>
+                                {source.configFields.map((field) => (
+                                  <div key={field.name}>
+                                    <Label htmlFor={`${field.name}-${apiKey.id}`} className="text-xs text-muted-foreground">
+                                      {field.label}
+                                    </Label>
+                                    <Input
+                                      id={`${field.name}-${apiKey.id}`}
+                                      value={apiKey.additional_config?.[field.name] || ''}
+                                      onChange={(e) => {
+                                        const newConfig = {
+                                          ...apiKey.additional_config,
+                                          [field.name]: e.target.value
+                                        };
+                                        setApiKeys(prev => prev.map(key => 
+                                          key.id === apiKey.id 
+                                            ? { ...key, additional_config: newConfig }
+                                            : key
+                                        ));
+                                      }}
+                                      placeholder={field.placeholder}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            <div className="flex gap-2 pt-2">
+                              <Button
+                                onClick={() => updateApiKey(apiKey.id, { 
+                                  api_key: apiKey.api_key,
+                                  additional_config: apiKey.additional_config 
+                                })}
+                                disabled={saving === apiKey.id}
+                                className="flex-1"
+                              >
+                                {saving === apiKey.id ? (
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+                                    Saving Changes...
+                                  </div>
+                                ) : (
+                                  <>
+                                    <Save className="w-4 h-4 mr-2" />
+                                    Save Configuration
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
               </Card>
             );
           })}
