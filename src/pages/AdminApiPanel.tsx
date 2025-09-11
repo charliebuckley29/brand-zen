@@ -120,8 +120,22 @@ export default function AdminApiPanel() {
     });
   };
 
+  // Map SOURCES names to database source_name values
+  const getDbSourceName = (sourceName: string) => {
+    const mapping: Record<string, string> = {
+      'news': 'gnews',
+      'reddit': 'reddit',
+      'youtube': 'youtube', 
+      'web': 'google_cse',
+      'x': 'x_twitter',
+      'google_alert': 'google_alert'
+    };
+    return mapping[sourceName] || sourceName;
+  };
+
   const getSourceStatus = (sourceName: string) => {
-    const apiKey = apiKeys.find(key => key.source_name === sourceName);
+    const dbSourceName = getDbSourceName(sourceName);
+    const apiKey = apiKeys.find(key => key.source_name === dbSourceName);
     if (!apiKey) return { status: 'missing', message: 'Not configured' };
     if (!apiKey.is_active) return { status: 'inactive', message: 'Inactive' };
     if (!apiKey.api_key) return { status: 'empty', message: 'No API key' };
@@ -188,7 +202,8 @@ export default function AdminApiPanel() {
 
         <div className="grid gap-6">
           {Object.values(SOURCES).map((source) => {
-            const apiKey = apiKeys.find(key => key.source_name === source.name);
+            const dbSourceName = getDbSourceName(source.name);
+            const apiKey = apiKeys.find(key => key.source_name === dbSourceName);
             const status = getSourceStatus(source.name);
             const category = SOURCE_CATEGORIES[source.category];
             const isExpanded = expandedSources.has(source.name);
@@ -283,7 +298,7 @@ export default function AdminApiPanel() {
                             <p className="text-sm text-muted-foreground mb-3">
                               No API key record exists for {source.name}
                             </p>
-                            <Button onClick={() => createApiKey(source.name)}>
+                            <Button onClick={() => createApiKey(getDbSourceName(source.name))}>
                               Create API Key Record
                             </Button>
                           </div>
