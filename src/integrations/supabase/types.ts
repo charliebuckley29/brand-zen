@@ -394,7 +394,9 @@ export type Database = {
           fetch_frequency_minutes: number | null
           full_name: string
           id: string
+          legal_team_email: string | null
           phone_number: string | null
+          pr_team_email: string | null
           timezone: string | null
           updated_at: string
           user_id: string
@@ -405,7 +407,9 @@ export type Database = {
           fetch_frequency_minutes?: number | null
           full_name: string
           id?: string
+          legal_team_email?: string | null
           phone_number?: string | null
+          pr_team_email?: string | null
           timezone?: string | null
           updated_at?: string
           user_id: string
@@ -416,7 +420,9 @@ export type Database = {
           fetch_frequency_minutes?: number | null
           full_name?: string
           id?: string
+          legal_team_email?: string | null
           phone_number?: string | null
+          pr_team_email?: string | null
           timezone?: string | null
           updated_at?: string
           user_id?: string

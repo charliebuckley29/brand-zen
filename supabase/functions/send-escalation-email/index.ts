@@ -46,24 +46,40 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the appropriate team email from global settings
-    const settingKey = escalationType === 'legal' ? 'legal_team_email' : 'pr_team_email';
-    const { data: setting, error: settingError } = await supabase
-      .from('global_settings')
-      .select('setting_value')
-      .eq('setting_key', settingKey)
+    // Determine recipient email from the mention owner's profile (per-user setting)
+    const { data: mentionRow, error: mentionError } = await supabase
+      .from('mentions')
+      .select('user_id')
+      .eq('id', mentionId)
       .maybeSingle();
 
-    if (settingError) {
-      console.error(`Error fetching ${settingKey}:`, settingError);
-      throw settingError;
+    if (mentionError) {
+      console.error('Error fetching mention owner:', mentionError);
+      throw mentionError;
     }
 
-    if (!setting?.setting_value) {
-      throw new Error(`${escalationType.toUpperCase()} team email not configured in settings`);
+    if (!mentionRow?.user_id) {
+      throw new Error('Mention owner not found');
     }
 
-    const teamEmail = setting.setting_value as string;
+    const { data: profileRow, error: profileError } = await supabase
+      .from('profiles')
+      .select('pr_team_email, legal_team_email')
+      .eq('user_id', mentionRow.user_id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Error fetching owner profile:', profileError);
+      throw profileError;
+    }
+
+    const teamEmail = (escalationType === 'legal' 
+      ? profileRow?.legal_team_email 
+      : profileRow?.pr_team_email) as string | null;
+
+    if (!teamEmail) {
+      throw new Error(`${escalationType.toUpperCase()} team email not configured for this user`);
+    }
     
     // Format sentiment
     const getSentimentLabel = (sentiment: number) => {
