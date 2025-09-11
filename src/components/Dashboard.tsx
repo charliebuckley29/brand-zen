@@ -368,7 +368,7 @@ export function Dashboard() {
           <CardContent className="p-0 sm:p-6 sm:pt-0">
             <MentionsTable 
               mentions={mentions} 
-              onMentionClick={setSelectedMention}
+              onMentionClick={(m) => setSelectedMention(m)}
               getSentimentEmoji={getSentimentEmoji}
               onNotMe={(id) => handleNotMe(id)}
               currentPage={currentPage}

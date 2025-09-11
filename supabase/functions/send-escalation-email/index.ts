@@ -2,7 +2,8 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+const resend = new Resend(resendApiKey || "");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -189,18 +190,34 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending escalation email to ${teamEmail}`);
 
-    const emailResponse = await resend.emails.send({
-      from: "Mention Alert <no-reply@resend.dev>",
+    if (!resendApiKey) {
+      console.error('Missing RESEND_API_KEY secret');
+      return new Response(JSON.stringify({ success: false, error: 'Email service not configured' }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const { data: sent, error: sendError } = await resend.emails.send({
+      from: "Mention Alerts <onboarding@resend.dev>",
       to: [teamEmail],
       subject: emailSubject,
       html: emailHtml,
     });
 
-    console.log("Escalation email sent successfully:", emailResponse);
+    if (sendError) {
+      console.error('Resend send error:', sendError);
+      return new Response(JSON.stringify({ success: false, error: sendError.message || 'Failed to send email' }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    console.log("Escalation email enqueued:", sent);
 
     return new Response(JSON.stringify({ 
       success: true, 
-      emailId: emailResponse.data?.id,
+      emailId: sent?.id,
       teamEmail,
       escalationType 
     }), {
