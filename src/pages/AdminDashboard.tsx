@@ -1,7 +1,7 @@
 import { useUserRole } from "@/hooks/use-user-role";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare } from "lucide-react";
+import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare, Activity } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function AdminDashboard() {
@@ -144,6 +144,29 @@ export default function AdminDashboard() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">
                   Configure Twilio settings for sending SMS and WhatsApp alerts for negative sentiment mentions.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/admin/monitoring">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Activity className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">System Monitoring</CardTitle>
+                    <CardDescription>
+                      Track resource usage and scaling limits
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Monitor API usage, edge function calls, user activity, and system performance metrics.
                 </p>
               </CardContent>
             </Card>
