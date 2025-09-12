@@ -5,6 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: '/',
   server: {
     host: "0.0.0.0",  // Listen on all IPv4 interfaces explicitly
     port: 8080,
@@ -39,11 +40,6 @@ export default defineConfig(({ mode }) => ({
           'query-vendor': ['@tanstack/react-query'],
           'supabase-vendor': ['@supabase/supabase-js'],
           'utils-vendor': ['date-fns', 'clsx', 'tailwind-merge'],
-          
-          // Feature chunks
-          'dashboard': ['./src/components/Dashboard.tsx', './src/components/MainDashboard.tsx'],
-          'admin': ['./src/pages/AdminDashboard.tsx', './src/pages/AdminApiPanel.tsx'],
-          'analytics': ['./src/components/AnalyticsChart.tsx', './src/components/ReportsPage.tsx'],
         },
       },
     },

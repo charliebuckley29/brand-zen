@@ -1,31 +1,16 @@
 version: 1
-applications:
-  - frontend:
-      phases:
-        preBuild:
-          commands:
-            # Install dependencies
-              - npm install
-        build:
-          commands:
-            # Retrieve secrets from AWS Secrets Manager and store in environment variables
-            - |
-              echo "Fetching secrets from AWS Secrets Manager..."
-              SECRET_JSON=$(aws secretsmanager get-secret-value \
-                --secret-id google-alerts-account-details \
-                --query SecretString \
-                --output text \
-                --region eu-west-2)
-              export GOOGLE_ACCOUNT_EMAIL=$(echo $SECRET_JSON | jq -r '.email')
-              export GOOGLE_ACCOUNT_PASSWORD=$(echo $SECRET_JSON | jq -r '.password')
-              echo "Secrets loaded"
-            # Build the app
-            - npm run build
-      artifacts:
-        baseDirectory: dist
-        files:
-          - '**/*'
-      cache:
-        paths:
-          - node_modules/**/*
-    appRoot: .
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
