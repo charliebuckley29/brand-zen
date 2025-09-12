@@ -77,6 +77,39 @@ export type Database = {
         }
         Relationships: []
       }
+      api_usage_tracking: {
+        Row: {
+          api_source: string
+          calls_count: number
+          created_at: string
+          edge_function: string | null
+          endpoint: string | null
+          id: string
+          response_status: number | null
+          user_id: string | null
+        }
+        Insert: {
+          api_source: string
+          calls_count?: number
+          created_at?: string
+          edge_function?: string | null
+          endpoint?: string | null
+          id?: string
+          response_status?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          api_source?: string
+          calls_count?: number
+          created_at?: string
+          edge_function?: string | null
+          endpoint?: string | null
+          id?: string
+          response_status?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       automation_heartbeat: {
         Row: {
           id: number
@@ -638,6 +671,17 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_api_usage: {
+        Args: {
+          _api_source: string
+          _calls_count?: number
+          _edge_function?: string
+          _endpoint?: string
+          _response_status?: number
+          _user_id?: string
+        }
+        Returns: undefined
       }
       minutes_until_user_can_fetch: {
         Args: { _user_id: string }

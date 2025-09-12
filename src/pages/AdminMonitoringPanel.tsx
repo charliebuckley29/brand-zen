@@ -9,9 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Activity, Database, Mail, Zap, TrendingUp, AlertTriangle, RefreshCw, Search, Calendar } from "lucide-react";
+import { ArrowLeft, Activity, Database, Mail, Zap, TrendingUp, AlertTriangle, RefreshCw, Search, Calendar, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type MonitoringMetrics = {
   totalMentions: number;
@@ -19,9 +20,18 @@ type MonitoringMetrics = {
   totalApiCalls: number;
   totalEdgeFunctionCalls: number;
   totalNotifications: number;
-  dailyMentionsBySource: Record<string, number>;
+  apiUsageBySource: Record<string, { calls: number; errors: number }>;
   weeklyGrowth: number;
   errorRate: number;
+};
+
+type ApiLimit = {
+  name: string;
+  free: number;
+  paid: number;
+  unit: string;
+  description: string;
+  warningThreshold: number;
 };
 
 type UserFetchLog = {
@@ -52,10 +62,61 @@ export default function AdminMonitoringPanel() {
     totalApiCalls: 0,
     totalEdgeFunctionCalls: 0,
     totalNotifications: 0,
-    dailyMentionsBySource: {},
+    apiUsageBySource: {},
     weeklyGrowth: 0,
     errorRate: 0,
   });
+
+  const API_LIMITS: ApiLimit[] = [
+    {
+      name: 'Google CSE',
+      free: 100,
+      paid: 10000,
+      unit: 'queries/day',
+      description: 'Google Custom Search Engine API for web search',
+      warningThreshold: 0.8
+    },
+    {
+      name: 'Google Alerts',
+      free: 1000,
+      paid: 10000,
+      unit: 'RSS fetches/day',
+      description: 'Google Alerts RSS feed processing',
+      warningThreshold: 0.9
+    },
+    {
+      name: 'GNews',
+      free: 100,
+      paid: 1000,
+      unit: 'articles/day',
+      description: 'GNews API for news article fetching',
+      warningThreshold: 0.8
+    },
+    {
+      name: 'YouTube Data API',
+      free: 10000,
+      paid: 1000000,
+      unit: 'quota units/day',
+      description: 'YouTube API for video and channel data',
+      warningThreshold: 0.85
+    },
+    {
+      name: 'Reddit API',
+      free: 60,
+      paid: 300,
+      unit: 'requests/min',
+      description: 'Reddit API for post and comment fetching',
+      warningThreshold: 0.8
+    },
+    {
+      name: 'Resend',
+      free: 100,
+      paid: 50000,
+      unit: 'emails/month',
+      description: 'Email delivery service',
+      warningThreshold: 0.9
+    }
+  ];
   const [userLogs, setUserLogs] = useState<UserFetchLog[]>([]);
   const [edgeFunctionLogs, setEdgeFunctionLogs] = useState<EdgeFunctionLog[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>("");
@@ -102,10 +163,10 @@ export default function AdminMonitoringPanel() {
         .from('profiles')
         .select('*', { count: 'exact', head: true });
 
-      // Get recent mentions by source
-      const { data: recentMentions } = await supabase
-        .from('mentions')
-        .select('source_name, created_at')
+      // Get API usage by source
+      const { data: apiUsage } = await supabase
+        .from('api_usage_tracking')
+        .select('api_source, calls_count, response_status')
         .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: false });
 
@@ -115,36 +176,49 @@ export default function AdminMonitoringPanel() {
         .select('*', { count: 'exact', head: true })
         .gte('created_at', startDate.toISOString());
 
-      // Calculate metrics
-      const dailyMentionsBySource: Record<string, number> = {};
-      recentMentions?.forEach(mention => {
-        const source = mention.source_name || 'unknown';
-        dailyMentionsBySource[source] = (dailyMentionsBySource[source] || 0) + 1;
+      // Calculate API usage metrics
+      const apiUsageBySource: Record<string, { calls: number; errors: number }> = {};
+      let totalApiCalls = 0;
+      
+      apiUsage?.forEach(usage => {
+        const source = usage.api_source || 'unknown';
+        if (!apiUsageBySource[source]) {
+          apiUsageBySource[source] = { calls: 0, errors: 0 };
+        }
+        apiUsageBySource[source].calls += usage.calls_count || 1;
+        totalApiCalls += usage.calls_count || 1;
+        
+        if (usage.response_status && usage.response_status >= 400) {
+          apiUsageBySource[source].errors += 1;
+        }
       });
 
       // Calculate growth (simplified)
       const previousWeekStart = new Date(startDate);
       previousWeekStart.setDate(previousWeekStart.getDate() - daysAgo);
       
-      const { count: previousPeriodMentions } = await supabase
-        .from('mentions')
-        .select('*', { count: 'exact', head: true })
+      const { count: previousPeriodApiCalls } = await supabase
+        .from('api_usage_tracking')
+        .select('calls_count', { count: 'exact', head: true })
         .gte('created_at', previousWeekStart.toISOString())
         .lt('created_at', startDate.toISOString());
 
-      const currentPeriodMentions = recentMentions?.length || 0;
-      const weeklyGrowth = previousPeriodMentions ? 
-        ((currentPeriodMentions - previousPeriodMentions) / previousPeriodMentions * 100) : 0;
+      const weeklyGrowth = previousPeriodApiCalls ? 
+        ((totalApiCalls - previousPeriodApiCalls) / previousPeriodApiCalls * 100) : 0;
+
+      // Calculate error rate
+      const totalErrors = Object.values(apiUsageBySource).reduce((sum, source) => sum + source.errors, 0);
+      const errorRate = totalApiCalls > 0 ? (totalErrors / totalApiCalls * 100) : 0;
 
       setMetrics({
         totalMentions: totalMentions || 0,
         totalUsers: totalUsers || 0,
-        totalApiCalls: currentPeriodMentions, // Approximate
+        totalApiCalls,
         totalEdgeFunctionCalls: 0, // Will be updated by edge function metrics
         totalNotifications: totalNotifications || 0,
-        dailyMentionsBySource,
+        apiUsageBySource,
         weeklyGrowth,
-        errorRate: 0, // Will be calculated from logs
+        errorRate,
       });
     } catch (error) {
       console.error('Error fetching overview metrics:', error);
@@ -395,29 +469,104 @@ export default function AdminMonitoringPanel() {
           </TabsList>
 
           <TabsContent value="api-usage" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {API_LIMITS.map((apiLimit) => {
+                const usage = metrics.apiUsageBySource[apiLimit.name.toLowerCase().replace(/\s+/g, '_')] || 
+                             metrics.apiUsageBySource[apiLimit.name.toLowerCase()] ||
+                             metrics.apiUsageBySource[apiLimit.name] ||
+                             { calls: 0, errors: 0 };
+                
+                const usagePercentage = (usage.calls / apiLimit.free) * 100;
+                const isNearLimit = usagePercentage > (apiLimit.warningThreshold * 100);
+                
+                return (
+                  <Card key={apiLimit.name} className={`${isNearLimit ? 'border-orange-500' : ''}`}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{apiLimit.name}</CardTitle>
+                        {isNearLimit && <AlertTriangle className="w-5 h-5 text-orange-500" />}
+                      </div>
+                      <CardDescription>{apiLimit.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl font-bold">{usage.calls.toLocaleString()}</span>
+                        <Badge variant={isNearLimit ? "destructive" : usage.calls > apiLimit.free * 0.5 ? "secondary" : "default"}>
+                          {usagePercentage.toFixed(1)}% used
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Free tier limit</span>
+                          <span>{apiLimit.free.toLocaleString()} {apiLimit.unit}</span>
+                        </div>
+                        <div className="w-full bg-secondary rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full transition-all ${isNearLimit ? 'bg-orange-500' : 'bg-primary'}`}
+                            style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Paid tier limit</span>
+                          <span>{apiLimit.paid.toLocaleString()} {apiLimit.unit}</span>
+                        </div>
+                      </div>
+
+                      {usage.errors > 0 && (
+                        <Alert>
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertDescription>
+                            {usage.errors} error{usage.errors !== 1 ? 's' : ''} in selected period
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      <div className="text-xs text-muted-foreground">
+                        Last {dateRange.replace('d', ' days')} • {usage.calls} total calls
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
             <Card>
               <CardHeader>
-                <CardTitle>Mentions by Source</CardTitle>
+                <CardTitle>API Usage Summary</CardTitle>
                 <CardDescription>
-                  Track API usage per source to monitor limits
+                  Real-time API call tracking across all services
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {Object.entries(metrics.dailyMentionsBySource).map(([source, count]) => (
-                    <div key={source} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-primary rounded-full"></div>
-                        <span className="font-medium">{source}</span>
+                  {Object.entries(metrics.apiUsageBySource).map(([source, data]) => (
+                    <div key={source} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${data.errors > 0 ? 'bg-orange-500' : 'bg-green-500'}`}></div>
+                        <div>
+                          <span className="font-medium capitalize">{source.replace(/_/g, ' ')}</span>
+                          {data.errors > 0 && (
+                            <p className="text-sm text-orange-600">{data.errors} errors</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span>{count} calls</span>
-                        <Badge variant={count > 1000 ? "destructive" : count > 500 ? "secondary" : "default"}>
-                          {count > 1000 ? "High" : count > 500 ? "Medium" : "Low"}
-                        </Badge>
+                      <div className="text-right">
+                        <p className="font-medium">{data.calls.toLocaleString()} calls</p>
+                        <p className="text-sm text-muted-foreground">
+                          {data.errors > 0 ? `${((data.errors / data.calls) * 100).toFixed(1)}% error rate` : 'No errors'}
+                        </p>
                       </div>
                     </div>
                   ))}
+                  
+                  {Object.keys(metrics.apiUsageBySource).length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Info className="w-8 h-8 mx-auto mb-2" />
+                      <p>No API usage data available for selected period</p>
+                      <p className="text-sm">API calls will be tracked once edge functions start logging usage</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -553,7 +702,7 @@ export default function AdminMonitoringPanel() {
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold">
-                        {metrics.dailyMentionsBySource['Google News'] || 0}
+                        {metrics.apiUsageBySource['gnews']?.calls || metrics.apiUsageBySource['google_news']?.calls || 0}
                       </p>
                       <p className="text-sm text-muted-foreground">requests today</p>
                     </div>
