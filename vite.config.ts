@@ -23,6 +23,57 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Production build optimizations
+    target: 'esnext',
+    minify: 'esbuild',
+    sourcemap: mode === 'development',
+    
+    // Chunk splitting for better caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tooltip'],
+          'query-vendor': ['@tanstack/react-query'],
+          'supabase-vendor': ['@supabase/supabase-js'],
+          'utils-vendor': ['date-fns', 'clsx', 'tailwind-merge'],
+          
+          // Feature chunks
+          'dashboard': ['./src/components/Dashboard.tsx', './src/components/MainDashboard.tsx'],
+          'admin': ['./src/pages/AdminDashboard.tsx', './src/pages/AdminApiPanel.tsx'],
+          'analytics': ['./src/components/AnalyticsChart.tsx', './src/components/ReportsPage.tsx'],
+        },
+      },
+    },
+    
+    // Asset optimization
+    assetsInlineLimit: 4096, // 4kb
+    cssCodeSplit: true,
+    
+    // Performance optimizations
+    chunkSizeWarningLimit: 1000,
+  },
+  
+  // Development optimizations
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query',
+      '@supabase/supabase-js',
+      'date-fns',
+      'clsx',
+      'tailwind-merge',
+    ],
+  },
+  
+  // CSS optimization
+  css: {
+    devSourcemap: mode === 'development',
+  },
 }));
 
 // This configuration sets up a Vite project with React and SWC, enabling component tagging in development mode.
