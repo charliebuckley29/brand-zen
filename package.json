@@ -8,7 +8,15 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset",
+    "supabase:status": "supabase status",
+    "supabase:studio": "supabase studio",
+    "db:diff": "supabase db diff --schema public",
+    "db:pull": "supabase db pull --schema public",
+    "db:push": "supabase db push"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
