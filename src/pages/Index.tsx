@@ -23,7 +23,7 @@ const IndexContent = () => {
   const [user, setUser] = useState<any>(null);
   const [hasKeywords, setHasKeywords] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { profileData, isProfileComplete, loading: profileLoading, updateProfile } = useProfileCompletion();
+  const { profileData, isProfileComplete, loading: profileLoading, updateProfile, refreshProfile } = useProfileCompletion();
   const { unreadCount } = useNotifications();
 
   useEffect(() => {
@@ -95,6 +95,11 @@ const IndexContent = () => {
       <ProfileCompletion
         initialData={profileData}
         onComplete={updateProfile}
+        onCancel={() => {
+          // Allow user to skip profile completion for now
+          // They can complete it later in settings
+          refreshProfile();
+        }}
       />
     );
   }

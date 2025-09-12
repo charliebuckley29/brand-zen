@@ -64,7 +64,10 @@ export function useProfileCompletion() {
   const updateProfile = async (fullName: string, phoneNumber?: string, prTeamEmail?: string, legalTeamEmail?: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        console.error("No authenticated user found");
+        throw new Error("Not authenticated. Please log in again.");
+      }
 
       const { error } = await supabase
         .from("profiles")
@@ -78,7 +81,10 @@ export function useProfileCompletion() {
           onConflict: 'user_id'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw new Error(`Database error: ${error.message}`);
+      }
 
       setProfileData(prev => ({
         ...prev,
@@ -90,9 +96,12 @@ export function useProfileCompletion() {
       setIsProfileComplete(true);
       
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
-      return { success: false, error };
+      return { 
+        success: false, 
+        error: error instanceof Error ? error : new Error("Unknown error occurred")
+      };
     }
   };
 

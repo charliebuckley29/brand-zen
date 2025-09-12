@@ -20,13 +20,11 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
   const [selectedMentionId, setSelectedMentionId] = useState<string | null>(null);
 
   const navigateToMention = (mentionId: string) => {
-    console.log('NavigationContext: Navigating to mention:', mentionId);
     setCurrentView("dashboard"); // Ensure we're on the dashboard
     setSelectedMentionId(mentionId); // Set the mention to be opened
   };
 
   const clearSelectedMention = () => {
-    console.log('NavigationContext: Clearing selected mention');
     setSelectedMentionId(null);
   };
 

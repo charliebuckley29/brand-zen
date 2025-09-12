@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, User } from "lucide-react";
+import { AlertCircle, User, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PhoneInputWithCountry } from "@/components/ui/phone-input-with-country";
 import { isValidPhoneNumber } from "react-phone-number-input";
@@ -15,9 +15,10 @@ interface ProfileCompletionProps {
     phone_number: string | null;
   };
   onComplete: (fullName: string, phoneNumber?: string) => Promise<{ success: boolean; error?: any }>;
+  onCancel?: () => void;
 }
 
-export function ProfileCompletion({ initialData, onComplete }: ProfileCompletionProps) {
+export function ProfileCompletion({ initialData, onComplete, onCancel }: ProfileCompletionProps) {
   const [fullName, setFullName] = useState(initialData?.full_name || "");
   const [phoneNumber, setPhoneNumber] = useState(initialData?.phone_number || "");
   const [isLoading, setIsLoading] = useState(false);
@@ -59,9 +60,10 @@ export function ProfileCompletion({ initialData, onComplete }: ProfileCompletion
         throw result.error;
       }
     } catch (error: any) {
+      console.error("Profile update error:", error);
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: error?.message || "Failed to update profile. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -71,7 +73,18 @@ export function ProfileCompletion({ initialData, onComplete }: ProfileCompletion
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md relative">
+        {onCancel && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 right-4 z-10"
+            onClick={onCancel}
+            disabled={isLoading}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <User className="h-6 w-6 text-primary" />
@@ -119,13 +132,26 @@ export function ProfileCompletion({ initialData, onComplete }: ProfileCompletion
               </p>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading || !fullName.trim()}
-            >
-              {isLoading ? "Updating Profile..." : "Complete Profile"}
-            </Button>
+            <div className="flex gap-3">
+              {onCancel && (
+                <Button 
+                  type="button"
+                  variant="outline" 
+                  className="flex-1" 
+                  onClick={onCancel}
+                  disabled={isLoading}
+                >
+                  Skip for Now
+                </Button>
+              )}
+              <Button 
+                type="submit" 
+                className="flex-1" 
+                disabled={isLoading || !fullName.trim()}
+              >
+                {isLoading ? "Updating Profile..." : "Complete Profile"}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

@@ -13,6 +13,7 @@ import { ArrowLeft, Activity, Database, Mail, Zap, TrendingUp, AlertTriangle, Re
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ErrorMonitoringDashboard } from "@/components/ErrorMonitoringDashboard";
 
 type MonitoringMetrics = {
   totalMentions: number;
@@ -615,6 +616,7 @@ export default function AdminMonitoringPanel() {
             <TabsTrigger value="api-usage">API Usage</TabsTrigger>
             <TabsTrigger value="user-logs">User Activity</TabsTrigger>
             <TabsTrigger value="edge-functions">Edge Functions</TabsTrigger>
+            <TabsTrigger value="error-monitoring">Error Monitoring</TabsTrigger>
             <TabsTrigger value="limits">Scaling Limits</TabsTrigger>
           </TabsList>
 
@@ -999,6 +1001,20 @@ export default function AdminMonitoringPanel() {
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="error-monitoring" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Application Error Monitoring</CardTitle>
+                <CardDescription>
+                  Real-time error tracking and debugging information for development and production issues
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ErrorMonitoringDashboard className="w-full" />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="limits" className="space-y-6">

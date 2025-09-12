@@ -33,7 +33,6 @@ interface Mention {
 
 export function Dashboard() {
   const [mentions, setMentions] = useState<Mention[]>([]);
-  console.log('DASHBOARD RENDER', mentions);
   const [selectedMention, setSelectedMention] = useState<Mention | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,15 +57,12 @@ export function Dashboard() {
   // Handle navigation to specific mention from notifications
   useEffect(() => {
     if (selectedMentionId && mentions.length > 0) {
-      console.log('Dashboard: Looking for mention with ID:', selectedMentionId);
       const mention = mentions.find(m => m.id === selectedMentionId);
       if (mention) {
-        console.log('Dashboard: Found mention, opening modal:', mention);
         setSelectedMention(mention);
         clearSelectedMention(); // Clear the navigation state
       } else {
         // If mention not found in current page, fetch it specifically
-        console.log('Dashboard: Mention not found in current page, fetching specifically');
         fetchSpecificMention(selectedMentionId);
       }
     }
@@ -89,8 +85,6 @@ export function Dashboard() {
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
-            console.log('New mention received via realtime:', payload.new);
-            
             // Add the new mention to the existing list if it passes filters
             const newMention = payload.new as Mention;
             if (enabledMentions.includes(newMention.source_type as any)) {
@@ -127,11 +121,9 @@ export function Dashboard() {
   }, [enabledMentions, pageSize, toast]);
 
   const fetchMentions = async () => {
-    console.log('FETCH MENTIONS CALLED');
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.log('No user found, cannot fetch mentions');
         return;
       }
 
@@ -164,8 +156,6 @@ export function Dashboard() {
       if (mentionsResult.error) throw mentionsResult.error;
       if (statsResult.error) throw statsResult.error;
 
-      // Debug: log raw mentions data from Supabase before setting state
-      console.log('Dashboard: raw mentions from Supabase', (mentionsResult.data || []).map(m => ({ id: m.id, sentiment: m.sentiment, type: typeof m.sentiment })));
       setMentions(mentionsResult.data || []);
       setTotalMentions(mentionsResult.count || 0);
       
@@ -186,7 +176,6 @@ export function Dashboard() {
 
   const fetchSpecificMention = async (mentionId: string) => {
     try {
-      console.log('Dashboard: Fetching specific mention:', mentionId);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -198,12 +187,11 @@ export function Dashboard() {
         .single();
 
       if (error) {
-        console.error('Dashboard: Error fetching specific mention:', error);
+        console.error('Error fetching specific mention:', error);
         return;
       }
 
       if (data) {
-        console.log('Dashboard: Found specific mention, opening modal:', data);
         setSelectedMention(data);
         clearSelectedMention(); // Clear the navigation state
       }
@@ -217,22 +205,11 @@ export function Dashboard() {
       const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
       const googleAlertsEnabled = (typeof window !== 'undefined') ? localStorage.getItem('google_alerts_enabled') !== 'false' : true;
       
-      console.log('Dashboard: Starting manual fetch...', { rssEnabled, googleAlertsEnabled });
-      
       const calls = [supabase.functions.invoke('aggregate-sources', { body: {} })];
       if (rssEnabled) calls.push(supabase.functions.invoke('monitor-news', { body: {} }));
       if (googleAlertsEnabled) calls.push(supabase.functions.invoke('google-alerts', { body: {} }));
       
       const results = await Promise.allSettled(calls as any);
-      
-      // Log results for debugging
-      results.forEach((result, index) => {
-        const functionName = index === 0 ? 'aggregate-sources' : (index === 1 ? 'monitor-news' : 'google-alerts');
-        console.log(`Dashboard: ${functionName} result:`, result);
-        if (result.status === 'rejected') {
-          console.error(`Dashboard: ${functionName} failed:`, result.reason);
-        }
-      });
       
       // Wait a moment for mentions to be processed, then refresh
       setTimeout(async () => {
@@ -244,7 +221,7 @@ export function Dashboard() {
         description: "Checking all sources for new mentions. Results will appear shortly." 
       });
     } catch (err: any) {
-      console.error("Dashboard: Error during manual fetch:", err);
+      console.error("Error during manual fetch:", err);
       toast({ 
         title: "Fetch failed", 
         description: err.message || "Could not fetch new mentions. Please try again.", 

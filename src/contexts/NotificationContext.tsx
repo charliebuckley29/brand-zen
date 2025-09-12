@@ -25,10 +25,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Debug logging for unread count changes
-  useEffect(() => {
-    console.log('NotificationProvider: Unread count changed to:', unreadCount);
-  }, [unreadCount]);
 
   // Load initial notifications
   useEffect(() => {
@@ -68,7 +64,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
-            console.log('New notification received:', payload);
             const newNotification = payload.new as Notification;
             
             // Add to notifications list
@@ -94,7 +89,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
-            console.log('Notification updated:', payload);
             const updatedNotification = payload.new as Notification;
             
             // Update notifications list
@@ -135,18 +129,11 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     if (!silent) setLoading(true);
     try {
       const fetchedNotifications = await getUserNotifications(false, 100);
-      console.log('NotificationProvider: Raw notifications data:', fetchedNotifications.map(n => ({ 
-        id: n.id, 
-        type: n.type, 
-        data: n.data, 
-        title: n.title 
-      })));
       setNotifications(fetchedNotifications);
       
       // Count unread notifications
       const unread = fetchedNotifications.filter(n => !n.read).length;
       setUnreadCount(unread);
-      console.log('NotificationProvider: Loaded notifications, unread count:', unread);
     } catch (error) {
       console.error('Error loading notifications:', error);
     } finally {
@@ -155,37 +142,26 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   };
 
   const markAsRead = async (notificationId: string) => {
-    console.log('NotificationProvider: Marking notification as read:', notificationId);
     const success = await markNotificationAsRead(notificationId);
     if (success) {
       setNotifications(prev => {
         const updated = prev.map(n => n.id === notificationId ? { ...n, read: true } : n);
-        console.log('NotificationProvider: Updated notifications:', updated.filter(n => !n.read).length, 'unread');
         return updated;
       });
-      setUnreadCount(prev => {
-        const newCount = Math.max(0, prev - 1);
-        console.log('NotificationProvider: Updated unread count from', prev, 'to', newCount);
-        return newCount;
-      });
+      setUnreadCount(prev => Math.max(0, prev - 1));
     }
   };
 
   const markAllAsReadLocal = async () => {
-    console.log('NotificationProvider: Marking all notifications as read locally');
-    
     // Update local state immediately
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     setUnreadCount(0);
     
     // Update database
     await markAllNotificationsAsRead();
-    
-    console.log('NotificationProvider: All notifications marked as read');
   };
 
   const forceRefresh = () => {
-    console.log('NotificationProvider: Force refreshing notifications');
     loadNotifications(true);
   };
 

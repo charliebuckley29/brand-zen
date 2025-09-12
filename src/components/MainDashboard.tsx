@@ -23,10 +23,6 @@ export function MainDashboard({ onSignOut, hasKeywords, onKeywordsUpdated, unrea
   const { isModerator } = useUserRole();
   const { currentView } = useNavigation();
 
-  // Debug logging
-  console.log('MainDashboard: Received unreadCount:', unreadCount);
-  console.log('MainDashboard: Current view from context:', currentView);
-
   // Note: unreadCount is now passed as prop from Index.tsx
 
   const renderCurrentView = () => {

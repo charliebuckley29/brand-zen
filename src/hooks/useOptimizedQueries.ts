@@ -1,335 +1,396 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient, useInfiniteQuery, UseQueryOptions } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Mention, PaginatedResponse } from '@/types';
+import { Mention, PaginatedResponse, Notification } from '@/types';
 import { useDebounce } from './usePerformance';
+import { useDataStore } from '@/store/dataStore';
+import { useAppStore } from '@/store/appStore';
+import { usePerformanceMonitor } from '@/store/performanceStore';
+import { logger } from '@/lib/logger';
 
-// Optimized mentions query with caching and pagination
+// Enhanced mentions query with caching and performance monitoring
 export function useMentionsQuery(
-  page: number = 1,
-  pageSize: number = 10,
-  sourceTypes?: string[],
-  options?: Partial<UseQueryOptions<PaginatedResponse<Mention>>>
+  page: number,
+  pageSize: number,
+  sourceTypes: string[],
+  options?: UseQueryOptions<PaginatedResponse<Mention>, Error>
 ) {
-  const queryClient = useQueryClient();
-  
-  const queryKey = useMemo(
-    () => ['mentions', page, pageSize, sourceTypes],
-    [page, pageSize, sourceTypes]
-  );
-
-  const queryFn = useCallback(async (): Promise<PaginatedResponse<Mention>> => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
-    let mentionsQuery = supabase
-      .from("mentions")
-      .select("*", { count: 'exact' })
-      .eq('user_id', user.id)
-      .order("published_at", { ascending: false })
-      .range((page - 1) * pageSize, (page * pageSize) - 1);
-
-    if (sourceTypes && sourceTypes.length > 0 && sourceTypes.length < 4) {
-      mentionsQuery = mentionsQuery.in("source_type", sourceTypes);
-    }
-
-    const { data, count, error } = await mentionsQuery;
-
-    if (error) throw error;
-
-    return {
-      data: data || [],
-      count: count || 0,
-    };
-  }, [page, pageSize, sourceTypes]);
-
-  return useQuery({
-    queryKey,
-    queryFn,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    keepPreviousData: true, // Keep previous data while fetching new page
-    ...options,
-  });
-}
-
-// Optimized stats query with separate caching
-export function useMentionsStatsQuery(sourceTypes?: string[]) {
-  const queryKey = useMemo(
-    () => ['mentions-stats', sourceTypes],
-    [sourceTypes]
-  );
+  const queryKey = useMemo(() => ['mentions', page, pageSize, sourceTypes], [page, pageSize, sourceTypes]);
+  const { fetchMentions } = useDataStore();
+  const { measure } = usePerformanceMonitor();
+  const { setMentions, setTotalMentions, setMentionsLoading, setMentionsError } = useAppStore();
 
   const queryFn = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
-    let statsQuery = supabase
-      .from("mentions")
-      .select('id, sentiment, flagged', { count: 'exact' })
-      .eq('user_id', user.id);
-
-    if (sourceTypes && sourceTypes.length > 0 && sourceTypes.length < 4) {
-      statsQuery = statsQuery.in("source_type", sourceTypes);
-    }
-
-    const { data, count, error } = await statsQuery;
-
-    if (error) throw error;
-
-    const total = count || 0;
-    const positive = data?.filter(m => m.sentiment !== null && m.sentiment !== -1 && m.sentiment >= 51).length || 0;
-    const neutral = data?.filter(m => m.sentiment === 50).length || 0;
-    const negative = data?.filter(m => m.sentiment !== null && m.sentiment !== -1 && m.sentiment <= 49).length || 0;
-    const flagged = data?.filter(m => m.flagged).length || 0;
-
-    return {
-      total,
-      positive,
-      neutral,
-      negative,
-      flagged,
-    };
-  }, [sourceTypes]);
-
-  return useQuery({
-    queryKey,
-    queryFn,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
-  });
-}
-
-// Search mentions with debounced input
-export function useMentionsSearch(
-  searchTerm: string,
-  sourceTypes?: string[],
-  debounceMs: number = 300
-) {
-  const debouncedSearchTerm = useDebounce(searchTerm, debounceMs);
-  const [isSearching, setIsSearching] = useState(false);
-
-  const queryKey = useMemo(
-    () => ['mentions-search', debouncedSearchTerm, sourceTypes],
-    [debouncedSearchTerm, sourceTypes]
-  );
-
-  const queryFn = useCallback(async (): Promise<Mention[]> => {
-    if (!debouncedSearchTerm.trim()) return [];
-
-    setIsSearching(true);
-    
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      let searchQuery = supabase
-        .from("mentions")
-        .select("*")
-        .eq('user_id', user.id)
-        .or(`content_snippet.ilike.%${debouncedSearchTerm}%,source_name.ilike.%${debouncedSearchTerm}%`)
-        .order("published_at", { ascending: false })
-        .limit(50);
-
-      if (sourceTypes && sourceTypes.length > 0 && sourceTypes.length < 4) {
-        searchQuery = searchQuery.in("source_type", sourceTypes);
-      }
-
-      const { data, error } = await searchQuery;
-
-      if (error) throw error;
-
-      return data || [];
-    } finally {
-      setIsSearching(false);
-    }
-  }, [debouncedSearchTerm, sourceTypes]);
+    return measure('fetchMentions', async () => {
+      const result = await fetchMentions(page, pageSize, sourceTypes);
+      
+      // Update global state
+      setMentions(result.data);
+      setTotalMentions(result.count);
+      
+      return result;
+    }, { page, pageSize, sourceTypes });
+  }, [page, pageSize, sourceTypes, fetchMentions, measure, setMentions, setTotalMentions]);
 
   const query = useQuery({
     queryKey,
     queryFn,
-    enabled: debouncedSearchTerm.length > 0,
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    keepPreviousData: true,
+    retry: (failureCount, error: any) => {
+      if (error?.status >= 400 && error?.status < 500) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    ...options,
   });
 
-  return {
-    ...query,
-    isSearching: isSearching || query.isLoading,
-  };
+  // Update loading and error states
+  useEffect(() => {
+    setMentionsLoading(query.isLoading);
+    setMentionsError(query.error?.message || null);
+  }, [query.isLoading, query.error, setMentionsLoading, setMentionsError]);
+
+  return query;
 }
 
-// Infinite scroll for mentions
-export function useInfiniteMentions(
-  sourceTypes?: string[],
-  pageSize: number = 20
+// Infinite scroll mentions query
+export function useInfiniteMentionsQuery(
+  pageSize: number,
+  sourceTypes: string[],
+  options?: any
 ) {
-  const queryClient = useQueryClient();
-
-  const queryFn = useCallback(async ({ pageParam = 0 }): Promise<PaginatedResponse<Mention>> => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
-    let mentionsQuery = supabase
-      .from("mentions")
-      .select("*", { count: 'exact' })
-      .eq('user_id', user.id)
-      .order("published_at", { ascending: false })
-      .range(pageParam * pageSize, (pageParam + 1) * pageSize - 1);
-
-    if (sourceTypes && sourceTypes.length > 0 && sourceTypes.length < 4) {
-      mentionsQuery = mentionsQuery.in("source_type", sourceTypes);
-    }
-
-    const { data, count, error } = await mentionsQuery;
-
-    if (error) throw error;
-
-    return {
-      data: data || [],
-      count: count || 0,
-    };
-  }, [sourceTypes, pageSize]);
+  const { fetchMentions } = useDataStore();
+  const { measure } = usePerformanceMonitor();
 
   return useInfiniteQuery({
-    queryKey: ['mentions-infinite', sourceTypes, pageSize],
-    queryFn,
-    getNextPageParam: (lastPage, pages) => {
-      const totalLoaded = pages.reduce((acc, page) => acc + page.data.length, 0);
-      return totalLoaded < lastPage.count ? pages.length : undefined;
+    queryKey: ['mentions', 'infinite', pageSize, sourceTypes],
+    queryFn: async ({ pageParam = 1 }) => {
+      return measure('fetchInfiniteMentions', async () => {
+        return await fetchMentions(pageParam, pageSize, sourceTypes);
+      }, { page: pageParam, pageSize, sourceTypes });
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const totalPages = Math.ceil(lastPage.count / pageSize);
+      return allPages.length < totalPages ? allPages.length + 1 : undefined;
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    keepPreviousData: true,
+    ...options,
   });
 }
 
-// Optimized analytics data query
-export function useAnalyticsData(
-  period: string,
-  startDate?: Date,
-  endDate?: Date,
-  sourceTypes?: string[]
+// Enhanced notifications query
+export function useNotificationsQuery(
+  limit: number = 100,
+  options?: UseQueryOptions<Notification[], Error>
 ) {
-  const queryKey = useMemo(
-    () => ['analytics', period, startDate, endDate, sourceTypes],
-    [period, startDate, endDate, sourceTypes]
-  );
+  const queryKey = useMemo(() => ['notifications', limit], [limit]);
+  const { fetchNotifications } = useDataStore();
+  const { measure } = usePerformanceMonitor();
+  const { setNotifications, setUnreadCount, setNotificationsLoading } = useAppStore();
 
   const queryFn = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
-    const days = parseInt(period);
-    const isCustom = Boolean(startDate && endDate);
-    const rangeStart = isCustom 
-      ? startDate! 
-      : (() => { const d = new Date(); d.setDate(d.getDate() - days); return d; })();
-    const rangeEnd = isCustom ? endDate! : new Date();
-
-    let baseQuery = supabase
-      .from('mentions')
-      .select('published_at, sentiment, source_name', { count: 'exact' })
-      .eq('user_id', user.id)
-      .gte('published_at', rangeStart.toISOString())
-      .lte('published_at', rangeEnd.toISOString())
-      .order('published_at');
-
-    if (sourceTypes && sourceTypes.length > 0 && sourceTypes.length < 4) {
-      baseQuery = baseQuery.in('source_type', sourceTypes);
-    }
-
-    // Get count first
-    const { count, error: countError } = await baseQuery;
-    if (countError) throw countError;
-
-    if (!count) {
-      return { chartData: [], sourceData: [] };
-    }
-
-    // Fetch data in chunks for large datasets
-    const chunkSize = 1000;
-    const chunks = Math.ceil(count / chunkSize);
-    let allData: any[] = [];
-
-    for (let i = 0; i < chunks; i++) {
-      const { data: chunkData, error: fetchError } = await baseQuery
-        .range(i * chunkSize, (i + 1) * chunkSize - 1);
+    return measure('fetchNotifications', async () => {
+      const notifications = await fetchNotifications(limit);
       
-      if (fetchError) throw fetchError;
-      if (chunkData) {
-        allData = [...allData, ...chunkData];
-      }
-    }
+      // Update global state
+      setNotifications(notifications);
+      setUnreadCount(notifications.filter(n => !n.read).length);
+      
+      return notifications;
+    }, { limit });
+  }, [limit, fetchNotifications, measure, setNotifications, setUnreadCount]);
 
-    // Process data
-    const dailyData = new Map<string, { positive: number; negative: number; neutral: number; total: number }>();
-    const sourceCount = new Map<string, number>();
+  const query = useQuery({
+    queryKey,
+    queryFn,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds
+    ...options,
+  });
 
-    allData.forEach((mention) => {
-      const date = new Date(mention.published_at);
-      const dateKey = date.toISOString().split('T')[0];
+  // Update loading state
+  useEffect(() => {
+    setNotificationsLoading(query.isLoading);
+  }, [query.isLoading, setNotificationsLoading]);
+
+  return query;
+}
+
+// User profile query
+export function useUserProfileQuery(options?: UseQueryOptions<any, Error>) {
+  const queryKey = ['userProfile'];
+  const { fetchUserProfile } = useDataStore();
+  const { measure } = usePerformanceMonitor();
+  const { setUser, setUserRole } = useAppStore();
+
+  const queryFn = useCallback(async () => {
+    return measure('fetchUserProfile', async () => {
+      const profile = await fetchUserProfile();
       
-      if (!dailyData.has(dateKey)) {
-        dailyData.set(dateKey, { positive: 0, negative: 0, neutral: 0, total: 0 });
-      }
+      // Update global state
+      setUser(profile);
+      setUserRole(profile.user_type);
       
-      const dayData = dailyData.get(dateKey)!;
-      dayData.total++;
-      
-      if (mention.sentiment !== null && mention.sentiment !== -1) {
-        if (mention.sentiment >= 51) dayData.positive++;
-        else if (mention.sentiment <= 49) dayData.negative++;
-        else dayData.neutral++;
-      }
-      
-      sourceCount.set(mention.source_name, (sourceCount.get(mention.source_name) || 0) + 1);
+      return profile;
     });
+  }, [fetchUserProfile, measure, setUser, setUserRole]);
 
-    const chartData = Array.from(dailyData.entries())
-      .map(([date, data]) => ({ date, ...data }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+  return useQuery({
+    queryKey,
+    queryFn,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    ...options,
+  });
+}
 
-    const sourceData = Array.from(sourceCount.entries())
-      .map(([source, count]) => ({
-        source,
-        count,
-        percentage: (count / allData.length) * 100,
-      }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
+// Keywords query
+export function useKeywordsQuery(options?: UseQueryOptions<any[], Error>) {
+  const queryKey = ['keywords'];
+  const { fetchKeywords } = useDataStore();
+  const { measure } = usePerformanceMonitor();
 
-    return { chartData, sourceData };
-  }, [period, startDate, endDate, sourceTypes]);
+  const queryFn = useCallback(async () => {
+    return measure('fetchKeywords', async () => {
+      return await fetchKeywords();
+    });
+  }, [fetchKeywords, measure]);
 
   return useQuery({
     queryKey,
     queryFn,
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
+    ...options,
   });
 }
 
-// Cache invalidation utilities
-export function useCacheInvalidation() {
+// Source preferences query
+export function useSourcePreferencesQuery(options?: UseQueryOptions<any[], Error>) {
+  const queryKey = ['sourcePreferences'];
+  const { fetchSourcePreferences } = useDataStore();
+  const { measure } = usePerformanceMonitor();
+
+  const queryFn = useCallback(async () => {
+    return measure('fetchSourcePreferences', async () => {
+      return await fetchSourcePreferences();
+    });
+  }, [fetchSourcePreferences, measure]);
+
+  return useQuery({
+    queryKey,
+    queryFn,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    ...options,
+  });
+}
+
+// Search mentions query with debouncing
+export function useMentionsSearch(
+  searchTerm: string,
+  sourceTypes: string[],
+  options?: UseQueryOptions<Mention[], Error>
+) {
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const queryKey = useMemo(() => ['mentions', 'search', debouncedSearchTerm, sourceTypes], [debouncedSearchTerm, sourceTypes]);
+  const { measure } = usePerformanceMonitor();
+
+  const queryFn = useCallback(async () => {
+    if (!debouncedSearchTerm.trim()) return [];
+
+    return measure('searchMentions', async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from("mentions")
+        .select("*")
+        .eq('user_id', user.id)
+        .in('source_type', sourceTypes)
+        .or(`content_snippet.ilike.%${debouncedSearchTerm}%,full_text.ilike.%${debouncedSearchTerm}%`)
+        .order('published_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      return data || [];
+    }, { searchTerm: debouncedSearchTerm, sourceTypes });
+  }, [debouncedSearchTerm, sourceTypes, measure]);
+
+  return useQuery({
+    queryKey,
+    queryFn,
+    enabled: debouncedSearchTerm.length > 2,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    ...options,
+  });
+}
+
+// Analytics data query
+export function useAnalyticsData(
+  timeRange: '7d' | '30d' | '90d' = '30d',
+  options?: UseQueryOptions<any, Error>
+) {
+  const queryKey = useMemo(() => ['analytics', timeRange], [timeRange]);
+  const { measure } = usePerformanceMonitor();
+
+  const queryFn = useCallback(async () => {
+    return measure('fetchAnalyticsData', async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      // Fetch mentions data for analytics
+      const { data: mentions, error: mentionsError } = await supabase
+        .from("mentions")
+        .select("*")
+        .eq('user_id', user.id)
+        .gte('published_at', startDate.toISOString())
+        .order('published_at', { ascending: false });
+
+      if (mentionsError) throw mentionsError;
+
+      // Process analytics data
+      const analytics = {
+        totalMentions: mentions?.length || 0,
+        positiveMentions: mentions?.filter(m => m.sentiment && m.sentiment >= 51).length || 0,
+        negativeMentions: mentions?.filter(m => m.sentiment && m.sentiment <= 49).length || 0,
+        neutralMentions: mentions?.filter(m => m.sentiment && m.sentiment === 50).length || 0,
+        unknownMentions: mentions?.filter(m => m.sentiment === null || m.sentiment === -1).length || 0,
+        flaggedMentions: mentions?.filter(m => m.flagged).length || 0,
+        escalatedMentions: mentions?.filter(m => m.escalation_type !== 'none').length || 0,
+        bySource: {} as Record<string, number>,
+        byDay: {} as Record<string, number>,
+        sentimentTrend: [] as Array<{ date: string; positive: number; negative: number; neutral: number }>,
+      };
+
+      // Group by source
+      mentions?.forEach(mention => {
+        analytics.bySource[mention.source_type] = (analytics.bySource[mention.source_type] || 0) + 1;
+      });
+
+      // Group by day
+      mentions?.forEach(mention => {
+        const date = new Date(mention.published_at).toISOString().split('T')[0];
+        analytics.byDay[date] = (analytics.byDay[date] || 0) + 1;
+      });
+
+      // Calculate sentiment trend
+      const sentimentByDay: Record<string, { positive: number; negative: number; neutral: number }> = {};
+      mentions?.forEach(mention => {
+        const date = new Date(mention.published_at).toISOString().split('T')[0];
+        if (!sentimentByDay[date]) {
+          sentimentByDay[date] = { positive: 0, negative: 0, neutral: 0 };
+        }
+        
+        if (mention.sentiment !== null && mention.sentiment !== -1) {
+          if (mention.sentiment >= 51) {
+            sentimentByDay[date].positive++;
+          } else if (mention.sentiment <= 49) {
+            sentimentByDay[date].negative++;
+          } else {
+            sentimentByDay[date].neutral++;
+          }
+        }
+      });
+
+      analytics.sentimentTrend = Object.entries(sentimentByDay)
+        .map(([date, sentiment]) => ({ date, ...sentiment }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      return analytics;
+    }, { timeRange });
+  }, [timeRange, measure]);
+
+  return useQuery({
+    queryKey,
+    queryFn,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    ...options,
+  });
+}
+
+// Real-time subscriptions hook
+export function useRealtimeSubscriptions() {
+  const { subscribeToMentions, subscribeToNotifications } = useDataStore();
+  const { addMention, addNotification } = useAppStore();
+  const { measure } = usePerformanceMonitor();
+
+  useEffect(() => {
+    const { data: { user } } = supabase.auth.getUser();
+    if (!user) return;
+
+    // Subscribe to mentions
+    const unsubscribeMentions = subscribeToMentions(user.id, (mention) => {
+      measure('realtimeMention', () => {
+        addMention(mention);
+        logger.info('New mention received via realtime:', mention.id);
+      });
+    });
+
+    // Subscribe to notifications
+    const unsubscribeNotifications = subscribeToNotifications(user.id, (notification) => {
+      measure('realtimeNotification', () => {
+        addNotification(notification);
+        logger.info('New notification received via realtime:', notification.id);
+      });
+    });
+
+    return () => {
+      unsubscribeMentions();
+      unsubscribeNotifications();
+    };
+  }, [subscribeToMentions, subscribeToNotifications, addMention, addNotification, measure]);
+}
+
+// Cache management hook
+export function useCacheManagement() {
   const queryClient = useQueryClient();
-
-  const invalidateMentions = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['mentions'] });
-    queryClient.invalidateQueries({ queryKey: ['mentions-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['mentions-search'] });
-    queryClient.invalidateQueries({ queryKey: ['mentions-infinite'] });
-  }, [queryClient]);
-
-  const invalidateAnalytics = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['analytics'] });
-  }, [queryClient]);
+  const { clearCache, clearExpiredCache } = useDataStore();
 
   const invalidateAll = useCallback(() => {
     queryClient.invalidateQueries();
+    clearCache();
+  }, [queryClient, clearCache]);
+
+  const invalidateMentions = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['mentions'] });
   }, [queryClient]);
 
+  const invalidateNotifications = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+  }, [queryClient]);
+
+  const clearAllCache = useCallback(() => {
+    queryClient.clear();
+    clearCache();
+  }, [queryClient, clearCache]);
+
+  // Auto-clear expired cache every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      clearExpiredCache();
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [clearExpiredCache]);
+
   return {
-    invalidateMentions,
-    invalidateAnalytics,
     invalidateAll,
+    invalidateMentions,
+    invalidateNotifications,
+    clearAllCache,
   };
 }
