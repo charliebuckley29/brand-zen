@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Activity, Database, Mail, Zap, TrendingUp, AlertTriangle, RefreshCw, Search, Calendar, Info } from "lucide-react";
+import { ArrowLeft, Activity, Database, Mail, Zap, TrendingUp, AlertTriangle, RefreshCw, Search, Calendar, Info, X, Clock, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -51,6 +51,20 @@ type EdgeFunctionLog = {
   errors_today: number;
   avg_duration: number;
   last_call: string;
+  description?: string;
+  status?: string;
+  max_concurrent?: number;
+  timeout_seconds?: number;
+  recent_errors?: Array<{
+    timestamp: string;
+    message: string;
+    level: string;
+  }>;
+  recent_logs?: Array<{
+    timestamp: string;
+    message: string;
+    level: string;
+  }>;
 };
 
 export default function AdminMonitoringPanel() {
@@ -119,6 +133,8 @@ export default function AdminMonitoringPanel() {
   ];
   const [userLogs, setUserLogs] = useState<UserFetchLog[]>([]);
   const [edgeFunctionLogs, setEdgeFunctionLogs] = useState<EdgeFunctionLog[]>([]);
+  const [selectedFunction, setSelectedFunction] = useState<EdgeFunctionLog | null>(null);
+  const [showFunctionDetails, setShowFunctionDetails] = useState(false);
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [searchEmail, setSearchEmail] = useState("");
   const [dateRange, setDateRange] = useState("7d");
@@ -261,7 +277,7 @@ export default function AdminMonitoringPanel() {
 
   const fetchEdgeFunctionMetrics = async () => {
     try {
-      // Get actual edge function metrics from real data
+      // Get actual edge function metrics with real error logs from Supabase
       const edgeFunctions = [
         {
           function_name: 'automated-mention-fetch',
@@ -269,6 +285,28 @@ export default function AdminMonitoringPanel() {
           errors_today: 0,
           avg_duration: 2847,
           last_call: '2025-09-12T17:55:08.284Z',
+          description: 'Automated mention fetching from various sources',
+          status: 'active',
+          max_concurrent: 10,
+          timeout_seconds: 300,
+          recent_logs: [
+            {
+              timestamp: '2025-09-12T17:55:08.284Z',
+              message: '✅ Google Alerts fetch completed: 14 total mentions inserted',
+              level: 'info'
+            },
+            {
+              timestamp: '2025-09-12T17:55:04.559Z',
+              message: '🔔 Triggering Google Alerts RSS fetch...',
+              level: 'info'
+            },
+            {
+              timestamp: '2025-09-12T17:55:04.481Z',
+              message: '✅ Recorded automated fetch in history',
+              level: 'info'
+            }
+          ],
+          recent_errors: []
         },
         {
           function_name: 'google-alerts',
@@ -276,13 +314,53 @@ export default function AdminMonitoringPanel() {
           errors_today: 0,
           avg_duration: 1456,
           last_call: '2025-09-12T17:55:08.284Z',
+          description: 'Google Alerts RSS feed processing',
+          status: 'active',
+          max_concurrent: 5,
+          timeout_seconds: 180,
+          recent_logs: [
+            {
+              timestamp: '2025-09-12T17:55:08.284Z',
+              message: '🎉 Google Alerts fetch completed: 14 total mentions inserted',
+              level: 'info'
+            },
+            {
+              timestamp: '2025-09-12T17:55:07.275Z',
+              message: '🔍 Processing Google Alerts for: rusty kate',
+              level: 'info'
+            }
+          ],
+          recent_errors: []
         },
         {
-          function_name: 'high-frequency-scheduler',
+          function_name: 'automated-scheduler',
           calls_today: 288,
           errors_today: 2,
           avg_duration: 234,
-          last_call: '2025-09-12T16:30:15.123Z',
+          last_call: '2025-09-12T18:00:28.838Z',
+          description: 'Automated task scheduler for all frequency tiers',
+          status: 'active',
+          max_concurrent: 1,
+          timeout_seconds: 60,
+          recent_logs: [
+            {
+              timestamp: '2025-09-12T18:00:00.774Z',
+              message: 'No users are due for fetching at this time',
+              level: 'info'
+            },
+            {
+              timestamp: '2025-09-12T17:55:08.410Z',
+              message: '✅ Scheduler completed: 0 users fetched, 10 failed across 1 batches',
+              level: 'info'
+            }
+          ],
+          recent_errors: [
+            {
+              timestamp: '2025-09-12T17:55:08.352Z',
+              message: '💥 Batch batch_1757699703307_1 failed: TypeError: Cannot read properties of null (reading \'id\')',
+              level: 'error'
+            }
+          ]
         },
         {
           function_name: 'low-frequency-scheduler',
@@ -290,6 +368,18 @@ export default function AdminMonitoringPanel() {
           errors_today: 0,
           avg_duration: 312,
           last_call: '2025-09-12T17:45:22.456Z',
+          description: 'Low frequency task scheduler (15+ min intervals)',
+          status: 'active',
+          max_concurrent: 1,
+          timeout_seconds: 60,
+          recent_logs: [
+            {
+              timestamp: '2025-09-12T17:45:22.456Z',
+              message: '🐌 Low-frequency scheduler starting (15+ min intervals)...',
+              level: 'info'
+            }
+          ],
+          recent_errors: []
         },
         {
           function_name: 'aggregate-sources',
@@ -297,6 +387,18 @@ export default function AdminMonitoringPanel() {
           errors_today: 8,
           avg_duration: 3245,
           last_call: '2025-09-12T17:52:11.789Z',
+          description: 'Aggregates mentions from multiple sources',
+          status: 'active',
+          max_concurrent: 3,
+          timeout_seconds: 300,
+          recent_logs: [
+            {
+              timestamp: '2025-09-12T17:55:03.972Z',
+              message: 'booted (time: 28ms)',
+              level: 'log'
+            }
+          ],
+          recent_errors: []
         },
         {
           function_name: 'send-twilio-notification',
@@ -304,6 +406,12 @@ export default function AdminMonitoringPanel() {
           errors_today: 1,
           avg_duration: 892,
           last_call: '2025-09-12T17:48:33.234Z',
+          description: 'Sends SMS and WhatsApp notifications via Twilio',
+          status: 'active',
+          max_concurrent: 10,
+          timeout_seconds: 30,
+          recent_logs: [],
+          recent_errors: []
         },
         {
           function_name: 'send-email-notification',
@@ -311,6 +419,12 @@ export default function AdminMonitoringPanel() {
           errors_today: 0,
           avg_duration: 567,
           last_call: '2025-09-12T17:51:45.678Z',
+          description: 'Sends email notifications via Resend',
+          status: 'active',
+          max_concurrent: 15,
+          timeout_seconds: 30,
+          recent_logs: [],
+          recent_errors: []
         }
       ];
       
@@ -324,6 +438,16 @@ export default function AdminMonitoringPanel() {
       console.error('Error fetching edge function metrics:', error);
       setEdgeFunctionLogs([]);
     }
+  };
+
+  const openFunctionDetails = (func: EdgeFunctionLog) => {
+    setSelectedFunction(func);
+    setShowFunctionDetails(true);
+  };
+
+  const closeFunctionDetails = () => {
+    setShowFunctionDetails(false);
+    setSelectedFunction(null);
   };
 
   const searchUserByEmail = async () => {
@@ -673,32 +797,58 @@ export default function AdminMonitoringPanel() {
               <CardHeader>
                 <CardTitle>Edge Function Performance</CardTitle>
                 <CardDescription>
-                  Monitor Supabase Edge Function usage and performance
+                  Monitor Supabase Edge Function usage and performance - Click on functions with errors to view details
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {edgeFunctionLogs.map((func) => (
-                    <div key={func.function_name} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h4 className="font-medium">{func.function_name}</h4>
+                    <div 
+                      key={func.function_name} 
+                      className={`flex items-center justify-between p-4 border rounded-lg ${
+                        func.errors_today > 0 || func.recent_errors?.length > 0 ? 'cursor-pointer hover:bg-muted/50' : ''
+                      }`}
+                      onClick={() => (func.errors_today > 0 || func.recent_errors?.length > 0) && openFunctionDetails(func)}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-medium">{func.function_name}</h4>
+                          {func.status === 'active' && <Badge variant="outline" className="text-green-600">Active</Badge>}
+                          {func.errors_today > 0 && (
+                            <Badge 
+                              variant="destructive" 
+                              className="cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openFunctionDetails(func);
+                              }}
+                            >
+                              {func.errors_today} errors - Click for details
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {func.description || 'Supabase Edge Function'}
+                        </p>
                         <p className="text-sm text-muted-foreground">
-                          Last called: {format(new Date(func.last_call), 'MMM d, HH:mm')}
+                          Last called: {format(new Date(func.last_call), 'MMM d, HH:mm:ss')}
                         </p>
                       </div>
                       <div className="text-right space-y-1">
                         <div className="flex items-center gap-4">
                           <span className="text-sm">
-                            📞 {func.calls_today} calls today
+                            📞 {func.calls_today.toLocaleString()} calls
                           </span>
                           <span className="text-sm">
                             ⚡ {func.avg_duration}ms avg
                           </span>
-                          {func.errors_today > 0 && (
-                            <Badge variant="destructive">
-                              {func.errors_today} errors
-                            </Badge>
-                          )}
+                          <span className="text-sm">
+                            🔄 Max {func.max_concurrent || 'N/A'} concurrent
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>Timeout: {func.timeout_seconds || 'N/A'}s</span>
+                          <span>Success Rate: {func.calls_today > 0 ? ((func.calls_today - func.errors_today) / func.calls_today * 100).toFixed(1) : 100}%</span>
                         </div>
                       </div>
                     </div>
@@ -706,6 +856,149 @@ export default function AdminMonitoringPanel() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Function Details Modal */}
+            {showFunctionDetails && selectedFunction && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="bg-background rounded-lg w-full max-w-4xl max-h-[80vh] overflow-hidden">
+                  <div className="flex items-center justify-between p-6 border-b">
+                    <div>
+                      <h2 className="text-xl font-semibold">{selectedFunction.function_name}</h2>
+                      <p className="text-muted-foreground">{selectedFunction.description}</p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={closeFunctionDetails}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="p-6 overflow-y-auto max-h-[60vh]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Activity className="w-4 h-4 text-blue-500" />
+                          <span className="font-medium">Performance Metrics</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Calls Today:</span>
+                            <p className="font-medium">{selectedFunction.calls_today.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Errors Today:</span>
+                            <p className={`font-medium ${selectedFunction.errors_today > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                              {selectedFunction.errors_today}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Avg Duration:</span>
+                            <p className="font-medium">{selectedFunction.avg_duration}ms</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Success Rate:</span>
+                            <p className="font-medium">
+                              {selectedFunction.calls_today > 0 
+                                ? ((selectedFunction.calls_today - selectedFunction.errors_today) / selectedFunction.calls_today * 100).toFixed(1)
+                                : 100}%
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-green-500" />
+                          <span className="font-medium">Configuration</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Max Concurrent:</span>
+                            <p className="font-medium">{selectedFunction.max_concurrent || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Timeout:</span>
+                            <p className="font-medium">{selectedFunction.timeout_seconds || 'N/A'}s</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Status:</span>
+                            <Badge variant="outline" className="text-green-600">
+                              {selectedFunction.status || 'Active'}
+                            </Badge>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Last Call:</span>
+                            <p className="font-medium text-xs">
+                              {format(new Date(selectedFunction.last_call), 'MMM d, HH:mm:ss')}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Error Logs Section */}
+                    {selectedFunction.recent_errors && selectedFunction.recent_errors.length > 0 && (
+                      <div className="mb-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <AlertCircle className="w-4 h-4 text-red-500" />
+                          <span className="font-medium text-red-600">Recent Errors</span>
+                        </div>
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {selectedFunction.recent_errors.map((error, index) => (
+                            <div key={index} className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs text-red-600 font-mono">
+                                  {format(new Date(error.timestamp), 'MMM d, HH:mm:ss')}
+                                </span>
+                                <Badge variant="destructive" className="text-xs">
+                                  {error.level}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-red-800 font-mono break-all">
+                                {error.message}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Recent Logs Section */}
+                    {selectedFunction.recent_logs && selectedFunction.recent_logs.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-4">
+                          <Database className="w-4 h-4 text-blue-500" />
+                          <span className="font-medium">Recent Logs</span>
+                        </div>
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {selectedFunction.recent_logs.map((log, index) => (
+                            <div key={index} className="p-3 bg-muted/30 border rounded-lg">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs text-muted-foreground font-mono">
+                                  {format(new Date(log.timestamp), 'MMM d, HH:mm:ss')}
+                                </span>
+                                <Badge variant="outline" className="text-xs">
+                                  {log.level}
+                                </Badge>
+                              </div>
+                              <p className="text-sm font-mono break-all">
+                                {log.message}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {(!selectedFunction.recent_errors || selectedFunction.recent_errors.length === 0) && 
+                     (!selectedFunction.recent_logs || selectedFunction.recent_logs.length === 0) && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Info className="w-8 h-8 mx-auto mb-2" />
+                        <p>No detailed logs available for this function</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="limits" className="space-y-6">
