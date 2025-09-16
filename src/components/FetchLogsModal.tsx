@@ -3,10 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, ChevronDown, ChevronRight, Clock, CheckCircle, XCircle, Activity } from "lucide-react";
+import { FileText, ChevronDown, ChevronRight, Clock, CheckCircle, XCircle, Activity, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useTimezone } from "@/contexts/TimezoneContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface SourceStats {
   google_alerts: number;
@@ -62,7 +64,9 @@ export function FetchLogsModal() {
   const [logs, setLogs] = useState<FetchLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+  const [clearing, setClearing] = useState(false);
   const { formatDateTime, formatRelativeTime } = useTimezone();
+  const { toast } = useToast();
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -79,6 +83,33 @@ export function FetchLogsModal() {
       console.error('Error fetching logs:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const clearLogs = async () => {
+    setClearing(true);
+    try {
+      const { error } = await supabase
+        .from('user_fetch_history')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+
+      if (error) throw error;
+      
+      setLogs([]);
+      toast({
+        title: "Fetch logs cleared",
+        description: "All fetch logs have been successfully removed.",
+      });
+    } catch (error: any) {
+      console.error('Error clearing logs:', error);
+      toast({
+        title: "Error clearing logs",
+        description: error.message || "Failed to clear fetch logs. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setClearing(false);
     }
   };
 
@@ -137,9 +168,45 @@ export function FetchLogsModal() {
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Fetch Logs
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Fetch Logs
+            </div>
+            {logs.length > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={clearing}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {clearing ? "Clearing..." : "Clear All"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Clear All Fetch Logs?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete all fetch logs from the system.
+                      <br /><br />
+                      <strong>{logs.length} log entries</strong> will be removed.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={clearLogs}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Clear All Logs
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </DialogTitle>
         </DialogHeader>
         
