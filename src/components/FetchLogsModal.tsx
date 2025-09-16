@@ -8,6 +8,44 @@ import { FileText, ChevronDown, ChevronRight, Clock, CheckCircle, XCircle, Activ
 import { formatDistanceToNow } from "date-fns";
 import { useTimezone } from "@/contexts/TimezoneContext";
 
+interface SourceStats {
+  google_alerts: number;
+  youtube: number;
+  reddit: number;
+  instagram: number;
+  twitter: number;
+}
+
+function parseSourceStats(log: string): SourceStats {
+  const stats: SourceStats = {
+    google_alerts: 0,
+    youtube: 0,
+    reddit: 0,
+    instagram: 0,
+    twitter: 0
+  };
+
+  if (!log) return stats;
+
+  // Parse patterns like "20 Google Alerts", "5 YouTube", etc.
+  const googleMatch = log.match(/(\d+)\s+Google\s+Alerts?/i);
+  if (googleMatch) stats.google_alerts = parseInt(googleMatch[1]);
+
+  const youtubeMatch = log.match(/(\d+)\s+YouTube/i);
+  if (youtubeMatch) stats.youtube = parseInt(youtubeMatch[1]);
+
+  const redditMatch = log.match(/(\d+)\s+Reddit/i);
+  if (redditMatch) stats.reddit = parseInt(redditMatch[1]);
+
+  const instagramMatch = log.match(/(\d+)\s+Instagram/i);
+  if (instagramMatch) stats.instagram = parseInt(instagramMatch[1]);
+
+  const twitterMatch = log.match(/(\d+)\s+Twitter/i);
+  if (twitterMatch) stats.twitter = parseInt(twitterMatch[1]);
+
+  return stats;
+}
+
 interface FetchLog {
   id: string;
   fetch_type: string;
@@ -15,6 +53,8 @@ interface FetchLog {
   completed_at: string | null;
   successful_keywords: number;
   failed_keywords: number;
+  successful_fetches: number;
+  log: string;
   created_at: string;
 }
 
@@ -200,23 +240,90 @@ export function FetchLogsModal() {
                       </div>
                     </div>
                     
-                    {totalKeywords > 0 && (
-                      <div className="mt-4 p-3 bg-muted/50 rounded-md">
-                        <div className="font-medium text-sm mb-2">Results Summary</div>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>{log.successful_keywords} keywords processed successfully</span>
-                          </div>
-                          {log.failed_keywords > 0 && (
+                    <div className="mt-4 p-3 bg-muted/50 rounded-md">
+                      <div className="font-medium text-sm mb-2">Results Summary</div>
+                      <div className="space-y-2">
+                        {/* Keywords Summary */}
+                        {totalKeywords > 0 && (
+                          <div className="grid grid-cols-2 gap-2 text-sm">
                             <div className="flex items-center gap-2">
-                              <XCircle className="h-4 w-4 text-red-500" />
-                              <span>{log.failed_keywords} keywords failed</span>
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                              <span>{log.successful_keywords} keywords processed successfully</span>
                             </div>
-                          )}
-                        </div>
+                            {log.failed_keywords > 0 && (
+                              <div className="flex items-center gap-2">
+                                <XCircle className="h-4 w-4 text-red-500" />
+                                <span>{log.failed_keywords} keywords failed</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Mentions Summary */}
+                        {log.successful_fetches > 0 && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <FileText className="h-4 w-4 text-blue-500" />
+                            <span className="font-medium">{log.successful_fetches} mentions fetched</span>
+                          </div>
+                        )}
+                        
+                        {/* Source Breakdown */}
+                        {log.log && (() => {
+                          const sourceStats = parseSourceStats(log.log);
+                          const hasSources = Object.values(sourceStats).some(count => count > 0);
+                          
+                          if (hasSources) {
+                            return (
+                              <div className="mt-2 pt-2 border-t">
+                                <div className="text-xs font-medium text-muted-foreground mb-1">Source Breakdown:</div>
+                                <div className="flex flex-wrap gap-2 text-xs">
+                                  {sourceStats.google_alerts > 0 && (
+                                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                      📰 {sourceStats.google_alerts} Google Alerts
+                                    </span>
+                                  )}
+                                  {sourceStats.youtube > 0 && (
+                                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded">
+                                      🎥 {sourceStats.youtube} YouTube
+                                    </span>
+                                  )}
+                                  {sourceStats.reddit > 0 && (
+                                    <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                                      🔴 {sourceStats.reddit} Reddit
+                                    </span>
+                                  )}
+                                  {sourceStats.instagram > 0 && (
+                                    <span className="bg-pink-100 text-pink-800 px-2 py-1 rounded">
+                                      📸 {sourceStats.instagram} Instagram
+                                    </span>
+                                  )}
+                                  {sourceStats.twitter > 0 && (
+                                    <span className="bg-sky-100 text-sky-800 px-2 py-1 rounded">
+                                      🐦 {sourceStats.twitter} Twitter
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+                        
+                        {/* Error Details */}
+                        {log.log && log.log.includes('Exception') && (
+                          <div className="mt-2 pt-2 border-t">
+                            <details className="text-xs">
+                              <summary className="cursor-pointer text-red-600 hover:text-red-800 font-medium">
+                                View Error Details
+                              </summary>
+                              <pre className="mt-1 p-2 bg-red-50 border border-red-200 rounded text-red-800 whitespace-pre-wrap">
+                                {log.log}
+                              </pre>
+                            </details>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </CollapsibleContent>
                 </Collapsible>
               );

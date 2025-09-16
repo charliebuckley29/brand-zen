@@ -15,6 +15,44 @@ import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ErrorMonitoringDashboard } from "@/components/ErrorMonitoringDashboard";
 
+interface SourceStats {
+  google_alerts: number;
+  youtube: number;
+  reddit: number;
+  instagram: number;
+  twitter: number;
+}
+
+function parseSourceStats(log: string): SourceStats {
+  const stats: SourceStats = {
+    google_alerts: 0,
+    youtube: 0,
+    reddit: 0,
+    instagram: 0,
+    twitter: 0
+  };
+
+  if (!log) return stats;
+
+  // Parse patterns like "20 Google Alerts", "5 YouTube", etc.
+  const googleMatch = log.match(/(\d+)\s+Google\s+Alerts?/i);
+  if (googleMatch) stats.google_alerts = parseInt(googleMatch[1]);
+
+  const youtubeMatch = log.match(/(\d+)\s+YouTube/i);
+  if (youtubeMatch) stats.youtube = parseInt(youtubeMatch[1]);
+
+  const redditMatch = log.match(/(\d+)\s+Reddit/i);
+  if (redditMatch) stats.reddit = parseInt(redditMatch[1]);
+
+  const instagramMatch = log.match(/(\d+)\s+Instagram/i);
+  if (instagramMatch) stats.instagram = parseInt(instagramMatch[1]);
+
+  const twitterMatch = log.match(/(\d+)\s+Twitter/i);
+  if (twitterMatch) stats.twitter = parseInt(twitterMatch[1]);
+
+  return stats;
+}
+
 type MonitoringMetrics = {
   totalMentions: number;
   totalUsers: number;
@@ -43,6 +81,8 @@ type UserFetchLog = {
   completed_at: string | null;
   successful_keywords: number;
   failed_keywords: number;
+  successful_fetches: number;
+  log: string;
   profiles?: { full_name: string };
 };
 
@@ -763,27 +803,84 @@ export default function AdminMonitoringPanel() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {userLogs.map((log) => (
-                    <div key={log.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full ${getStatusColor(log)}`}></div>
-                        <div>
-                          <p className="font-medium">{log.profiles?.full_name || 'Unknown User'}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {log.fetch_type} • {format(new Date(log.started_at), 'MMM d, HH:mm')}
-                          </p>
+                  {userLogs.map((log) => {
+                    const sourceStats = parseSourceStats(log.log);
+                    const hasSources = Object.values(sourceStats).some(count => count > 0);
+                    
+                    return (
+                      <div key={log.id} className="p-3 border rounded-lg space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full ${getStatusColor(log)}`}></div>
+                            <div>
+                              <p className="font-medium">{log.profiles?.full_name || 'Unknown User'}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {log.fetch_type} • {format(new Date(log.started_at), 'MMM d, HH:mm')}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium">
+                              ✅ {log.successful_keywords} / ❌ {log.failed_keywords}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {getDuration(log.started_at, log.completed_at)}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Enhanced statistics */}
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          {/* Mentions fetched */}
+                          {log.successful_fetches > 0 && (
+                            <div className="flex items-center gap-2">
+                              <Activity className="h-4 w-4 text-blue-500" />
+                              <span>{log.successful_fetches} mentions fetched</span>
+                            </div>
+                          )}
+                          
+                          {/* Source breakdown */}
+                          {hasSources && (
+                            <div className="flex flex-wrap gap-1">
+                              {sourceStats.google_alerts > 0 && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                  📰 {sourceStats.google_alerts}
+                                </span>
+                              )}
+                              {sourceStats.youtube > 0 && (
+                                <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                                  🎥 {sourceStats.youtube}
+                                </span>
+                              )}
+                              {sourceStats.reddit > 0 && (
+                                <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                                  🔴 {sourceStats.reddit}
+                                </span>
+                              )}
+                              {sourceStats.instagram > 0 && (
+                                <span className="text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded">
+                                  📸 {sourceStats.instagram}
+                                </span>
+                              )}
+                              {sourceStats.twitter > 0 && (
+                                <span className="text-xs bg-sky-100 text-sky-800 px-2 py-1 rounded">
+                                  🐦 {sourceStats.twitter}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Error indicator */}
+                          {log.log && log.log.includes('Exception') && (
+                            <div className="flex items-center gap-1 text-red-600">
+                              <AlertCircle className="h-4 w-4" />
+                              <span className="text-xs">Some sources had errors</span>
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          ✅ {log.successful_keywords} / ❌ {log.failed_keywords}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {getDuration(log.started_at, log.completed_at)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {userLogs.length === 0 && (
                     <p className="text-center text-muted-foreground py-4">
                       No fetch logs found

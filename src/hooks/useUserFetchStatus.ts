@@ -6,6 +6,12 @@ interface UserFetchStatus {
   minutesUntilNextFetch: number;
   frequency: number;
   lastFetchTime: Date | null;
+  lastFetchStats: {
+    successful_keywords: number;
+    failed_keywords: number;
+    successful_fetches: number;
+    log: string;
+  } | null;
   loading: boolean;
   automationEnabled: boolean;
   updateAutomationEnabled: (enabled: boolean) => Promise<void>;
@@ -17,6 +23,7 @@ export function useUserFetchStatus(): UserFetchStatus {
     minutesUntilNextFetch: 0,
     frequency: 15,
     lastFetchTime: null,
+    lastFetchStats: null,
     loading: true,
     automationEnabled: false,
     updateAutomationEnabled: async () => {},
@@ -52,10 +59,10 @@ export function useUserFetchStatus(): UserFetchStatus {
           _user_id: user.id 
         });
 
-        // Get last fetch time (manual or automated)
+        // Get last fetch time and statistics (manual or automated)
         const { data: lastFetch } = await supabase
           .from('user_fetch_history')
-          .select('started_at, fetch_type')
+          .select('started_at, fetch_type, successful_keywords, failed_keywords, successful_fetches, log')
           .eq('user_id', user.id)
           .order('started_at', { ascending: false })
           .limit(1)
@@ -86,6 +93,12 @@ export function useUserFetchStatus(): UserFetchStatus {
           minutesUntilNextFetch: minutesUntil || 0,
           frequency,
           lastFetchTime: lastFetch?.started_at ? new Date(lastFetch.started_at) : null,
+          lastFetchStats: lastFetch ? {
+            successful_keywords: lastFetch.successful_keywords || 0,
+            failed_keywords: lastFetch.failed_keywords || 0,
+            successful_fetches: lastFetch.successful_fetches || 0,
+            log: lastFetch.log || ''
+          } : null,
           loading: false,
           automationEnabled,
           updateAutomationEnabled,
