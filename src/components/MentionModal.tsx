@@ -19,6 +19,7 @@ interface Mention {
   published_at: string;
   content_snippet: string;
   full_text: string | null;
+  cleaned_text: string | null; // Clean, readable version of the content
   sentiment: number | null; // -1 = unknown, 0 = strongly negative, 100 = strongly positive
   topics: string[] | null;
   flagged: boolean;
@@ -351,12 +352,12 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
           <div>
             <Label className="text-sm font-medium">Content</Label>
             <div className="mt-2 p-4 bg-muted rounded-lg">
-              {isResolving && !(resolvedText || mention.full_text) && (
+              {isResolving && !(resolvedText || mention.cleaned_text || mention.full_text) && (
                 <p className="text-sm text-muted-foreground">Fetching article body…</p>
               )}
-              {(resolvedText || mention.full_text) ? (
+              {(resolvedText || mention.cleaned_text || mention.full_text) ? (
                 <p className="text-sm leading-relaxed whitespace-pre-line">
-                  {cleanHtmlContent(resolvedText || mention.full_text || '')}
+                  {cleanHtmlContent(resolvedText || mention.cleaned_text || mention.full_text || '')}
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground">No article body available for this mention.</p>

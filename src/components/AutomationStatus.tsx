@@ -7,43 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserFetchStatus } from "@/hooks/useUserFetchStatus";
 
-interface SourceStats {
-  google_alerts: number;
-  youtube: number;
-  reddit: number;
-  instagram: number;
-  twitter: number;
-}
-
-function parseSourceStats(log: string): SourceStats {
-  const stats: SourceStats = {
-    google_alerts: 0,
-    youtube: 0,
-    reddit: 0,
-    instagram: 0,
-    twitter: 0
-  };
-
-  if (!log) return stats;
-
-  // Parse patterns like "20 Google Alerts", "5 YouTube", etc.
-  const googleMatch = log.match(/(\d+)\s+Google\s+Alerts?/i);
-  if (googleMatch) stats.google_alerts = parseInt(googleMatch[1]);
-
-  const youtubeMatch = log.match(/(\d+)\s+YouTube/i);
-  if (youtubeMatch) stats.youtube = parseInt(youtubeMatch[1]);
-
-  const redditMatch = log.match(/(\d+)\s+Reddit/i);
-  if (redditMatch) stats.reddit = parseInt(redditMatch[1]);
-
-  const instagramMatch = log.match(/(\d+)\s+Instagram/i);
-  if (instagramMatch) stats.instagram = parseInt(instagramMatch[1]);
-
-  const twitterMatch = log.match(/(\d+)\s+Twitter/i);
-  if (twitterMatch) stats.twitter = parseInt(twitterMatch[1]);
-
-  return stats;
-}
 
 interface AutomationStatusProps {
   className?: string;
@@ -201,44 +164,6 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
                 </div>
               )}
               
-              {/* Source breakdown */}
-              {lastFetchStats.log && (() => {
-                const sourceStats = parseSourceStats(lastFetchStats.log);
-                const hasSources = Object.values(sourceStats).some(count => count > 0);
-                
-                if (hasSources) {
-                  return (
-                    <div className="flex flex-wrap gap-1">
-                      {sourceStats.google_alerts > 0 && (
-                        <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
-                          📰 {sourceStats.google_alerts}
-                        </span>
-                      )}
-                      {sourceStats.youtube > 0 && (
-                        <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">
-                          🎥 {sourceStats.youtube}
-                        </span>
-                      )}
-                      {sourceStats.reddit > 0 && (
-                        <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">
-                          🔴 {sourceStats.reddit}
-                        </span>
-                      )}
-                      {sourceStats.instagram > 0 && (
-                        <span className="text-xs bg-pink-100 text-pink-700 px-1.5 py-0.5 rounded">
-                          📸 {sourceStats.instagram}
-                        </span>
-                      )}
-                      {sourceStats.twitter > 0 && (
-                        <span className="text-xs bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded">
-                          🐦 {sourceStats.twitter}
-                        </span>
-                      )}
-                    </div>
-                  );
-                }
-                return null;
-              })()}
               
               {/* Error indicator */}
               {lastFetchStats.log && lastFetchStats.log.includes('Exception') && (

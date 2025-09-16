@@ -16,6 +16,7 @@ interface Mention {
   published_at: string;
   content_snippet: string;
   full_text: string | null;
+  cleaned_text: string | null; // Clean, readable version of the content
   sentiment: number | null; // -1 = unknown, 0 = strongly negative, 100 = strongly positive
   topics: string[] | null;
   flagged: boolean;
@@ -269,7 +270,7 @@ export function MentionsTable({
               </div>
               
               <p className="text-sm text-foreground mb-3 line-clamp-2">
-                {cleanAndTruncate(mention.content_snippet, 150)}
+                {cleanAndTruncate(mention.cleaned_text || mention.content_snippet, 150)}
               </p>
               
               <div className="flex items-center justify-between mb-3">
@@ -363,7 +364,7 @@ export function MentionsTable({
                     </div>
                   </TableCell>
                   <TableCell className="max-w-md">
-                    <p className="truncate">{cleanAndTruncate(mention.content_snippet, 100)}</p>
+                    <p className="truncate">{cleanAndTruncate(mention.cleaned_text || mention.content_snippet, 100)}</p>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={`text-xs ${getSentimentColor(mention.sentiment)}`}>

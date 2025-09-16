@@ -7,6 +7,7 @@ export interface Mention {
   published_at: string;
   content_snippet: string;
   full_text: string | null;
+  cleaned_text: string | null; // Clean, readable version of the content
   sentiment: number | null; // -1 = unknown, 0 = strongly negative, 100 = strongly positive
   topics: string[];
   flagged: boolean;
