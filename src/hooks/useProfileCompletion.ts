@@ -7,6 +7,7 @@ interface ProfileData {
   pr_team_email: string | null;
   legal_team_email: string | null;
   notification_preferences?: {
+    email?: boolean;
     sms?: boolean;
     whatsapp?: boolean;
   };

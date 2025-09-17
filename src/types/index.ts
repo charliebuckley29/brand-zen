@@ -52,6 +52,7 @@ export interface ProfileData {
   legal_team_email: string | null;
   timezone?: string;
   notification_preferences?: {
+    email?: boolean;
     sms?: boolean;
     whatsapp?: boolean;
   };

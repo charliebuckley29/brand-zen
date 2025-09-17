@@ -90,20 +90,25 @@ export function Dashboard() {
             if (enabledMentions.includes(newMention.source_type as any)) {
               setMentions(prev => [newMention, ...prev.slice(0, pageSize - 1)]);
               
-              // Show toast notification for new mention and store in database
-              showToastWithStorage(
-                toast,
-                "New mention found!",
-                `From ${newMention.source_name}: ${newMention.content_snippet.slice(0, 100)}...`,
-                'default',
-                'mention',
-                {
-                  mention_id: newMention.id,
-                  source_name: newMention.source_name,
-                  source_url: newMention.source_url,
-                  sentiment: newMention.sentiment
-                }
-              );
+              // Only show toast notification for negative sentiment mentions (< 50)
+              // This matches the external notification logic for consistency
+              if (newMention.sentiment !== null && newMention.sentiment < 50) {
+                showToastWithStorage(
+                  toast,
+                  "🚨 Negative mention detected!",
+                  `From ${newMention.source_name}: ${newMention.content_snippet.slice(0, 100)}...`,
+                  'destructive',
+                  'mention',
+                  {
+                    mention_id: newMention.id,
+                    source_name: newMention.source_name,
+                    source_url: newMention.source_url,
+                    sentiment: newMention.sentiment
+                  }
+                );
+              }
+              // Positive/neutral mentions (≥ 50) and pending mentions (null) are silently added to the dashboard
+              // No toast notifications for these - users can check the dashboard when they want to
             }
           }
         )
