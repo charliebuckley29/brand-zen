@@ -66,7 +66,7 @@ export default function AdminApiLimitsPanel() {
   const [usageData, setUsageData] = useState<ApiUsageData | null>(null);
   const [limitsData, setLimitsData] = useState<ApiLimitsData | null>(null);
   const [timeframe, setTimeframe] = useState('7d');
-  const [source, setSource] = useState<string>('');
+  const [source, setSource] = useState<string>('all');
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
@@ -80,7 +80,7 @@ export default function AdminApiLimitsPanel() {
     setLoading(true);
     try {
       const [usageResponse, limitsResponse] = await Promise.all([
-        fetch(`/api/admin/api-usage?timeframe=${timeframe}${source ? `&source=${source}` : ''}`),
+        fetch(`/api/admin/api-usage?timeframe=${timeframe}${source && source !== 'all' ? `&source=${source}` : ''}`),
         fetch('/api/admin/api-limits')
       ]);
 
@@ -200,7 +200,7 @@ export default function AdminApiLimitsPanel() {
               <SelectValue placeholder="All Sources" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Sources</SelectItem>
+              <SelectItem value="all">All Sources</SelectItem>
               <SelectItem value="youtube">YouTube</SelectItem>
               <SelectItem value="reddit">Reddit</SelectItem>
               <SelectItem value="openai">OpenAI</SelectItem>
