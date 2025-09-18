@@ -188,6 +188,22 @@ export default function AdminApiLimitsPanel() {
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
+            <Button 
+              onClick={async () => {
+                try {
+                  await fetch('https://mentions-backend-af0c3ljbx-brand-protected.vercel.app/api/admin/test-api-usage');
+                  await fetchData(); // Refresh the data
+                } catch (error) {
+                  console.error('Failed to generate test data:', error);
+                }
+              }} 
+              disabled={loading} 
+              size="sm" 
+              variant="outline"
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              Generate Test Data
+            </Button>
           </div>
         </div>
 
