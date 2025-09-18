@@ -81,8 +81,8 @@ export default function AdminApiLimitsPanel() {
     console.log('Fetching API data...');
     try {
       const [usageResponse, limitsResponse] = await Promise.all([
-        fetch(`https://mentions-backend-af0c3ljbx-brand-protected.vercel.app/api/admin/api-usage?timeframe=${timeframe}${source && source !== 'all' ? `&source=${source}` : ''}`),
-        fetch('https://mentions-backend-af0c3ljbx-brand-protected.vercel.app/api/admin/api-limits')
+        fetch(`https://mentions-backend.vercel.app/api/admin/api-usage?timeframe=${timeframe}${source && source !== 'all' ? `&source=${source}` : ''}`),
+        fetch('https://mentions-backend.vercel.app/api/admin/api-limits')
       ]);
 
       console.log('Usage response status:', usageResponse.status);
@@ -191,7 +191,7 @@ export default function AdminApiLimitsPanel() {
             <Button 
               onClick={async () => {
                 try {
-                  await fetch('https://mentions-backend-af0c3ljbx-brand-protected.vercel.app/api/admin/test-api-usage');
+                  await fetch('https://mentions-backend.vercel.app/api/admin/test-api-usage');
                   await fetchData(); // Refresh the data
                 } catch (error) {
                   console.error('Failed to generate test data:', error);
