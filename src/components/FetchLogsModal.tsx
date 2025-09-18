@@ -57,6 +57,28 @@ interface FetchLog {
   failed_keywords: number;
   successful_fetches: number;
   log: string;
+  results_summary?: {
+    totalFetched: number;
+    totalInserted: number;
+    totalDuplicates: number;
+    sourceBreakdown: {
+      google_alerts: number;
+      youtube: number;
+      reddit: number;
+      instagram: number;
+      twitter: number;
+    };
+    sourceAttempts: {
+      [key: string]: {
+        attempted: boolean;
+        succeeded: boolean;
+        failed: boolean;
+        skipped: boolean;
+        reason: string;
+      };
+    };
+    timestamp: string;
+  };
   created_at: string;
 }
 
@@ -307,90 +329,149 @@ export function FetchLogsModal() {
                       </div>
                     </div>
                     
+                    {/* Enhanced Results Summary */}
                     <div className="mt-4 p-3 bg-muted/50 rounded-md">
-                      <div className="font-medium text-sm mb-2">Results Summary</div>
-                      <div className="space-y-2">
-                        {/* Keywords Summary */}
-                        {totalKeywords > 0 && (
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                              <span>{log.successful_keywords} keywords processed successfully</span>
-                            </div>
-                            {log.failed_keywords > 0 && (
+                      <div className="font-medium text-sm mb-3">Results Summary</div>
+                      <div className="space-y-3">
+                        {/* Enhanced Summary with new data structure */}
+                        {log.results_summary ? (
+                          <>
+                            {/* Overall Statistics */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                               <div className="flex items-center gap-2">
-                                <XCircle className="h-4 w-4 text-red-500" />
-                                <span>{log.failed_keywords} keywords failed</span>
+                                <FileText className="h-4 w-4 text-blue-500" />
+                                <div>
+                                  <div className="font-medium">{log.results_summary.totalFetched}</div>
+                                  <div className="text-xs text-muted-foreground">Total Fetched</div>
+                                </div>
                               </div>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* Mentions Summary */}
-                        {log.successful_fetches > 0 && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <FileText className="h-4 w-4 text-blue-500" />
-                            <span className="font-medium">{log.successful_fetches} mentions fetched</span>
-                          </div>
-                        )}
-                        
-                        {/* Source Breakdown */}
-                        {log.log && (() => {
-                          const sourceStats = parseSourceStats(log.log);
-                          const hasSources = Object.values(sourceStats).some(count => count > 0);
-                          
-                          if (hasSources) {
-                            return (
-                              <div className="mt-2 pt-2 border-t">
-                                <div className="text-xs font-medium text-muted-foreground mb-1">Source Breakdown:</div>
+                              <div className="flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <div>
+                                  <div className="font-medium">{log.results_summary.totalInserted}</div>
+                                  <div className="text-xs text-muted-foreground">New Mentions</div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <XCircle className="h-4 w-4 text-orange-500" />
+                                <div>
+                                  <div className="font-medium">{log.results_summary.totalDuplicates}</div>
+                                  <div className="text-xs text-muted-foreground">Duplicates</div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Activity className="h-4 w-4 text-purple-500" />
+                                <div>
+                                  <div className="font-medium">{log.successful_keywords}</div>
+                                  <div className="text-xs text-muted-foreground">Keywords</div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Source Breakdown */}
+                            {log.results_summary.sourceBreakdown && (
+                              <div className="pt-3 border-t">
+                                <div className="text-xs font-medium text-muted-foreground mb-2">Source Breakdown:</div>
                                 <div className="flex flex-wrap gap-2 text-xs">
-                                  {sourceStats.google_alerts > 0 && (
+                                  {log.results_summary.sourceBreakdown.google_alerts > 0 && (
                                     <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                      📰 {sourceStats.google_alerts} Google Alerts
+                                      📰 {log.results_summary.sourceBreakdown.google_alerts} Google Alerts
                                     </span>
                                   )}
-                                  {sourceStats.youtube > 0 && (
+                                  {log.results_summary.sourceBreakdown.youtube > 0 && (
                                     <span className="bg-red-100 text-red-800 px-2 py-1 rounded">
-                                      🎥 {sourceStats.youtube} YouTube
+                                      🎥 {log.results_summary.sourceBreakdown.youtube} YouTube
                                     </span>
                                   )}
-                                  {sourceStats.reddit > 0 && (
+                                  {log.results_summary.sourceBreakdown.reddit > 0 && (
                                     <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                                      🔴 {sourceStats.reddit} Reddit
+                                      🔴 {log.results_summary.sourceBreakdown.reddit} Reddit
                                     </span>
                                   )}
-                                  {sourceStats.instagram > 0 && (
+                                  {log.results_summary.sourceBreakdown.instagram > 0 && (
                                     <span className="bg-pink-100 text-pink-800 px-2 py-1 rounded">
-                                      📸 {sourceStats.instagram} Instagram
+                                      📸 {log.results_summary.sourceBreakdown.instagram} Instagram
                                     </span>
                                   )}
-                                  {sourceStats.twitter > 0 && (
+                                  {log.results_summary.sourceBreakdown.twitter > 0 && (
                                     <span className="bg-sky-100 text-sky-800 px-2 py-1 rounded">
-                                      🐦 {sourceStats.twitter} Twitter
+                                      🐦 {log.results_summary.sourceBreakdown.twitter} Twitter
                                     </span>
                                   )}
                                 </div>
                               </div>
-                            );
-                          }
-                          return null;
-                        })()}
-                        
-                        {/* Error Details */}
-                        {log.log && log.log.includes('Exception') && (
-                          <div className="mt-2 pt-2 border-t">
-                            <details className="text-xs">
-                              <summary className="cursor-pointer text-red-600 hover:text-red-800 font-medium">
-                                View Error Details
-                              </summary>
-                              <pre className="mt-1 p-2 bg-red-50 border border-red-200 rounded text-red-800 whitespace-pre-wrap">
-                                {log.log}
-                              </pre>
-                            </details>
-                          </div>
+                            )}
+
+                            {/* Source Attempts Status */}
+                            {log.results_summary.sourceAttempts && (
+                              <div className="pt-3 border-t">
+                                <div className="text-xs font-medium text-muted-foreground mb-2">Source Status:</div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                                  {Object.entries(log.results_summary.sourceAttempts).map(([source, attempt]) => (
+                                    <div key={source} className="flex items-center gap-2">
+                                      {attempt.succeeded ? (
+                                        <CheckCircle className="h-3 w-3 text-green-500" />
+                                      ) : attempt.failed ? (
+                                        <XCircle className="h-3 w-3 text-red-500" />
+                                      ) : (
+                                        <Clock className="h-3 w-3 text-gray-400" />
+                                      )}
+                                      <span className="capitalize">{source.replace('_', ' ')}</span>
+                                      {attempt.reason && attempt.reason !== '' && (
+                                        <span className="text-muted-foreground">({attempt.reason})</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          /* Fallback to old format */
+                          <>
+                            {/* Keywords Summary */}
+                            {totalKeywords > 0 && (
+                              <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                  <span>{log.successful_keywords} keywords processed successfully</span>
+                                </div>
+                                {log.failed_keywords > 0 && (
+                                  <div className="flex items-center gap-2">
+                                    <XCircle className="h-4 w-4 text-red-500" />
+                                    <span>{log.failed_keywords} keywords failed</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Mentions Summary */}
+                            {log.successful_fetches > 0 && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <FileText className="h-4 w-4 text-blue-500" />
+                                <span className="font-medium">{log.successful_fetches} mentions fetched</span>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
+
+                    {/* Full Logs Section */}
+                    {log.log && log.log.trim() !== '' && (
+                      <div className="mt-4 p-3 bg-muted/30 rounded-md">
+                        <details className="text-sm">
+                          <summary className="cursor-pointer font-medium text-muted-foreground hover:text-foreground mb-2">
+                            📋 Full Logs
+                          </summary>
+                          <div className="mt-2 pt-2 border-t">
+                            <pre className="text-xs bg-background p-3 rounded border whitespace-pre-wrap overflow-x-auto">
+                              {log.log}
+                            </pre>
+                          </div>
+                        </details>
+                      </div>
+                    )}
                   </CollapsibleContent>
                 </Collapsible>
               );
