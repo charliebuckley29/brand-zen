@@ -80,8 +80,8 @@ export default function AdminApiLimitsPanel() {
     setLoading(true);
     try {
       const [usageResponse, limitsResponse] = await Promise.all([
-        fetch(`/api/admin/api-usage?timeframe=${timeframe}${source && source !== 'all' ? `&source=${source}` : ''}`),
-        fetch('/api/admin/api-limits')
+        fetch(`https://mentions-backend-d9dh9iblw-brand-protected.vercel.app/api/admin/api-usage?timeframe=${timeframe}${source && source !== 'all' ? `&source=${source}` : ''}`),
+        fetch('https://mentions-backend-d9dh9iblw-brand-protected.vercel.app/api/admin/api-limits')
       ]);
 
       if (usageResponse.ok) {
