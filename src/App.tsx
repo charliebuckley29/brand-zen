@@ -35,6 +35,7 @@ import AdminModeratorsPanel from "./pages/AdminModeratorsPanel";
 import AdminBugReportsPage from "./pages/AdminBugReportsPage";
 import AdminTwilioPanel from "./pages/AdminTwilioPanel";
 import AdminMonitoringPanel from "./pages/AdminMonitoringPanel";
+import AdminApiLimitsPanel from "./pages/AdminApiLimitsPanel";
 import NotFound from "./pages/NotFound";
 
 /**
@@ -115,6 +116,7 @@ const App = () => {
                   <Route path="/admin/bug-reports" element={<AdminBugReportsPage />} />
                   <Route path="/admin/twilio" element={<AdminTwilioPanel />} />
                   <Route path="/admin/monitoring" element={<AdminMonitoringPanel />} />
+                  <Route path="/admin/api-limits" element={<AdminApiLimitsPanel />} />
                   
                   {/* Catch-all route for 404 pages */}
                   <Route path="*" element={<NotFound />} />
