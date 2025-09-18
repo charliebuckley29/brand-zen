@@ -78,20 +78,30 @@ export default function AdminApiLimitsPanel() {
 
   const fetchData = async () => {
     setLoading(true);
+    console.log('Fetching API data...');
     try {
       const [usageResponse, limitsResponse] = await Promise.all([
         fetch(`https://mentions-backend-d9dh9iblw-brand-protected.vercel.app/api/admin/api-usage?timeframe=${timeframe}${source && source !== 'all' ? `&source=${source}` : ''}`),
         fetch('https://mentions-backend-d9dh9iblw-brand-protected.vercel.app/api/admin/api-limits')
       ]);
 
+      console.log('Usage response status:', usageResponse.status);
+      console.log('Limits response status:', limitsResponse.status);
+
       if (usageResponse.ok) {
         const usageResult = await usageResponse.json();
+        console.log('Usage data received:', usageResult);
         setUsageData(usageResult.data);
+      } else {
+        console.error('Usage API failed:', usageResponse.status, await usageResponse.text());
       }
 
       if (limitsResponse.ok) {
         const limitsResult = await limitsResponse.json();
+        console.log('Limits data received:', limitsResult);
         setLimitsData(limitsResult);
+      } else {
+        console.error('Limits API failed:', limitsResponse.status, await limitsResponse.text());
       }
 
       setLastUpdated(new Date());
