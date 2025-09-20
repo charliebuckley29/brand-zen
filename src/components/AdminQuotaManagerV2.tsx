@@ -277,13 +277,13 @@ export function AdminQuotaManagerV2() {
         </CardHeader>
         <CardContent className="space-y-4">
           {defaultQuotas.map((quota) => (
-            <div key={quota.source_type} className="flex items-center justify-between p-4 border rounded-lg">
+            <div key={quota.source_type} className="flex items-center justify-between p-4 border rounded-lg bg-card text-card-foreground shadow-sm">
               <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{sourceDisplayNames[quota.source_type]}</span>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-medium text-foreground">{sourceDisplayNames[quota.source_type]}</span>
                   <Badge variant="outline">Default</Badge>
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-muted-foreground">
                   Current limit: {quota.monthly_limit.toLocaleString()} mentions/month
                 </div>
               </div>
@@ -361,16 +361,16 @@ export function AdminQuotaManagerV2() {
                 </h4>
                 <div className="space-y-2">
                   {exceptions.map((exception) => (
-                    <div key={`${exception.user_id}-${exception.source_type}`} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                    <div key={`${exception.user_id}-${exception.source_type}`} className="flex items-center justify-between p-4 border rounded-lg bg-card text-card-foreground shadow-sm">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{exception.full_name}</span>
-                          <Badge variant="outline">{exception.user_type}</Badge>
-                          <span className="text-sm text-gray-500">{exception.email}</span>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-foreground">{exception.full_name}</span>
+                          <Badge variant="secondary">{exception.user_type}</Badge>
+                          <span className="text-sm text-muted-foreground">{exception.email}</span>
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           Exception: {exception.exception_limit?.toLocaleString()} mentions/month
-                          <span className="ml-2 text-gray-400">
+                          <span className="ml-2 text-muted-foreground/70">
                             (Default: {exception.default_limit.toLocaleString()})
                           </span>
                         </div>
@@ -396,7 +396,7 @@ export function AdminQuotaManagerV2() {
           })}
 
           {effectiveQuotas.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No user exceptions found.</p>
               <p className="text-sm">All users are using the default quotas.</p>
