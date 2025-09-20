@@ -21,6 +21,8 @@ import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PhoneInputWithCountry } from "@/components/ui/phone-input-with-country";
 import { isValidPhoneNumber } from "react-phone-number-input";
+import { QuotaDisplay } from "@/components/QuotaDisplay";
+import { useQuotaUsage } from "@/hooks/useQuotaUsage";
 interface SettingsPageProps {
   onSignOut: () => void;
 }
@@ -84,6 +86,9 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const { loading: prefsLoading, prefs, setPref, setAllForSource } = useSourcePreferences();
   const [rssEnabled, setRssEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('rss_news_ingestion') !== 'false' : true));
   const [googleAlertsEnabled, setGoogleAlertsEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('google_alerts_enabled') !== 'false' : true));
+  
+  // Quota management
+  const { quotaData, loading: quotaLoading, error: quotaError, refreshQuotaData, getSourcesNearLimit, getSourcesExceeded } = useQuotaUsage();
 
   // Check if user can change brand name
   const canChangeBrandName = globalSettingsLoading 
@@ -1013,6 +1018,84 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Quota Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              View Fetching Rate Limitations
+            </CardTitle>
+            <CardDescription>
+              Monitor your monthly usage limits for each data source
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {quotaLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-sm text-gray-500">Loading quota data...</div>
+              </div>
+            ) : quotaError ? (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error Loading Quota Data</AlertTitle>
+                <AlertDescription>
+                  {quotaError}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="ml-2"
+                    onClick={refreshQuotaData}
+                  >
+                    Retry
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            ) : quotaData.length > 0 ? (
+              <div className="space-y-4">
+                {/* Overall Status */}
+                {getSourcesExceeded().length > 0 && (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Quota Exceeded</AlertTitle>
+                    <AlertDescription>
+                      You've reached your monthly limit for: {getSourcesExceeded().map(s => s.source_type).join(', ')}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                {getSourcesNearLimit().length > 0 && (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Approaching Limits</AlertTitle>
+                    <AlertDescription>
+                      You're near your monthly limit for: {getSourcesNearLimit().map(s => s.source_type).join(', ')}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Quota Display */}
+                <QuotaDisplay quotaData={quotaData} showDetails={true} />
+                
+                {/* Refresh Button */}
+                <div className="flex justify-end">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={refreshQuotaData}
+                    disabled={quotaLoading}
+                  >
+                    Refresh Data
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-sm text-gray-500">No quota data available</div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

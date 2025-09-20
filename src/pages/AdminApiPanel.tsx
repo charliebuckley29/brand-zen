@@ -9,9 +9,10 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { Eye, EyeOff, Save, ArrowLeft, CheckCircle, XCircle, AlertCircle, ChevronDown, Info, Zap, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, Save, ArrowLeft, CheckCircle, XCircle, AlertCircle, ChevronDown, Info, Zap, AlertTriangle, Settings, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SOURCES, SOURCE_CATEGORIES } from "@/config/sources";
+import { AdminQuotaManager } from "@/components/AdminQuotaManager";
 
 type ApiKey = {
   id: string;
@@ -28,6 +29,7 @@ export default function AdminApiPanel() {
   const [saving, setSaving] = useState<string | null>(null);
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
   const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<'api-keys' | 'quota-management'>('api-keys');
 
   useEffect(() => {
     if (!roleLoading && isAdmin) {
@@ -200,7 +202,41 @@ export default function AdminApiPanel() {
           </div>
         </div>
 
-        <div className="grid gap-6">
+        {/* Tab Navigation */}
+        <div className="border-b">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('api-keys')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'api-keys'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                API Keys
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('quota-management')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'quota-management'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Quota Management
+              </div>
+            </button>
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'api-keys' && (
+          <div className="grid gap-6">
           {Object.values(SOURCES).map((source) => {
             const dbSourceName = getDbSourceName(source.id);
             const apiKey = apiKeys.find(key => key.source_name === dbSourceName);
@@ -417,6 +453,11 @@ export default function AdminApiPanel() {
             );
           })}
         </div>
+        )}
+
+        {activeTab === 'quota-management' && (
+          <AdminQuotaManager />
+        )}
       </div>
     </div>
   );
