@@ -18,7 +18,7 @@ export function useQuotaUsage() {
         return;
       }
 
-      const response = await fetch(`/api/user/quota-usage?user_id=${user.id}`);
+      const response = await fetch(`https://mentions-backend.vercel.app/api/user/quota-usage?user_id=${user.id}`);
       const result = await response.json();
 
       if (!response.ok) {

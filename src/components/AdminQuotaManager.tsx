@@ -96,7 +96,7 @@ export function AdminQuotaManager() {
   const fetchQuotaData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/quota-limits');
+      const response = await fetch('https://mentions-backend.vercel.app/api/admin/quota-limits');
       const result = await response.json();
 
       if (result.success) {
@@ -114,7 +114,7 @@ export function AdminQuotaManager() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users');
+      const response = await fetch('https://mentions-backend.vercel.app/api/admin/users');
       const result = await response.json();
 
       if (result.success) {
@@ -127,7 +127,7 @@ export function AdminQuotaManager() {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await fetch('/api/admin/quota-analytics?days=30');
+      const response = await fetch('https://mentions-backend.vercel.app/api/admin/quota-analytics?days=30');
       const result = await response.json();
 
       if (result.success) {
@@ -146,7 +146,7 @@ export function AdminQuotaManager() {
 
     try {
       setSaving('create');
-      const response = await fetch('/api/admin/quota-limits', {
+      const response = await fetch('https://mentions-backend.vercel.app/api/admin/quota-limits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -179,7 +179,7 @@ export function AdminQuotaManager() {
 
     try {
       setSaving(editingLimit.id);
-      const response = await fetch('/api/admin/quota-limits', {
+      const response = await fetch('https://mentions-backend.vercel.app/api/admin/quota-limits', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -212,7 +212,7 @@ export function AdminQuotaManager() {
 
     try {
       setSaving(id);
-      const response = await fetch(`/api/admin/quota-limits?id=${id}`, {
+      const response = await fetch(`https://mentions-backend.vercel.app/api/admin/quota-limits?id=${id}`, {
         method: 'DELETE'
       });
 
