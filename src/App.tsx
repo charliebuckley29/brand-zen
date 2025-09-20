@@ -30,7 +30,7 @@ import { logger } from "@/lib/logger";
 import Index from "./pages/Index";
 import Help from "./pages/Help";
 import AdminDashboard from "./pages/AdminDashboard";
-import AdminApiPanel from "./pages/AdminApiPanel";
+import AdminUserQuotaManagement from "./pages/AdminUserQuotaManagement";
 import AdminModeratorsPanel from "./pages/AdminModeratorsPanel";
 import AdminBugReportsPage from "./pages/AdminBugReportsPage";
 import AdminTwilioPanel from "./pages/AdminTwilioPanel";
@@ -112,7 +112,7 @@ const App = () => {
                   
                   {/* Admin routes - protected by role-based access */}
                   <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/admin/api" element={<AdminApiPanel />} />
+                  <Route path="/admin/api" element={<AdminUserQuotaManagement />} />
                   <Route path="/admin/moderators" element={<AdminModeratorsPanel />} />
                   <Route path="/admin/bug-reports" element={<AdminBugReportsPage />} />
                   <Route path="/admin/twilio" element={<AdminTwilioPanel />} />

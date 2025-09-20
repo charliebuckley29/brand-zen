@@ -65,9 +65,9 @@ export default function AdminDashboard() {
                     <Key className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">API Management</CardTitle>
+                    <CardTitle className="text-lg">User Quota Management</CardTitle>
                     <CardDescription>
-                      Configure API keys for external data sources
+                      Manage monthly quota limits and user exceptions
                     </CardDescription>
                   </div>
                 </div>
