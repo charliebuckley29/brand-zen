@@ -74,7 +74,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Manage API keys for Google, Reddit, YouTube, Twitter, and other data sources used by the system.
+                  Set default monthly limits for each data source and create individual user exceptions as needed.
                 </p>
               </CardContent>
             </Card>
