@@ -388,36 +388,168 @@ export default function AdminMonitoringPanel() {
   };
 
   const openFunctionDetails = (func: EdgeFunctionLog) => {
-          errors_today: 2,
-          avg_duration: 234,
-          last_call: '2025-09-12T18:00:28.838Z',
-          description: 'Automated task scheduler for all frequency tiers',
-          status: 'active',
-          max_concurrent: 1,
-          timeout_seconds: 60,
-          recent_logs: [
-            {
-              timestamp: '2025-09-12T18:00:00.774Z',
-              message: 'No users are due for fetching at this time',
-              level: 'info'
-            },
-            {
-              timestamp: '2025-09-12T17:55:08.410Z',
-              message: '✅ Scheduler completed: 0 users fetched, 10 failed across 1 batches',
-              level: 'info'
-            }
-          ],
-          recent_errors: [
-            {
-              timestamp: '2025-09-12T17:55:08.352Z',
-              message: '💥 Batch batch_1757699703307_1 failed: TypeError: Cannot read properties of null (reading \'id\')',
-              level: 'error'
-            }
-          ]
-        },
-        {
-          function_name: 'low-frequency-scheduler',
-          calls_today: 96,
+    setSelectedFunction(func);
+    setShowFunctionDetails(true);
+  };
+
+  const closeFunctionDetails = () => {
+    setShowFunctionDetails(false);
+    setSelectedFunction(null);
+  };
+
+  const searchUserByEmail = async () => {
+    if (!searchEmail.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .ilike('full_name', `%${searchEmail}%`)
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setSelectedUser(data.user_id);
+        toast.success(`Found user: ${data.full_name}`);
+        fetchUserFetchLogs();
+      }
+    } catch (error) {
+      toast.error('User not found');
+    }
+  };
+
+  const getStatusColor = (log: UserFetchLog) => {
+    if (!log.completed_at) return 'bg-yellow-500';
+    if (log.failed_keywords > 0) return 'bg-orange-500';
+    return 'bg-green-500';
+  };
+
+  const getDuration = (startedAt: string, completedAt: string | null) => {
+    if (!completedAt) return 'Running...';
+    const start = new Date(startedAt);
+    const end = new Date(completedAt);
+    const diff = Math.round((end.getTime() - start.getTime()) / 1000);
+    return `${diff}s`;
+  };
+
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">Access Denied</CardTitle>
+            <CardDescription className="text-center">
+              You need admin privileges to access this page.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Link to="/admin">
+              <Button variant="outline" className="w-full">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Admin Dashboard
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">System Monitoring</h1>
+          <p className="text-muted-foreground">
+            Monitor system performance, API usage, and user activity
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1d">Last 24h</SelectItem>
+              <SelectItem value="7d">Last 7 days</SelectItem>
+              <SelectItem value="30d">Last 30 days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="functions">Edge Functions</TabsTrigger>
+          <TabsTrigger value="users">User Activity</TabsTrigger>
+          <TabsTrigger value="resources">Resource Usage</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Mentions</CardTitle>
+                <Database className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics.totalMentions.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">
+                  +{metrics.weeklyGrowth.toFixed(1)}% from last week
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics.totalUsers.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">
+                  {metrics.activeUsers.toLocaleString()} active this week
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">API Calls</CardTitle>
+                <Zap className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics.totalApiCalls.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">
+                  {metrics.edgeFunctionCalls.toLocaleString()} edge function calls
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Error Rate</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics.errorRate.toFixed(1)}%</div>
+                <p className="text-xs text-muted-foreground">
+                  {metrics.totalErrors.toLocaleString()} total errors
+                </p>
+              </CardContent>
+            </Card>
+          </div>
           errors_today: 0,
           avg_duration: 312,
           last_call: '2025-09-12T17:45:22.456Z',
