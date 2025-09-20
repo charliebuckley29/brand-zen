@@ -19,8 +19,8 @@ interface SourceStats {
   google_alerts: number;
   youtube: number;
   reddit: number;
-  instagram: number;
   x: number;
+  rss_news: number;
 }
 
 function parseSourceStats(log: string): SourceStats {
@@ -28,8 +28,8 @@ function parseSourceStats(log: string): SourceStats {
     google_alerts: 0,
     youtube: 0,
     reddit: 0,
-    instagram: 0,
-    x: 0
+    x: 0,
+    rss_news: 0
   };
 
   if (!log) return stats;
@@ -44,11 +44,11 @@ function parseSourceStats(log: string): SourceStats {
   const redditMatch = log.match(/(\d+)\s+Reddit/i);
   if (redditMatch) stats.reddit = parseInt(redditMatch[1]);
 
-  const instagramMatch = log.match(/(\d+)\s+Instagram/i);
-  if (instagramMatch) stats.instagram = parseInt(instagramMatch[1]);
-
   const xMatch = log.match(/(\d+)\s+X/i);
   if (xMatch) stats.x = parseInt(xMatch[1]);
+
+  const rssMatch = log.match(/(\d+)\s+RSS/i);
+  if (rssMatch) stats.rss_news = parseInt(rssMatch[1]);
 
   return stats;
 }
@@ -124,30 +124,6 @@ export default function AdminMonitoringPanel() {
 
   const API_LIMITS: ApiLimit[] = [
     {
-      name: 'Google CSE',
-      free: 100,
-      paid: 10000,
-      unit: 'queries/day',
-      description: 'Google Custom Search Engine API for web search',
-      warningThreshold: 0.8
-    },
-    {
-      name: 'Google Alerts',
-      free: 1000,
-      paid: 10000,
-      unit: 'RSS fetches/day',
-      description: 'Google Alerts RSS feed processing',
-      warningThreshold: 0.9
-    },
-    {
-      name: 'GNews',
-      free: 100,
-      paid: 1000,
-      unit: 'articles/day',
-      description: 'GNews API for news article fetching',
-      warningThreshold: 0.8
-    },
-    {
       name: 'YouTube Data API',
       free: 10000,
       paid: 1000000,
@@ -164,11 +140,19 @@ export default function AdminMonitoringPanel() {
       warningThreshold: 0.8
     },
     {
-      name: 'Resend',
-      free: 100,
+      name: 'X (Twitter) API',
+      free: 10000,
       paid: 50000,
-      unit: 'emails/month',
-      description: 'Email delivery service',
+      unit: 'tweets/month',
+      description: 'X API v2 for tweet data',
+      warningThreshold: 0.8
+    },
+    {
+      name: 'Google Alerts',
+      free: 1000,
+      paid: 10000,
+      unit: 'RSS fetches/day',
+      description: 'Google Alerts RSS feed processing',
       warningThreshold: 0.9
     }
   ];
@@ -318,64 +302,92 @@ export default function AdminMonitoringPanel() {
 
   const fetchEdgeFunctionMetrics = async () => {
     try {
-      // Get actual edge function metrics with real error logs from Supabase
-      const edgeFunctions = [
-        {
+      // Get real edge function metrics from automation_logs table
+      const { data: automationLogs, error } = await supabase
+        .from('automation_logs')
+        .select('*')
+        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching automation logs:', error);
+        // Fallback to basic metrics
+        setEdgeFunctionLogs([{
           function_name: 'automated-mention-fetch',
-          calls_today: 24,
+          calls_today: 0,
           errors_today: 0,
-          avg_duration: 2847,
-          last_call: '2025-09-12T17:55:08.284Z',
+          avg_duration: 0,
+          last_call: new Date().toISOString(),
           description: 'Automated mention fetching from various sources',
-          status: 'active',
+          status: 'inactive',
           max_concurrent: 10,
           timeout_seconds: 300,
-          recent_logs: [
-            {
-              timestamp: '2025-09-12T17:55:08.284Z',
-              message: '✅ Google Alerts fetch completed: 14 total mentions inserted',
-              level: 'info'
-            },
-            {
-              timestamp: '2025-09-12T17:55:04.559Z',
-              message: '🔔 Triggering Google Alerts RSS fetch...',
-              level: 'info'
-            },
-            {
-              timestamp: '2025-09-12T17:55:04.481Z',
-              message: '✅ Recorded automated fetch in history',
-              level: 'info'
-            }
-          ],
+          recent_logs: [],
           recent_errors: []
-        },
-        {
-          function_name: 'google-alerts',
-          calls_today: 12,
-          errors_today: 0,
-          avg_duration: 1456,
-          last_call: '2025-09-12T17:55:08.284Z',
-          description: 'Google Alerts RSS feed processing',
-          status: 'active',
-          max_concurrent: 5,
-          timeout_seconds: 180,
-          recent_logs: [
-            {
-              timestamp: '2025-09-12T17:55:08.284Z',
-              message: '🎉 Google Alerts fetch completed: 14 total mentions inserted',
-              level: 'info'
-            },
-            {
-              timestamp: '2025-09-12T17:55:07.275Z',
-              message: '🔍 Processing Google Alerts for: rusty kate',
-              level: 'info'
-            }
-          ],
-          recent_errors: []
-        },
-        {
-          function_name: 'automated-scheduler',
-          calls_today: 288,
+        }]);
+        return;
+      }
+
+      // Process automation logs to create function metrics
+      const functionMetrics: Record<string, EdgeFunctionLog> = {};
+      
+      automationLogs?.forEach(log => {
+        const functionName = log.function_name || 'unknown';
+        
+        if (!functionMetrics[functionName]) {
+          functionMetrics[functionName] = {
+            function_name: functionName,
+            calls_today: 0,
+            errors_today: 0,
+            avg_duration: 0,
+            last_call: log.created_at,
+            description: log.description || 'Automated function',
+            status: 'active',
+            max_concurrent: 5,
+            timeout_seconds: 300,
+            recent_logs: [],
+            recent_errors: []
+          };
+        }
+        
+        functionMetrics[functionName].calls_today++;
+        if (log.level === 'error') {
+          functionMetrics[functionName].errors_today++;
+          functionMetrics[functionName].recent_errors?.push({
+            timestamp: log.created_at,
+            message: log.message,
+            level: log.level
+          });
+        } else {
+          functionMetrics[functionName].recent_logs?.push({
+            timestamp: log.created_at,
+            message: log.message,
+            level: log.level
+          });
+        }
+        
+        // Keep only last 5 logs/errors
+        if (functionMetrics[functionName].recent_logs && functionMetrics[functionName].recent_logs.length > 5) {
+          functionMetrics[functionName].recent_logs = functionMetrics[functionName].recent_logs.slice(0, 5);
+        }
+        if (functionMetrics[functionName].recent_errors && functionMetrics[functionName].recent_errors.length > 5) {
+          functionMetrics[functionName].recent_errors = functionMetrics[functionName].recent_errors.slice(0, 5);
+        }
+      });
+
+      setEdgeFunctionLogs(Object.values(functionMetrics));
+      
+      // Update total edge function calls in metrics
+      const totalEdgeFunctionCalls = Object.values(functionMetrics).reduce((sum, fn) => sum + fn.calls_today, 0);
+      setMetrics(prev => ({ ...prev, totalEdgeFunctionCalls }));
+      
+    } catch (error) {
+      console.error('Error fetching edge function metrics:', error);
+      setEdgeFunctionLogs([]);
+    }
+  };
+
+  const openFunctionDetails = (func: EdgeFunctionLog) => {
           errors_today: 2,
           avg_duration: 234,
           last_call: '2025-09-12T18:00:28.838Z',
