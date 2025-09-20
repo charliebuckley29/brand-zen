@@ -22,6 +22,15 @@ import {
   RefreshCw
 } from 'lucide-react';
 
+interface DefaultQuotaLimit {
+  id: string;
+  source_type: string;
+  monthly_limit: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 interface UserQuotaLimit {
   id: string;
   user_id: string;
@@ -37,6 +46,20 @@ interface UserQuotaLimit {
   user_roles?: {
     user_type: string;
   };
+}
+
+interface EffectiveQuotaLimit {
+  user_id: string;
+  user_type: string;
+  full_name: string;
+  email: string;
+  source_type: string;
+  effective_limit: number;
+  quota_type: 'default' | 'exception';
+  exception_limit?: number;
+  default_limit: number;
+  exception_active?: boolean;
+  exception_created_at?: string;
 }
 
 interface QuotaAnalytics {

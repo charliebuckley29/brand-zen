@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Save, ArrowLeft, CheckCircle, XCircle, AlertCircle, ChevronDown, Info, Zap, AlertTriangle, Settings, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SOURCES, SOURCE_CATEGORIES } from "@/config/sources";
-import { AdminQuotaManager } from "@/components/AdminQuotaManager";
+import { AdminQuotaManagerV2 } from "@/components/AdminQuotaManagerV2";
 
 type ApiKey = {
   id: string;
@@ -456,7 +456,7 @@ export default function AdminApiPanel() {
         )}
 
         {activeTab === 'quota-management' && (
-          <AdminQuotaManager />
+          <AdminQuotaManagerV2 />
         )}
       </div>
     </div>
