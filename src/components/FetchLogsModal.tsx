@@ -15,7 +15,7 @@ interface SourceStats {
   youtube: number;
   reddit: number;
   instagram: number;
-  twitter: number;
+  x: number;
 }
 
 function parseSourceStats(log: string): SourceStats {
@@ -24,7 +24,7 @@ function parseSourceStats(log: string): SourceStats {
     youtube: 0,
     reddit: 0,
     instagram: 0,
-    twitter: 0
+    x: 0
   };
 
   if (!log) return stats;
@@ -42,8 +42,8 @@ function parseSourceStats(log: string): SourceStats {
   const instagramMatch = log.match(/(\d+)\s+Instagram/i);
   if (instagramMatch) stats.instagram = parseInt(instagramMatch[1]);
 
-  const twitterMatch = log.match(/(\d+)\s+Twitter/i);
-  if (twitterMatch) stats.twitter = parseInt(twitterMatch[1]);
+  const xMatch = log.match(/(\d+)\s+X/i);
+  if (xMatch) stats.x = parseInt(xMatch[1]);
 
   return stats;
 }
@@ -66,7 +66,7 @@ interface FetchLog {
       youtube: number;
       reddit: number;
       instagram: number;
-      twitter: number;
+      x: number;
     };
     sourceAttempts: {
       [key: string]: {
@@ -393,9 +393,9 @@ export function FetchLogsModal() {
                                       📸 {log.results_summary.sourceBreakdown.instagram} Instagram
                                     </span>
                                   )}
-                                  {log.results_summary.sourceBreakdown.twitter > 0 && (
+                                  {log.results_summary.sourceBreakdown.x > 0 && (
                                     <span className="bg-sky-100 text-sky-800 px-2 py-1 rounded">
-                                      🐦 {log.results_summary.sourceBreakdown.twitter} Twitter
+                                      🐦 {log.results_summary.sourceBreakdown.x} X
                                     </span>
                                   )}
                                 </div>

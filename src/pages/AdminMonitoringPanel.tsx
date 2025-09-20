@@ -20,7 +20,7 @@ interface SourceStats {
   youtube: number;
   reddit: number;
   instagram: number;
-  twitter: number;
+  x: number;
 }
 
 function parseSourceStats(log: string): SourceStats {
@@ -29,7 +29,7 @@ function parseSourceStats(log: string): SourceStats {
     youtube: 0,
     reddit: 0,
     instagram: 0,
-    twitter: 0
+    x: 0
   };
 
   if (!log) return stats;
@@ -47,8 +47,8 @@ function parseSourceStats(log: string): SourceStats {
   const instagramMatch = log.match(/(\d+)\s+Instagram/i);
   if (instagramMatch) stats.instagram = parseInt(instagramMatch[1]);
 
-  const twitterMatch = log.match(/(\d+)\s+Twitter/i);
-  if (twitterMatch) stats.twitter = parseInt(twitterMatch[1]);
+  const xMatch = log.match(/(\d+)\s+X/i);
+  if (xMatch) stats.x = parseInt(xMatch[1]);
 
   return stats;
 }
@@ -862,9 +862,9 @@ export default function AdminMonitoringPanel() {
                                   📸 {sourceStats.instagram}
                                 </span>
                               )}
-                              {sourceStats.twitter > 0 && (
+                              {sourceStats.x > 0 && (
                                 <span className="text-xs bg-sky-100 text-sky-800 px-2 py-1 rounded">
-                                  🐦 {sourceStats.twitter}
+                                  🐦 {sourceStats.x}
                                 </span>
                               )}
                             </div>

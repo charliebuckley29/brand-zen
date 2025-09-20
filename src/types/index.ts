@@ -104,7 +104,7 @@ export interface Report {
 }
 
 // Configuration types
-export type SourceType = 'rss_news' | 'google_alerts' | 'youtube' | 'reddit';
+export type SourceType = 'rss_news' | 'google_alerts' | 'youtube' | 'reddit' | 'x';
 
 export type SourceCategory = 'news' | 'social' | 'web' | 'video';
 
