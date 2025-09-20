@@ -45,10 +45,30 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
         if (exclusionsError) throw exclusionsError;
       }
       
+      // Clear API cursors so fetching starts fresh
+      try {
+        const backendUrl = 'https://mentions-backend-8cslcy7iw-brand-protected.vercel.app';
+        
+        const cursorsResponse = await fetch(`${backendUrl}/api/admin/clear-cursors`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id })
+        });
+        
+        if (!cursorsResponse.ok) {
+          const errorData = await cursorsResponse.json();
+          console.warn('Failed to clear API cursors:', errorData);
+          // Don't throw here - cursors clearing is nice-to-have, not critical
+        }
+      } catch (cursorsError) {
+        console.warn('Failed to clear API cursors:', cursorsError);
+        // Don't throw here - cursors clearing is nice-to-have, not critical
+      }
+      
       await onMentionsUpdated();
       const message = alsoDeleteRemovedMentions 
-        ? 'All mentions and removed mentions were deleted.' 
-        : 'All your mentions were removed.';
+        ? 'All mentions, removed mentions, and API cursors were cleared. Fetching will start fresh.' 
+        : 'All your mentions and API cursors were cleared. Fetching will start fresh.';
       toast({ title: 'Mentions cleared', description: message });
     } catch (err) {
       console.error('Error clearing mentions:', err);
@@ -106,7 +126,7 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. All found mentions will be permanently deleted from our database.
+                  This action cannot be undone. All found mentions will be permanently deleted from our database, and API cursors will be cleared so fetching starts fresh.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               
