@@ -1,7 +1,7 @@
 import { useUserRole } from "@/hooks/use-user-role";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare, Activity, BarChart3 } from "lucide-react";
+import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare, Activity, BarChart3, GitBranch } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function AdminDashboard() {
@@ -190,6 +190,29 @@ export default function AdminDashboard() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">
                   Track API usage across all services, monitor rate limits, and get alerts when approaching quotas.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/admin/cursor-monitoring">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <GitBranch className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Cursor Monitoring</CardTitle>
+                    <CardDescription>
+                      Monitor API cursor continuity and pagination state
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Track API pagination cursors, verify continuity, and detect cursor-related issues.
                 </p>
               </CardContent>
             </Card>
