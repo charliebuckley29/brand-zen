@@ -47,7 +47,7 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
       
       // Clear API cursors so fetching starts fresh
       try {
-        const backendUrl = 'https://mentions-backend-8cslcy7iw-brand-protected.vercel.app';
+        const backendUrl = 'https://mentions-backend.vercel.app';
         
         const cursorsResponse = await fetch(`${backendUrl}/api/admin/clear-cursors`, {
           method: 'POST',
