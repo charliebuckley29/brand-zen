@@ -32,7 +32,10 @@ interface UserQuotaLimit {
   updated_at: string;
   profiles?: {
     full_name: string;
-    user_id: string;
+    email: string;
+  };
+  user_roles?: {
+    user_type: string;
   };
 }
 
@@ -422,9 +425,13 @@ export function AdminQuotaManager() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{limit.profiles?.full_name || 'Unknown User'}</span>
                       <Badge variant="outline">{sourceDisplayNames[limit.source_type]}</Badge>
-                      {!limit.is_active && <Badge variant="secondary">Inactive</Badge>}
+                      {limit.user_roles?.user_type && (
+                        <Badge variant="secondary">{limit.user_roles.user_type}</Badge>
+                      )}
+                      {!limit.is_active && <Badge variant="destructive">Inactive</Badge>}
                     </div>
                     <div className="text-sm text-gray-500">
+                      {limit.profiles?.email && <span>{limit.profiles.email} • </span>}
                       Limit: {limit.monthly_limit.toLocaleString()} mentions/month
                     </div>
                   </div>
