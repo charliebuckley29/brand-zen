@@ -1,11 +1,12 @@
 import React from "react";
 import { useUserRole } from "../hooks/use-user-role";
 import { useMonitoring } from "../hooks/useMonitoring";
+import { useQueueMonitoring } from "../hooks/useQueueMonitoring";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { toast } from "sonner";
 import { 
   ArrowLeft, 
@@ -43,7 +44,7 @@ import {
 import { API_LIMITS } from "../constants/monitoring";
 
 const AdminMonitoringPanel: React.FC = () => {
-  const { userRole } = useUserRole();
+  const { isAdmin } = useUserRole();
   const {
     metrics,
     edgeFunctionLogs,
@@ -71,6 +72,20 @@ const AdminMonitoringPanel: React.FC = () => {
     setAutoRefresh,
     clearSelectedUser
   } = useMonitoring({ autoRefresh: true, refreshInterval: 30000 });
+
+  const {
+    queueData,
+    loading: queueLoading,
+    error: queueError,
+    lastRefresh: queueLastRefresh,
+    fetchQueueStatus,
+    refreshQueueStatus,
+    getQueueStatusColor,
+    getQueueStatusText,
+    formatTimeAgo,
+    getApiSourceDisplayName,
+    getApiSourceIcon
+  } = useQueueMonitoring({ autoRefresh: true, refreshInterval: 30000 });
 
   // Helper functions for UI rendering
   const getStatusColor = (log: UserFetchLog): string => {
@@ -135,7 +150,7 @@ const AdminMonitoringPanel: React.FC = () => {
   };
 
   // Early return for non-admin users
-  if (userRole !== "admin") {
+  if (!isAdmin) {
     return (
       <div className="container mx-auto py-8">
         <Alert>
@@ -259,6 +274,7 @@ const AdminMonitoringPanel: React.FC = () => {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="functions">Edge Functions</TabsTrigger>
           <TabsTrigger value="users">User Activity</TabsTrigger>
+          <TabsTrigger value="queue">API Queue</TabsTrigger>
           <TabsTrigger value="resources">Resource Usage</TabsTrigger>
         </TabsList>
 
@@ -677,6 +693,201 @@ const AdminMonitoringPanel: React.FC = () => {
                 </div>
               ))}
             </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="queue" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">API Queue Monitoring</h2>
+              <p className="text-muted-foreground">
+                Monitor fair API usage distribution across all users
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refreshQueueStatus}
+                disabled={queueLoading}
+              >
+                <RefreshCw className={`h-4 w-4 ${queueLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              {queueLastRefresh && (
+                <span className="text-sm text-muted-foreground">
+                  Last updated: {format(queueLastRefresh, 'HH:mm:ss')}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {queueError && (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Error loading queue data: {queueError}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {queueData && (
+            <>
+              {/* Queue Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Queue Entries</CardTitle>
+                    <Hash className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{queueData.summary.total}</div>
+                    <p className="text-xs text-muted-foreground">
+                      All queue entries
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Pending</CardTitle>
+                    <Clock className="h-4 w-4 text-yellow-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-yellow-600">
+                      {queueData.summary.byStatus.pending}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Waiting for processing
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Processing</CardTitle>
+                    <Loader2 className="h-4 w-4 text-blue-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-600">
+                      {queueData.summary.byStatus.processing}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Currently processing
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Average Priority</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {queueData.summary.averagePriorityScore}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Higher = more urgent
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* API Source Breakdown */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Queue by API Source</CardTitle>
+                  <CardDescription>Distribution of queue entries across different APIs</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {Object.entries(queueData.summary.byApiSource).map(([apiSource, stats]) => (
+                      <div key={apiSource} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{getApiSourceIcon(apiSource)}</span>
+                          <div>
+                            <p className="font-medium">{getApiSourceDisplayName(apiSource)}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Avg Priority: {stats.averagePriority}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-yellow-600">{stats.pending}</div>
+                            <div className="text-xs text-muted-foreground">Pending</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-blue-600">{stats.processing}</div>
+                            <div className="text-xs text-muted-foreground">Processing</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-green-600">{stats.completed}</div>
+                            <div className="text-xs text-muted-foreground">Completed</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-red-600">{stats.failed}</div>
+                            <div className="text-xs text-muted-foreground">Failed</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Queue Entries */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Queue Activity</CardTitle>
+                  <CardDescription>Latest queue entries and their status</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {queueData.entries.slice(0, 20).map((entry) => (
+                      <div key={entry.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">{getApiSourceIcon(entry.api_source)}</span>
+                          <div>
+                            <p className="font-medium text-sm">
+                              {getApiSourceDisplayName(entry.api_source)} - User {entry.user_id.slice(0, 8)}...
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Priority: {entry.priority_score} • Queued: {formatTimeAgo(entry.queued_at)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant="secondary" 
+                            className={`${getQueueStatusColor(entry.status)} text-white`}
+                          >
+                            {getQueueStatusText(entry.status)}
+                          </Badge>
+                          {entry.last_served_at && (
+                            <span className="text-xs text-muted-foreground">
+                              Last served: {formatTimeAgo(entry.last_served_at)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {!queueData && !queueLoading && (
+            <Card>
+              <CardContent className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <Database className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-muted-foreground">No queue data available</p>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
