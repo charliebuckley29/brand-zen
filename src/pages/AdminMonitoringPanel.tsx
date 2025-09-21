@@ -1,362 +1,89 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/use-user-role";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from "react";
+import { useUserRole } from "../hooks/use-user-role";
+import { useMonitoring } from "../hooks/useMonitoring";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Badge } from "../components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Activity, Database, Mail, Zap, TrendingUp, AlertTriangle, RefreshCw, Search, Calendar, Info, X, Clock, AlertCircle, Users, Hash, Play, MessageSquare, Rss, CheckCircle } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Activity, 
+  Database, 
+  Mail, 
+  Zap, 
+  AlertTriangle, 
+  RefreshCw, 
+  Search, 
+  X, 
+  Clock, 
+  AlertCircle, 
+  Users, 
+  Hash, 
+  Play, 
+  MessageSquare, 
+  Rss, 
+  CheckCircle,
+  Loader2,
+  TrendingUp,
+  TrendingDown,
+  Shield,
+  Wifi,
+  WifiOff
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ErrorMonitoringDashboard } from "@/components/ErrorMonitoringDashboard";
+import { Alert, AlertDescription } from "../components/ui/alert";
+import { ErrorMonitoringDashboard } from "../components/ErrorMonitoringDashboard";
+import { 
+  EdgeFunctionLog, 
+  UserFetchLog 
+} from "../types/monitoring";
+import { API_LIMITS } from "../constants/monitoring";
 
-interface SourceStats {
-  google_alerts: number;
-  youtube: number;
-  reddit: number;
-  x: number;
-  rss_news: number;
-}
-
-function parseSourceStats(log: string): SourceStats {
-  const stats: SourceStats = {
-    google_alerts: 0,
-    youtube: 0,
-    reddit: 0,
-    x: 0,
-    rss_news: 0
-  };
-
-  if (!log) return stats;
-
-  // Parse patterns like "20 Google Alerts", "5 YouTube", etc.
-  const googleMatch = log.match(/(\d+)\s+Google\s+Alerts?/i);
-  if (googleMatch) stats.google_alerts = parseInt(googleMatch[1]);
-
-  const youtubeMatch = log.match(/(\d+)\s+YouTube/i);
-  if (youtubeMatch) stats.youtube = parseInt(youtubeMatch[1]);
-
-  const redditMatch = log.match(/(\d+)\s+Reddit/i);
-  if (redditMatch) stats.reddit = parseInt(redditMatch[1]);
-
-  const xMatch = log.match(/(\d+)\s+X/i);
-  if (xMatch) stats.x = parseInt(xMatch[1]);
-
-  const rssMatch = log.match(/(\d+)\s+RSS/i);
-  if (rssMatch) stats.rss_news = parseInt(rssMatch[1]);
-
-  return stats;
-}
-
-interface ApiLimit {
-  name: string;
-  free: number;
-  paid: number;
-  unit: string;
-  description: string;
-  warningThreshold: number;
-}
-
-const API_LIMITS: ApiLimit[] = [
-  {
-    name: 'YouTube Data API',
-    free: 10000,
-    paid: 1000000,
-    unit: 'quota units/day',
-    description: 'YouTube API for video and channel data',
-    warningThreshold: 0.85
-  },
-  {
-    name: 'Reddit API',
-    free: 60,
-    paid: 300,
-    unit: 'requests/min',
-    description: 'Reddit API for post and comment fetching',
-    warningThreshold: 0.8
-  },
-  {
-    name: 'X (Twitter) API',
-    free: 10000,
-    paid: 50000,
-    unit: 'tweets/month',
-    description: 'X API v2 for tweet data',
-    warningThreshold: 0.8
-  },
-  {
-    name: 'Google Alerts',
-    free: 1000,
-    paid: 10000,
-    unit: 'RSS fetches/day',
-    description: 'Google Alerts RSS feed processing',
-    warningThreshold: 0.9
-  }
-];
-
-interface MonitoringMetrics {
-  totalMentions: number;
-  totalApiCalls: number;
-  totalNotifications: number;
-  totalEdgeFunctionCalls: number;
-  apiUsageBySource: Record<string, number>;
-}
-
-interface EdgeFunctionLog {
-  function_name: string;
-  calls_today: number;
-  errors_today: number;
-  avg_duration: number;
-  last_call: string;
-  description: string;
-  status: 'active' | 'inactive';
-  max_concurrent: number;
-  timeout_seconds: number;
-  recent_logs?: Array<{
-    timestamp: string;
-    message: string;
-    level: string;
-  }>;
-  recent_errors?: Array<{
-    timestamp: string;
-    message: string;
-    level: string;
-  }>;
-}
-
-interface UserFetchLog {
-  id: string;
-  user_name: string;
-  started_at: string;
-  completed_at: string | null;
-  total_keywords: number;
-  failed_keywords: number;
-  sources: string[];
-  mentions_found: number;
-  error_message?: string;
-}
-
-const AdminMonitoringPanel = () => {
+const AdminMonitoringPanel: React.FC = () => {
   const { userRole } = useUserRole();
-  const [metrics, setMetrics] = useState<MonitoringMetrics>({
-    totalMentions: 0,
-    totalApiCalls: 0,
-    totalNotifications: 0,
-    totalEdgeFunctionCalls: 0,
-    apiUsageBySource: {}
-  });
-  const [edgeFunctionLogs, setEdgeFunctionLogs] = useState<EdgeFunctionLog[]>([]);
-  const [userLogs, setUserLogs] = useState<UserFetchLog[]>([]);
-  const [searchEmail, setSearchEmail] = useState("");
-  const [selectedUser, setSelectedUser] = useState("");
-  const [showFunctionDetails, setShowFunctionDetails] = useState(false);
-  const [selectedFunction, setSelectedFunction] = useState<EdgeFunctionLog | null>(null);
+  const {
+    metrics,
+    edgeFunctionLogs,
+    userLogs,
+    searchEmail,
+    selectedUser,
+    showFunctionDetails,
+    selectedFunction,
+    autoRefresh,
+    lastRefresh,
+    systemHealth,
+    totalErrors,
+    averageErrorRate,
+    hasActiveFunctions,
+    totalActiveUsers,
+    fetchMetrics,
+    fetchEdgeFunctionMetrics,
+    fetchUserFetchLogs,
+    searchUserByEmail,
+    refreshAll,
+    setSelectedUser,
+    setSearchEmail,
+    setShowFunctionDetails,
+    setSelectedFunction,
+    setAutoRefresh,
+    clearSelectedUser
+  } = useMonitoring({ autoRefresh: true, refreshInterval: 30000 });
 
-  useEffect(() => {
-    if (userRole === "admin") {
-      fetchMetrics();
-      fetchEdgeFunctionMetrics();
-    }
-  }, [userRole]);
-
-  const fetchMetrics = async () => {
-    try {
-      // Fetch mentions count
-      const { data: mentions, error: mentionsError } = await supabase
-        .from('mentions')
-        .select('id', { count: 'exact' });
-
-      if (mentionsError) throw mentionsError;
-
-      // Fetch API usage by source
-      const { data: fetchLogs, error: logsError } = await supabase
-        .from('fetch_logs')
-        .select('source_stats')
-        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-
-      if (logsError) throw logsError;
-
-      const sourceStats: Record<string, number> = {};
-      fetchLogs?.forEach(log => {
-        const stats = parseSourceStats(log.source_stats || '');
-        Object.entries(stats).forEach(([source, count]) => {
-          sourceStats[source] = (sourceStats[source] || 0) + count;
-        });
-      });
-
-      setMetrics({
-        totalMentions: mentions?.length || 0,
-        totalApiCalls: Object.values(sourceStats).reduce((sum, count) => sum + count, 0),
-        totalNotifications: 0, // TODO: Implement notification counting
-        totalEdgeFunctionCalls: 0, // Will be updated by fetchEdgeFunctionMetrics
-        apiUsageBySource: sourceStats
-      });
-    } catch (error) {
-      console.error('Error fetching metrics:', error);
-      toast.error('Failed to fetch monitoring metrics');
+  // Helper functions for UI rendering
+  const getStatusColor = (log: UserFetchLog): string => {
+    switch (log.status) {
+      case 'running': return 'bg-yellow-500';
+      case 'partial': return 'bg-orange-500';
+      case 'failed': return 'bg-red-500';
+      case 'completed': return 'bg-green-500';
+      default: return 'bg-gray-500';
     }
   };
 
-  const fetchEdgeFunctionMetrics = async () => {
-    try {
-      // Get real edge function metrics from automation_logs table
-      const { data: automationLogs, error } = await supabase
-        .from('automation_logs')
-        .select('*')
-        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching automation logs:', error);
-        // Fallback to basic metrics
-        setEdgeFunctionLogs([{
-          function_name: 'automated-mention-fetch',
-          calls_today: 0,
-          errors_today: 0,
-          avg_duration: 0,
-          last_call: new Date().toISOString(),
-          description: 'Automated mention fetching from various sources',
-          status: 'inactive',
-          max_concurrent: 10,
-          timeout_seconds: 300,
-          recent_logs: [],
-          recent_errors: []
-        }]);
-        return;
-      }
-
-      // Process automation logs to create function metrics
-      const functionMetrics: Record<string, EdgeFunctionLog> = {};
-      
-      automationLogs?.forEach(log => {
-        const functionName = log.function_name || 'unknown';
-        
-        if (!functionMetrics[functionName]) {
-          functionMetrics[functionName] = {
-            function_name: functionName,
-            calls_today: 0,
-            errors_today: 0,
-            avg_duration: 0,
-            last_call: log.created_at,
-            description: log.description || 'Automated function',
-            status: 'active',
-            max_concurrent: 5,
-            timeout_seconds: 300,
-            recent_logs: [],
-            recent_errors: []
-          };
-        }
-        
-        functionMetrics[functionName].calls_today++;
-        if (log.level === 'error') {
-          functionMetrics[functionName].errors_today++;
-          functionMetrics[functionName].recent_errors?.push({
-            timestamp: log.created_at,
-            message: log.message,
-            level: log.level
-          });
-        } else {
-          functionMetrics[functionName].recent_logs?.push({
-            timestamp: log.created_at,
-            message: log.message,
-            level: log.level
-          });
-        }
-        
-        // Keep only last 5 logs/errors
-        if (functionMetrics[functionName].recent_logs && functionMetrics[functionName].recent_logs.length > 5) {
-          functionMetrics[functionName].recent_logs = functionMetrics[functionName].recent_logs.slice(0, 5);
-        }
-        if (functionMetrics[functionName].recent_errors && functionMetrics[functionName].recent_errors.length > 5) {
-          functionMetrics[functionName].recent_errors = functionMetrics[functionName].recent_errors.slice(0, 5);
-        }
-      });
-
-      setEdgeFunctionLogs(Object.values(functionMetrics));
-      
-      // Update total edge function calls in metrics
-      const totalEdgeFunctionCalls = Object.values(functionMetrics).reduce((sum, fn) => sum + fn.calls_today, 0);
-      setMetrics(prev => ({ ...prev, totalEdgeFunctionCalls }));
-      
-    } catch (error) {
-      console.error('Error fetching edge function metrics:', error);
-      setEdgeFunctionLogs([]);
-    }
-  };
-
-  const fetchUserFetchLogs = async () => {
-    if (!selectedUser) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('fetch_logs')
-        .select('*')
-        .eq('user_id', selectedUser)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-
-      const logs: UserFetchLog[] = data?.map(log => ({
-        id: log.id,
-        user_name: log.user_name || 'Unknown User',
-        started_at: log.created_at,
-        completed_at: log.completed_at,
-        total_keywords: log.total_keywords || 0,
-        failed_keywords: log.failed_keywords || 0,
-        sources: log.sources || [],
-        mentions_found: log.mentions_found || 0,
-        error_message: log.error_message
-      })) || [];
-
-      setUserLogs(logs);
-    } catch (error) {
-      console.error('Error fetching user logs:', error);
-      toast.error('Failed to fetch user logs');
-    }
-  };
-
-  const openFunctionDetails = (func: EdgeFunctionLog) => {
-    setSelectedFunction(func);
-    setShowFunctionDetails(true);
-  };
-
-  const closeFunctionDetails = () => {
-    setShowFunctionDetails(false);
-    setSelectedFunction(null);
-  };
-
-  const searchUserByEmail = async () => {
-    if (!searchEmail.trim()) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('user_id, full_name')
-        .ilike('full_name', `%${searchEmail}%`)
-        .limit(1)
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        setSelectedUser(data.user_id);
-        toast.success(`Found user: ${data.full_name}`);
-        fetchUserFetchLogs();
-      }
-    } catch (error) {
-      toast.error('User not found');
-    }
-  };
-
-  const getStatusColor = (log: UserFetchLog) => {
-    if (!log.completed_at) return 'bg-yellow-500';
-    if (log.failed_keywords > 0) return 'bg-orange-500';
-    return 'bg-green-500';
-  };
-
-  const getDuration = (startedAt: string, completedAt: string | null) => {
+  const getDuration = (startedAt: string, completedAt: string | null): string => {
     if (!completedAt) return 'Running...';
     const start = new Date(startedAt);
     const end = new Date(completedAt);
@@ -364,6 +91,50 @@ const AdminMonitoringPanel = () => {
     return `${diff}s`;
   };
 
+  const getSystemHealthIcon = () => {
+    switch (systemHealth) {
+      case 'healthy': return <Shield className="h-4 w-4 text-green-500" />;
+      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+      case 'critical': return <AlertCircle className="h-4 w-4 text-red-500" />;
+      default: return <Shield className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const getSystemHealthColor = () => {
+    switch (systemHealth) {
+      case 'healthy': return 'text-green-600';
+      case 'warning': return 'text-yellow-600';
+      case 'critical': return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  };
+
+  // Event handlers
+  const handleRefresh = async () => {
+    await refreshAll();
+    toast.success('Data refreshed successfully');
+  };
+
+  const handleUserSearch = async () => {
+    await searchUserByEmail(searchEmail);
+  };
+
+  const handleFunctionDetails = (func: EdgeFunctionLog) => {
+    setSelectedFunction(func);
+    setShowFunctionDetails(true);
+  };
+
+  const handleCloseFunctionDetails = () => {
+    setShowFunctionDetails(false);
+    setSelectedFunction(null);
+  };
+
+  const handleToggleAutoRefresh = () => {
+    setAutoRefresh(!autoRefresh);
+    toast.success(`Auto-refresh ${!autoRefresh ? 'enabled' : 'disabled'}`);
+  };
+
+  // Early return for non-admin users
   if (userRole !== "admin") {
     return (
       <div className="container mx-auto py-8">
@@ -379,24 +150,109 @@ const AdminMonitoringPanel = () => {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <div className="flex items-center gap-4">
-        <Link to="/admin">
-          <Button variant="outline" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Admin
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">System Monitoring</h1>
-          <p className="text-muted-foreground">
-            Monitor system performance, API usage, and user activity
-          </p>
+      {/* Header with system health */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link to="/admin">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Admin
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold">System Monitoring</h1>
+            <p className="text-muted-foreground">
+              Monitor system performance, API usage, and user activity
+            </p>
+          </div>
         </div>
-        <Button onClick={fetchMetrics} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        
+        <div className="flex items-center gap-4">
+          {/* System Health Indicator */}
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+            systemHealth === 'healthy' ? 'bg-green-50 border-green-200' :
+            systemHealth === 'warning' ? 'bg-yellow-50 border-yellow-200' :
+            'bg-red-50 border-red-200'
+          }`}>
+            {getSystemHealthIcon()}
+            <span className={`text-sm font-medium ${getSystemHealthColor()}`}>
+              System {systemHealth}
+            </span>
+          </div>
+
+          {/* Auto-refresh indicator */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToggleAutoRefresh}
+              className={autoRefresh ? 'bg-green-50' : ''}
+            >
+              {autoRefresh ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
+              {autoRefresh ? 'Auto' : 'Manual'}
+            </Button>
+            
+            <Button 
+              onClick={handleRefresh} 
+              variant="outline" 
+              size="sm"
+              disabled={metrics.isLoading}
+            >
+              {metrics.isLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Refresh
+            </Button>
+          </div>
+        </div>
       </div>
+
+      {/* System Status Alert */}
+      {metrics.error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Error loading monitoring data: {metrics.error}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* System Health Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            System Overview
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold">{totalErrors}</div>
+              <div className="text-sm text-muted-foreground">Total Errors</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold">{averageErrorRate.toFixed(1)}%</div>
+              <div className="text-sm text-muted-foreground">Error Rate</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold">{hasActiveFunctions ? 'Yes' : 'No'}</div>
+              <div className="text-sm text-muted-foreground">Active Functions</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold">{totalActiveUsers}</div>
+              <div className="text-sm text-muted-foreground">Active Users</div>
+            </div>
+          </div>
+          {lastRefresh && (
+            <div className="mt-4 text-sm text-muted-foreground text-center">
+              Last updated: {format(new Date(lastRefresh), 'MMM dd, yyyy HH:mm:ss')}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="overview" className="w-full">
         <TabsList>
@@ -414,7 +270,13 @@ const AdminMonitoringPanel = () => {
                 <Database className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{metrics.totalMentions.toLocaleString()}</div>
+                <div className="text-2xl font-bold">
+                  {metrics.isLoading ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    metrics.totalMentions.toLocaleString()
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   All time mentions
                 </p>
@@ -427,7 +289,13 @@ const AdminMonitoringPanel = () => {
                 <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{metrics.totalApiCalls.toLocaleString()}</div>
+                <div className="text-2xl font-bold">
+                  {metrics.isLoading ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    metrics.totalApiCalls.toLocaleString()
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Across all sources
                 </p>
@@ -440,7 +308,13 @@ const AdminMonitoringPanel = () => {
                 <Zap className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{metrics.totalEdgeFunctionCalls.toLocaleString()}</div>
+                <div className="text-2xl font-bold">
+                  {metrics.isLoading ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    metrics.totalEdgeFunctionCalls.toLocaleString()
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Today's automated calls
                 </p>
@@ -453,7 +327,13 @@ const AdminMonitoringPanel = () => {
                 <Mail className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{metrics.totalNotifications.toLocaleString()}</div>
+                <div className="text-2xl font-bold">
+                  {metrics.isLoading ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    metrics.totalNotifications.toLocaleString()
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Email notifications
                 </p>
@@ -488,7 +368,7 @@ const AdminMonitoringPanel = () => {
                     <div className="flex-1">
                       <div className="font-medium capitalize">{source.replace('_', ' ')}</div>
                       <div className="text-sm text-muted-foreground">
-                        {usage.toLocaleString()} mentions
+                        {Number(usage).toLocaleString()} mentions
                       </div>
                     </div>
                   </div>
@@ -505,16 +385,28 @@ const AdminMonitoringPanel = () => {
             <CardContent>
               <div className="space-y-4">
                 {API_LIMITS.map((apiLimit) => {
-                  const usage = Math.random() * apiLimit.paid; // Mock usage data
+                  // Get real usage data for this API
+                  const apiUsage = metrics.apiUsageData[apiLimit.name.toLowerCase().replace(/\s+/g, '_')] || 
+                                 metrics.apiUsageData[apiLimit.name.toLowerCase().replace(/\s+/g, '')] ||
+                                 metrics.apiUsageData[apiLimit.name];
+                  
+                  const usage = apiUsage?.totalCalls || 0;
+                  const errorRate = apiUsage?.errorRate || 0;
                   const percentage = (usage / apiLimit.paid) * 100;
-                  const isWarning = percentage > (apiLimit.warningThreshold * 100);
+                  const isWarning = percentage > (apiLimit.warningThreshold * 100) || errorRate > 10;
+                  const hasErrors = errorRate > 0;
 
                   return (
                     <div key={apiLimit.name} className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium">{apiLimit.name}</div>
-                          <div className="text-sm text-muted-foreground">{apiLimit.description}</div>
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-3 h-3 rounded-full ${
+                            hasErrors ? 'bg-red-500' : 'bg-green-500'
+                          }`} />
+                          <div>
+                            <div className="font-medium">{apiLimit.name}</div>
+                            <div className="text-sm text-muted-foreground">{apiLimit.description}</div>
+                          </div>
                         </div>
                         <div className="text-right">
                           <div className="font-medium">
@@ -522,20 +414,73 @@ const AdminMonitoringPanel = () => {
                           </div>
                           <div className="text-sm text-muted-foreground">
                             {percentage.toFixed(1)}% used
+                            {hasErrors && (
+                              <span className="text-red-600 ml-2">
+                                • {errorRate.toFixed(1)}% error rate
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
                           className={`h-2 rounded-full ${
-                            isWarning ? 'bg-yellow-500' : 'bg-green-500'
+                            isWarning ? 'bg-yellow-500' : hasErrors ? 'bg-red-500' : 'bg-green-500'
                           }`}
                           style={{ width: `${Math.min(percentage, 100)}%` }}
                         />
                       </div>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Free: {apiLimit.free.toLocaleString()} {apiLimit.unit}</span>
+                        <span>Paid: {apiLimit.paid.toLocaleString()} {apiLimit.unit}</span>
+                      </div>
                     </div>
                   );
                 })}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>API Usage Summary</CardTitle>
+              <CardDescription>Real-time API call tracking across all services</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {Object.entries(metrics.apiUsageData).map(([apiSource, usage]) => {
+                  const usageData = usage as { totalCalls: number; errorCalls: number; errorRate: number };
+                  return (
+                    <div key={apiSource} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-3 h-3 rounded-full ${
+                          usageData.errorRate > 0 ? 'bg-red-500' : 'bg-green-500'
+                        }`} />
+                        <div>
+                          <div className="font-medium capitalize">{apiSource}</div>
+                          {usageData.errorRate > 0 && (
+                            <div className="text-sm text-red-600">
+                              {usageData.errorCalls} errors
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">{usageData.totalCalls} calls</div>
+                        <div className="text-sm text-muted-foreground">
+                          {usageData.errorRate > 0 ? `${usageData.errorRate.toFixed(1)}% error rate` : 'No errors'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {Object.keys(metrics.apiUsageData).length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No API usage data available</p>
+                    <p className="text-sm">API calls will appear here when they are made</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -544,11 +489,19 @@ const AdminMonitoringPanel = () => {
         <TabsContent value="functions" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Edge Function Performance</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                Edge Function Performance
+              </CardTitle>
               <CardDescription>Real-time metrics for automated functions</CardDescription>
             </CardHeader>
             <CardContent>
-              {edgeFunctionLogs.length === 0 ? (
+              {metrics.isLoading ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin" />
+                  <p className="text-muted-foreground">Loading function metrics...</p>
+                </div>
+              ) : edgeFunctionLogs.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Zap className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No edge function data available</p>
@@ -557,7 +510,7 @@ const AdminMonitoringPanel = () => {
               ) : (
                 <div className="space-y-4">
                   {edgeFunctionLogs.map((func) => (
-                    <div key={func.function_name} className="border rounded-lg p-4">
+                    <div key={func.function_name} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-3">
                           <div className={`p-2 rounded-lg ${
@@ -576,13 +529,15 @@ const AdminMonitoringPanel = () => {
                             <div className="text-xs text-muted-foreground">today</div>
                           </div>
                           <div className="text-right">
-                            <div className="text-sm font-medium">{func.errors_today} errors</div>
+                            <div className={`text-sm font-medium ${func.errors_today > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {func.errors_today} errors
+                            </div>
                             <div className="text-xs text-muted-foreground">today</div>
                           </div>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => openFunctionDetails(func)}
+                            onClick={() => handleFunctionDetails(func)}
                           >
                             View Details
                           </Button>
@@ -620,22 +575,30 @@ const AdminMonitoringPanel = () => {
         <TabsContent value="users" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>User Activity Search</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                User Activity Search
+              </CardTitle>
               <CardDescription>
-                Search for specific user's mention fetching activity
+                Search for specific user's mention fetching activity by name or email
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Search by user name..."
+                  placeholder="Search by user name or email..."
                   value={searchEmail}
                   onChange={(e) => setSearchEmail(e.target.value)}
                   className="max-w-sm"
+                  onKeyDown={(e) => e.key === 'Enter' && handleUserSearch()}
                 />
-                <Button onClick={searchUserByEmail}>Search</Button>
+                <Button onClick={handleUserSearch} disabled={!searchEmail.trim()}>
+                  <Search className="h-4 w-4 mr-2" />
+                  Search
+                </Button>
                 {selectedUser && (
-                  <Button variant="outline" onClick={() => setSelectedUser("")}>
+                  <Button variant="outline" onClick={clearSelectedUser}>
+                    <X className="h-4 w-4 mr-2" />
                     Clear
                   </Button>
                 )}
@@ -652,23 +615,21 @@ const AdminMonitoringPanel = () => {
           ) : (
             <div className="space-y-4">
               {userLogs.map((log) => (
-                <div key={log.id} className="border rounded-lg p-4">
+                <div key={log.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-full ${
-                        !log.completed_at ? 'bg-yellow-500' :
-                        log.failed_keywords > 0 ? 'bg-orange-500' :
-                        'bg-green-500'
-                      }`}>
-                        {!log.completed_at ? <Clock className="h-4 w-4" /> :
-                         log.failed_keywords > 0 ? <AlertTriangle className="h-4 w-4" /> :
+                      <div className={`p-2 rounded-full ${getStatusColor(log)}`}>
+                        {log.status === 'running' ? <Clock className="h-4 w-4" /> :
+                         log.status === 'partial' ? <AlertTriangle className="h-4 w-4" /> :
+                         log.status === 'failed' ? <AlertCircle className="h-4 w-4" /> :
                          <CheckCircle className="h-4 w-4" />}
                       </div>
                       <div>
                         <div className="font-medium">{log.user_name || 'Unknown User'}</div>
                         <div className="text-sm text-muted-foreground">
-                          {!log.completed_at ? 'In Progress' :
-                           log.failed_keywords > 0 ? 'Partial Success' :
+                          {log.status === 'running' ? 'In Progress' :
+                           log.status === 'partial' ? 'Partial Success' :
+                           log.status === 'failed' ? 'Failed' :
                            'Completed'} • {log.total_keywords} keywords
                         </div>
                       </div>
@@ -690,7 +651,9 @@ const AdminMonitoringPanel = () => {
                     </div>
                     <div>
                       <div className="text-muted-foreground">Failed Keywords</div>
-                      <div className="font-medium">{log.failed_keywords}</div>
+                      <div className={`font-medium ${log.failed_keywords > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {log.failed_keywords}
+                      </div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Sources</div>
@@ -796,8 +759,11 @@ const AdminMonitoringPanel = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">{selectedFunction.function_name}</h3>
-              <Button variant="outline" onClick={closeFunctionDetails}>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                {selectedFunction.function_name}
+              </h3>
+              <Button variant="outline" onClick={handleCloseFunctionDetails}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -811,19 +777,36 @@ const AdminMonitoringPanel = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm font-medium text-muted-foreground mb-1">Status</div>
-                  <div className="text-sm capitalize">{selectedFunction.status}</div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${
+                      selectedFunction.status === 'active' ? 'bg-green-500' : 'bg-gray-500'
+                    }`} />
+                    <span className="text-sm capitalize">{selectedFunction.status}</span>
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm font-medium text-muted-foreground mb-1">Calls Today</div>
-                  <div className="text-sm">{selectedFunction.calls_today}</div>
+                  <div className="text-sm font-medium">{selectedFunction.calls_today}</div>
                 </div>
                 <div>
                   <div className="text-sm font-medium text-muted-foreground mb-1">Errors Today</div>
-                  <div className="text-sm">{selectedFunction.errors_today}</div>
+                  <div className={`text-sm font-medium ${
+                    selectedFunction.errors_today > 0 ? 'text-red-600' : 'text-green-600'
+                  }`}>
+                    {selectedFunction.errors_today}
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm font-medium text-muted-foreground mb-1">Avg Duration</div>
                   <div className="text-sm">{selectedFunction.avg_duration}ms</div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Max Concurrent</div>
+                  <div className="text-sm">{selectedFunction.max_concurrent}</div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Timeout</div>
+                  <div className="text-sm">{selectedFunction.timeout_seconds}s</div>
                 </div>
               </div>
               
