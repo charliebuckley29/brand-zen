@@ -105,7 +105,7 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
     fetchQueueStatus();
   }, [fetchQueueStatus]);
 
-  const resetFailedQueue = useCallback(async () => {
+  const resetAllQueues = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -118,22 +118,56 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to reset queue: ${response.status} - ${errorText}`);
+        throw new Error(`Failed to reset all queues: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
       
       if (result.success) {
-        toast.success(`Successfully reset ${result.resetCount} failed queue entries`);
+        toast.success(`Successfully reset ${result.resetCount} failed queue entries across all APIs`);
         // Refresh the queue status after reset
         await fetchQueueStatus();
       } else {
-        throw new Error(result.error || 'Failed to reset queue');
+        throw new Error(result.error || 'Failed to reset all queues');
       }
     } catch (err: any) {
-      console.error('Error resetting queue:', err);
+      console.error('Error resetting all queues:', err);
       setError(err.message);
-      toast.error(`Failed to reset queue: ${err.message}`);
+      toast.error(`Failed to reset all queues: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchQueueStatus]);
+
+  const resetQueueByApiSource = useCallback(async (apiSource: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`https://mentions-backend.vercel.app/api/debug/reset-failed-queue?api_source=${apiSource}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to reset ${apiSource} queue: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success(`Successfully reset ${result.resetCount} failed entries in ${apiSource} queue`);
+        // Refresh the queue status after reset
+        await fetchQueueStatus();
+      } else {
+        throw new Error(result.error || `Failed to reset ${apiSource} queue`);
+      }
+    } catch (err: any) {
+      console.error(`Error resetting ${apiSource} queue:`, err);
+      setError(err.message);
+      toast.error(`Failed to reset ${apiSource} queue: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -217,7 +251,8 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
     lastRefresh,
     fetchQueueStatus,
     refreshQueueStatus,
-    resetFailedQueue,
+    resetAllQueues,
+    resetQueueByApiSource,
     getQueueStatusColor,
     getQueueStatusText,
     formatTimeAgo,

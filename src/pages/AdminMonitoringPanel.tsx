@@ -81,7 +81,8 @@ const AdminMonitoringPanel: React.FC = () => {
     lastRefresh: queueLastRefresh,
     fetchQueueStatus,
     refreshQueueStatus,
-    resetFailedQueue,
+    resetAllQueues,
+    resetQueueByApiSource,
     getQueueStatusColor,
     getQueueStatusText,
     formatTimeAgo,
@@ -719,12 +720,12 @@ const AdminMonitoringPanel: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={resetFailedQueue}
+                onClick={resetAllQueues}
                 disabled={queueLoading}
                 className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
               >
                 <RotateCcw className="h-4 w-4" />
-                Reset Failed
+                Reset All Queues
               </Button>
               {queueLastRefresh && (
                 <span className="text-sm text-muted-foreground">
@@ -843,6 +844,18 @@ const AdminMonitoringPanel: React.FC = () => {
                             <div className="text-xs text-muted-foreground">Failed</div>
                           </div>
                         </div>
+                        {stats.failed > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => resetQueueByApiSource(apiSource)}
+                            disabled={queueLoading}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 ml-4"
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                            Reset {getApiSourceDisplayName(apiSource)}
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>
