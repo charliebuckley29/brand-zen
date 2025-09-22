@@ -83,7 +83,24 @@ export function FetchLogsModal() {
       }
       
       const data = await response.json();
-      setDetailedLogs(data);
+      
+      // Ensure the data has the expected structure
+      const normalizedData = {
+        fetchHistory: data?.fetchHistory || [],
+        automationLogs: data?.automationLogs || [],
+        queueStatus: data?.queueStatus || [],
+        summary: {
+          totalFetches: data?.summary?.totalFetches || 0,
+          recentLogs: data?.summary?.recentLogs || 0,
+          queueEntries: data?.summary?.queueEntries || 0,
+          lastFetch: data?.summary?.lastFetch || null,
+          sourcesInQueue: data?.summary?.sourcesInQueue || [],
+          recentErrors: data?.summary?.recentErrors || 0,
+          logsByType: data?.summary?.logsByType || []
+        }
+      };
+      
+      setDetailedLogs(normalizedData);
     } catch (error) {
       console.error('Error fetching detailed logs:', error);
       toast({
@@ -221,7 +238,7 @@ export function FetchLogsModal() {
                     <AlertDialogDescription>
                       This action cannot be undone. This will permanently delete all fetch logs from the system.
                       <br /><br />
-                      <strong>{detailedLogs.fetchHistory.length} log entries</strong> will be removed.
+                      <strong>{detailedLogs?.fetchHistory?.length || 0} log entries</strong> will be removed.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -245,7 +262,7 @@ export function FetchLogsModal() {
               <Activity className="h-6 w-6 animate-spin mr-2" />
               Loading detailed logs...
             </div>
-          ) : !detailedLogs || detailedLogs.fetchHistory.length === 0 ? (
+          ) : !detailedLogs || !detailedLogs.fetchHistory || detailedLogs.fetchHistory.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium">No fetch logs found</p>
@@ -426,10 +443,10 @@ export function FetchLogsModal() {
         
         <div className="flex justify-between items-center pt-4 border-t">
           <div className="text-sm text-muted-foreground">
-            {detailedLogs && (
+            {detailedLogs && detailedLogs.summary && (
               <>
-                {detailedLogs.summary.totalFetches} total fetches • 
-                {detailedLogs.summary.recentErrors > 0 && (
+                {detailedLogs.summary.totalFetches || 0} total fetches • 
+                {(detailedLogs.summary.recentErrors || 0) > 0 && (
                   <span className="text-red-600 ml-1">{detailedLogs.summary.recentErrors} errors</span>
                 )}
               </>
