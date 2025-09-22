@@ -37,6 +37,7 @@ import {
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { useQueueMonitoring } from '@/hooks/useQueueMonitoring';
 import { 
   LineChart, 
   Line, 
@@ -167,6 +168,23 @@ const AdminUnifiedMonitoring: React.FC = () => {
   const [systemHealth, setSystemHealth] = useState<any>(null);
   const [cacheStats, setCacheStats] = useState<any>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
+  
+  // Queue monitoring hook
+  const {
+    queueData,
+    loading: queueLoading,
+    error: queueError,
+    lastRefresh: queueLastRefresh,
+    fetchQueueStatus,
+    refreshQueueStatus,
+    resetAllQueues,
+    resetQueueByApiSource,
+    getQueueStatusColor,
+    getQueueStatusText,
+    formatTimeAgo,
+    getApiSourceDisplayName,
+    getApiSourceIcon
+  } = useQueueMonitoring({ autoRefresh: true, refreshInterval: 30000 });
 
   // Fetch data function
   const fetchAllData = async () => {
@@ -421,6 +439,55 @@ const AdminUnifiedMonitoring: React.FC = () => {
       }
     }
 
+    // Check queue health
+    if (queueData?.summary) {
+      // High number of failed entries
+      if (queueData.summary.byStatus.failed > 10) {
+        newAlerts.push({
+          id: 'queue-high-failures',
+          type: 'error',
+          severity: 'high',
+          title: 'High Queue Failure Rate',
+          message: `${queueData.summary.byStatus.failed} failed queue entries detected`,
+          service: 'queue_system',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Very old pending entries
+      if (queueData.summary.oldestPendingEntry) {
+        const oldestTime = new Date(queueData.summary.oldestPendingEntry.queued_at);
+        const hoursOld = (Date.now() - oldestTime.getTime()) / (1000 * 60 * 60);
+        
+        if (hoursOld > 2) {
+          newAlerts.push({
+            id: 'queue-stale-entries',
+            type: 'warning',
+            severity: 'medium',
+            title: 'Stale Queue Entries',
+            message: `Oldest pending entry is ${Math.round(hoursOld)} hours old`,
+            service: 'queue_system',
+            timestamp: new Date().toISOString()
+          });
+        }
+      }
+
+      // Check for API sources with high failure rates
+      Object.entries(queueData.summary.byApiSource).forEach(([apiSource, stats]: [string, any]) => {
+        if (stats.total > 0 && stats.failed / stats.total > 0.5) {
+          newAlerts.push({
+            id: `queue-${apiSource}-high-failure-rate`,
+            type: 'warning',
+            severity: 'medium',
+            title: 'High Failure Rate',
+            message: `${getApiSourceDisplayName(apiSource)} has ${Math.round((stats.failed / stats.total) * 100)}% failure rate`,
+            service: apiSource,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+    }
+
     setAlerts(newAlerts);
   };
 
@@ -517,13 +584,21 @@ const AdminUnifiedMonitoring: React.FC = () => {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="quotas">User Quotas</TabsTrigger>
           <TabsTrigger value="mentions">Mention Analytics</TabsTrigger>
           <TabsTrigger value="api-limits">API Limits</TabsTrigger>
           <TabsTrigger value="system">System Health</TabsTrigger>
           <TabsTrigger value="users">User Activity</TabsTrigger>
+          <TabsTrigger value="queue" className="relative">
+            Queue Status
+            {queueData?.summary.byStatus.failed > 0 && (
+              <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
+                {queueData.summary.byStatus.failed}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="alerts" className="relative">
             Alerts
             {alerts.length > 0 && (
@@ -1067,6 +1142,215 @@ const AdminUnifiedMonitoring: React.FC = () => {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Queue Status Tab */}
+        <TabsContent value="queue" className="space-y-6">
+          <div className="grid grid-cols-1 gap-6">
+            {/* Queue Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Queue Status Overview
+                  <div className="ml-auto flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={refreshQueueStatus}
+                      disabled={queueLoading}
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${queueLoading ? 'animate-spin' : ''}`} />
+                      Refresh
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      onClick={resetAllQueues}
+                      disabled={queueLoading}
+                    >
+                      Reset All Queues
+                    </Button>
+                  </div>
+                </CardTitle>
+                <CardDescription>
+                  Real-time monitoring of the user fetch queue system
+                  {queueLastRefresh && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      Last updated: {format(queueLastRefresh, 'HH:mm:ss')}
+                    </span>
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {queueLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                  </div>
+                ) : queueError ? (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Error loading queue data: {queueError}
+                    </AlertDescription>
+                  </Alert>
+                ) : queueData ? (
+                  <div className="space-y-6">
+                    {/* Overall Statistics */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-4 border rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">{queueData.summary.total}</div>
+                        <div className="text-sm text-muted-foreground">Total Entries</div>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <div className="text-2xl font-bold text-yellow-600">{queueData.summary.byStatus.pending}</div>
+                        <div className="text-sm text-muted-foreground">Pending</div>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">{queueData.summary.byStatus.completed}</div>
+                        <div className="text-sm text-muted-foreground">Completed</div>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <div className="text-2xl font-bold text-red-600">{queueData.summary.byStatus.failed}</div>
+                        <div className="text-sm text-muted-foreground">Failed</div>
+                      </div>
+                    </div>
+
+                    {/* Queue Status by API Source */}
+                    <div>
+                      <h4 className="text-lg font-semibold mb-4">Queue Status by API Source</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(queueData.summary.byApiSource).map(([apiSource, stats]: [string, any]) => (
+                          <div key={apiSource} className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{getApiSourceIcon(apiSource)}</span>
+                                <span className="font-medium">{getApiSourceDisplayName(apiSource)}</span>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => resetQueueByApiSource(apiSource)}
+                                disabled={queueLoading}
+                              >
+                                Reset
+                              </Button>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span>Total:</span>
+                                <span className="font-medium">{stats.total}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-yellow-600">Pending:</span>
+                                <span className="font-medium">{stats.pending}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-blue-600">Processing:</span>
+                                <span className="font-medium">{stats.processing}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-green-600">Completed:</span>
+                                <span className="font-medium">{stats.completed}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-red-600">Failed:</span>
+                                <span className="font-medium">{stats.failed}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span>Avg Priority:</span>
+                                <span className="font-medium">{stats.averagePriority}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Recent Queue Entries */}
+                    <div>
+                      <h4 className="text-lg font-semibold mb-4">Recent Queue Entries</h4>
+                      <div className="border rounded-lg">
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-4 py-2 text-left text-sm font-medium">Source</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium">Status</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium">Priority</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium">Queued</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium">Last Served</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {queueData.entries.slice(0, 20).map((entry) => (
+                                <tr key={entry.id} className="border-t">
+                                  <td className="px-4 py-2">
+                                    <div className="flex items-center gap-2">
+                                      <span>{getApiSourceIcon(entry.api_source)}</span>
+                                      <span className="text-sm">{getApiSourceDisplayName(entry.api_source)}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    <Badge 
+                                      variant={entry.status === 'failed' ? 'destructive' : 
+                                               entry.status === 'completed' ? 'default' : 
+                                               entry.status === 'processing' ? 'secondary' : 'outline'}
+                                    >
+                                      {getQueueStatusText(entry.status)}
+                                    </Badge>
+                                  </td>
+                                  <td className="px-4 py-2 text-sm">{entry.priority_score}</td>
+                                  <td className="px-4 py-2 text-sm text-muted-foreground">
+                                    {formatTimeAgo(entry.queued_at)}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm text-muted-foreground">
+                                    {entry.last_served_at ? formatTimeAgo(entry.last_served_at) : 'Never'}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Queue Health Indicators */}
+                    <div>
+                      <h4 className="text-lg font-semibold mb-4">Queue Health Indicators</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="border rounded-lg p-4">
+                          <h5 className="font-medium mb-2">Oldest Pending Entry</h5>
+                          {queueData.summary.oldestPendingEntry ? (
+                            <div className="text-sm text-muted-foreground">
+                              <div>Source: {getApiSourceDisplayName(queueData.summary.oldestPendingEntry.api_source)}</div>
+                              <div>Queued: {formatTimeAgo(queueData.summary.oldestPendingEntry.queued_at)}</div>
+                              <div>Priority: {queueData.summary.oldestPendingEntry.priority_score}</div>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-green-600">No pending entries</div>
+                          )}
+                        </div>
+                        <div className="border rounded-lg p-4">
+                          <h5 className="font-medium mb-2">Average Priority Score</h5>
+                          <div className="text-2xl font-bold text-blue-600">
+                            {queueData.summary.averagePriorityScore}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Higher scores = higher priority
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-muted-foreground">No queue data available</div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
