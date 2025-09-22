@@ -1,6 +1,6 @@
-import { useUserRole } from "@/hooks/use-user-role";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useUserRole } from "../hooks/use-user-role";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Button } from "../components/ui/button";
 import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare, Activity, BarChart3, GitBranch, TestTube } from "lucide-react";
 import { Link } from "react-router-dom";
 

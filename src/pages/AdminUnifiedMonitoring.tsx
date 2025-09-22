@@ -37,7 +37,7 @@ import {
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { useQueueMonitoring } from '@/hooks/useQueueMonitoring';
+import { useQueueMonitoring } from '../hooks/useQueueMonitoring';
 import { 
   LineChart, 
   Line, 
@@ -187,6 +187,176 @@ const AdminUnifiedMonitoring: React.FC = () => {
     getApiSourceDisplayName,
     getApiSourceIcon
   } = useQueueMonitoring({ autoRefresh: true, refreshInterval: 30000 });
+
+  // Generate alerts based on monitoring data
+  const generateAlerts = () => {
+    const newAlerts: any[] = [];
+
+    // Check API limits
+    if (apiLimits) {
+      Object.entries(apiLimits).forEach(([service, data]: [string, any]) => {
+        if (!data.available) {
+          newAlerts.push({
+            id: `api-${service}-unavailable`,
+            type: 'error',
+            severity: 'high',
+            title: `${service.toUpperCase()} API Unavailable`,
+            message: data.error || 'API service is not responding',
+            service,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+    }
+
+    // Check quota usage
+    if (userQuotaUsage) {
+      userQuotaUsage.forEach(user => {
+        user.quota_usage.forEach((quota: any) => {
+          if (quota.utilization_percentage > 90) {
+            newAlerts.push({
+              id: `quota-${user.user_id}-${quota.source_type}`,
+              type: 'warning',
+              severity: 'high',
+              title: 'High Quota Usage',
+              message: `${user.full_name} has used ${quota.utilization_percentage.toFixed(1)}% of ${quota.source_type} quota`,
+              user: user.full_name,
+              source: quota.source_type,
+              timestamp: new Date().toISOString()
+            });
+          }
+        });
+      });
+    }
+
+    // Check API usage
+    if (apiVsQuota?.external_api_usage) {
+      Object.entries(apiVsQuota.external_api_usage).forEach(([service, data]: [string, any]) => {
+        if (data.usage_percentage > 80) {
+          newAlerts.push({
+            id: `usage-${service}-high`,
+            type: 'warning',
+            severity: 'medium',
+            title: 'High API Usage',
+            message: `${service.toUpperCase()} usage is at ${data.usage_percentage.toFixed(1)}%`,
+            service,
+            usage: data.usage_percentage,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+    }
+
+    // Check system health
+    if (systemHealth) {
+      if (systemHealth.database_status !== 'healthy') {
+        newAlerts.push({
+          id: 'system-database-unhealthy',
+          type: 'error',
+          severity: 'high',
+          title: 'Database Health Issue',
+          message: `Database status: ${systemHealth.database_status}`,
+          component: 'database',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      if (systemHealth.automated_fetching_status !== 'active') {
+        newAlerts.push({
+          id: 'system-fetching-inactive',
+          type: 'warning',
+          severity: 'medium',
+          title: 'Automated Fetching Inactive',
+          message: `Automated fetching status: ${systemHealth.automated_fetching_status}`,
+          component: 'fetching',
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
+    // Check queue health
+    if (queueData?.summary) {
+      const failureRate = queueData.summary.byStatus.failed / queueData.summary.total;
+      if (failureRate > 0.2) {
+        newAlerts.push({
+          id: 'queue-high-failure-rate',
+          type: 'warning',
+          severity: 'high',
+          title: 'High Queue Failure Rate',
+          message: `${(failureRate * 100).toFixed(1)}% of queue entries are failing`,
+          component: 'queue',
+          failureRate,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Check for stale entries
+      if (queueData.summary.oldestPendingEntry) {
+        const oldestTime = new Date(queueData.summary.oldestPendingEntry.queued_at);
+        const hoursOld = (Date.now() - oldestTime.getTime()) / (1000 * 60 * 60);
+        if (hoursOld > 2) {
+          newAlerts.push({
+            id: 'queue-stale-entries',
+            type: 'warning',
+            severity: 'medium',
+            title: 'Stale Queue Entries',
+            message: `Oldest pending entry is ${hoursOld.toFixed(1)} hours old`,
+            component: 'queue',
+            hoursOld,
+            timestamp: new Date().toISOString()
+          });
+        }
+      }
+    }
+
+    // Check cursor health
+    if (cursorData?.health) {
+      const errorRate = cursorData.health.error / cursorData.health.total;
+      if (errorRate > 0.1) {
+        newAlerts.push({
+          id: 'cursor-high-error-rate',
+          type: 'warning',
+          severity: 'medium',
+          title: 'High Cursor Error Rate',
+          message: `${(errorRate * 100).toFixed(1)}% of cursors have errors`,
+          component: 'cursor',
+          errorRate,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      if (cursorData.health.stale > 5) {
+        newAlerts.push({
+          id: 'cursor-many-stale',
+          type: 'warning',
+          severity: 'medium',
+          title: 'Many Stale Cursors',
+          message: `${cursorData.health.stale} cursors are stale`,
+          component: 'cursor',
+          staleCount: cursorData.health.stale,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Check individual cursor issues
+      if (cursorData.issues && cursorData.issues.length > 0) {
+        cursorData.issues.forEach((issue: any, index: number) => {
+          newAlerts.push({
+            id: `cursor-issue-${index}`,
+            type: issue.severity === 'high' ? 'error' : 'warning',
+            severity: issue.severity,
+            title: `Cursor Issue: ${issue.message}`,
+            message: issue.examples ? `${issue.examples.length} examples found` : 'Issue detected',
+            component: 'cursor',
+            issueType: issue.type,
+            timestamp: new Date().toISOString()
+          });
+        });
+      }
+    }
+
+    setAlerts(newAlerts);
+  };
 
   // Fetch data function
   const fetchAllData = async () => {
