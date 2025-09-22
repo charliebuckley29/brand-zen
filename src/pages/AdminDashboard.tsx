@@ -149,29 +149,6 @@ export default function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link to="/admin/monitoring">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Activity className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">System Monitoring</CardTitle>
-                    <CardDescription>
-                      Track resource usage and scaling limits
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Monitor API usage, edge function calls, user activity, and system performance metrics.
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-
           <Link to="/admin/unified-monitoring">
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <CardHeader>
@@ -180,43 +157,21 @@ export default function AdminDashboard() {
                     <BarChart3 className="w-5 h-5 text-green-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Unified Monitoring</CardTitle>
+                    <CardTitle className="text-lg">Unified Monitoring Dashboard</CardTitle>
                     <CardDescription>
-                      Comprehensive API & quota analytics
+                      Comprehensive system monitoring & analytics
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  View API usage, user quotas, mention analytics, and system performance in one place.
+                  Monitor API usage, user quotas, system health, performance metrics, and user activity in one unified dashboard.
                 </p>
               </CardContent>
             </Card>
           </Link>
 
-          <Link to="/admin/api-limits">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <BarChart3 className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">API Limits & Usage</CardTitle>
-                    <CardDescription>
-                      Monitor API usage and track service limits
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Track API usage across all services, monitor rate limits, and get alerts when approaching quotas.
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
 
           <Link to="/admin/cursor-monitoring">
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
