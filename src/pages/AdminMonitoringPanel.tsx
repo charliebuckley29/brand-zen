@@ -31,7 +31,8 @@ import {
   TrendingDown,
   Shield,
   Wifi,
-  WifiOff
+  WifiOff,
+  RotateCcw
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -80,6 +81,7 @@ const AdminMonitoringPanel: React.FC = () => {
     lastRefresh: queueLastRefresh,
     fetchQueueStatus,
     refreshQueueStatus,
+    resetFailedQueue,
     getQueueStatusColor,
     getQueueStatusText,
     formatTimeAgo,
@@ -713,6 +715,16 @@ const AdminMonitoringPanel: React.FC = () => {
               >
                 <RefreshCw className={`h-4 w-4 ${queueLoading ? 'animate-spin' : ''}`} />
                 Refresh
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={resetFailedQueue}
+                disabled={queueLoading}
+                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset Failed
               </Button>
               {queueLastRefresh && (
                 <span className="text-sm text-muted-foreground">

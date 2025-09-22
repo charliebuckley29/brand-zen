@@ -105,6 +105,40 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
     fetchQueueStatus();
   }, [fetchQueueStatus]);
 
+  const resetFailedQueue = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/debug/reset-failed-queue`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to reset queue: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success(`Successfully reset ${result.resetCount} failed queue entries`);
+        // Refresh the queue status after reset
+        await fetchQueueStatus();
+      } else {
+        throw new Error(result.error || 'Failed to reset queue');
+      }
+    } catch (err: any) {
+      console.error('Error resetting queue:', err);
+      setError(err.message);
+      toast.error(`Failed to reset queue: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchQueueStatus]);
+
   // Auto-refresh effect
   useEffect(() => {
     if (autoRefresh) {
@@ -183,6 +217,7 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
     lastRefresh,
     fetchQueueStatus,
     refreshQueueStatus,
+    resetFailedQueue,
     getQueueStatusColor,
     getQueueStatusText,
     formatTimeAgo,
