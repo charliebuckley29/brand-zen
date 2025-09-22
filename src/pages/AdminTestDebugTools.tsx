@@ -317,10 +317,11 @@ export default function AdminTestDebugTools() {
                                 <SelectTrigger className="h-8">
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="youtube">YouTube</SelectItem>
-                                  <SelectItem value="reddit">Reddit</SelectItem>
-                                </SelectContent>
+                              <SelectContent>
+                                <SelectItem value="youtube">YouTube</SelectItem>
+                                <SelectItem value="reddit">Reddit</SelectItem>
+                                <SelectItem value="x">X (Twitter)</SelectItem>
+                              </SelectContent>
                               </Select>
                             </div>
                           </div>
