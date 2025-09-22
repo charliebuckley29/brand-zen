@@ -173,28 +173,6 @@ export default function AdminDashboard() {
           </Link>
 
 
-          <Link to="/admin/cursor-monitoring">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <GitBranch className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">Cursor Monitoring</CardTitle>
-                    <CardDescription>
-                      Monitor API cursor continuity and pagination state
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Track API pagination cursors, verify continuity, and detect cursor-related issues.
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
 
           <Link to="/admin/test-debug">
             <Card className="cursor-pointer hover:shadow-md transition-shadow">

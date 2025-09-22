@@ -167,6 +167,8 @@ const AdminUnifiedMonitoring: React.FC = () => {
   const [apiLimits, setApiLimits] = useState<any>(null);
   const [systemHealth, setSystemHealth] = useState<any>(null);
   const [cacheStats, setCacheStats] = useState<any>(null);
+  const [cursorData, setCursorData] = useState<any>(null);
+  const [cursorLoading, setCursorLoading] = useState(false);
   const [alerts, setAlerts] = useState<any[]>([]);
   
   // Queue monitoring hook
@@ -192,14 +194,15 @@ const AdminUnifiedMonitoring: React.FC = () => {
     try {
       const backendUrl = 'https://mentions-backend.vercel.app';
       
-          const [userQuotaRes, monthlyRes, apiVsQuotaRes, analyticsRes, apiLimitsRes, systemHealthRes, cacheStatsRes] = await Promise.allSettled([
+          const [userQuotaRes, monthlyRes, apiVsQuotaRes, analyticsRes, apiLimitsRes, systemHealthRes, cacheStatsRes, cursorRes] = await Promise.allSettled([
             fetch(`${backendUrl}/api/admin/user-quota-usage?month=${selectedMonth}&source_type=${selectedSource}`),
             fetch(`${backendUrl}/api/admin/monthly-mentions?month=${selectedMonth}&source_type=${selectedSource}`),
             fetch(`${backendUrl}/api/admin/api-vs-quota-limits`),
             fetch(`${backendUrl}/api/admin/quota-analytics?days=30`),
             fetch(`${backendUrl}/api/admin/api-limits`),
             fetch(`${backendUrl}/api/admin/system-health`),
-            fetch(`${backendUrl}/api/admin/cache-stats`)
+            fetch(`${backendUrl}/api/admin/cache-stats`),
+            fetch(`${backendUrl}/api/admin/cursor-status`)
           ]);
 
       // Process user quota usage
@@ -242,6 +245,12 @@ const AdminUnifiedMonitoring: React.FC = () => {
       if (cacheStatsRes.status === 'fulfilled' && cacheStatsRes.value.ok) {
         const data = await cacheStatsRes.value.json();
         setCacheStats(data.data);
+      }
+
+      // Process cursor data
+      if (cursorRes.status === 'fulfilled' && cursorRes.value.ok) {
+        const data = await cursorRes.value.json();
+        setCursorData(data);
       }
 
       // Generate alerts based on data
@@ -304,6 +313,55 @@ const AdminUnifiedMonitoring: React.FC = () => {
     if (percentage >= 90) return <Badge variant="destructive">Critical</Badge>;
     if (percentage >= 75) return <Badge variant="secondary">Warning</Badge>;
     return <Badge variant="default">Healthy</Badge>;
+  };
+
+  // Cursor monitoring functions
+  const fetchCursorStatus = async () => {
+    setCursorLoading(true);
+    try {
+      const response = await fetch('https://mentions-backend.vercel.app/api/admin/cursor-status');
+      const result = await response.json();
+      setCursorData(result);
+    } catch (error) {
+      console.error('Error fetching cursor status:', error);
+      toast.error('Failed to fetch cursor status');
+    } finally {
+      setCursorLoading(false);
+    }
+  };
+
+  const runCursorHealthCheck = async () => {
+    try {
+      const response = await fetch('https://mentions-backend.vercel.app/api/admin/cursor-health-check?cleanup=true');
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success(`Cursor health check complete: ${result.health_report.overall_health}`);
+        await fetchCursorStatus();
+      }
+    } catch (error) {
+      console.error('Error running cursor health check:', error);
+      toast.error('Failed to run cursor health check');
+    }
+  };
+
+  const getCursorStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active': return <Activity className="h-4 w-4 text-green-500" />;
+      case 'completed': return <CheckCircle className="h-4 w-4 text-blue-500" />;
+      case 'error': return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'paused': return <Clock className="h-4 w-4 text-yellow-500" />;
+      default: return <Activity className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'error': return 'destructive';
+      case 'warning': return 'default';
+      case 'info': return 'secondary';
+      default: return 'secondary';
+    }
   };
 
   // Generate alerts based on monitoring data
@@ -488,6 +546,52 @@ const AdminUnifiedMonitoring: React.FC = () => {
       });
     }
 
+    // Check cursor health
+    if (cursorData?.issues && cursorData.issues.length > 0) {
+      cursorData.issues.forEach((issue: any) => {
+        newAlerts.push({
+          id: `cursor-${issue.type}`,
+          type: issue.severity === 'error' ? 'error' : 'warning',
+          severity: issue.severity === 'error' ? 'high' : 'medium',
+          title: `Cursor Issue: ${issue.type}`,
+          message: issue.message,
+          service: 'cursor_system',
+          timestamp: new Date().toISOString()
+        });
+      });
+    }
+
+    // Check cursor health statistics
+    if (cursorData?.health) {
+      const health = cursorData.health;
+      
+      // High error rate
+      if (health.total > 0 && health.error / health.total > 0.3) {
+        newAlerts.push({
+          id: 'cursor-high-error-rate',
+          type: 'error',
+          severity: 'high',
+          title: 'High Cursor Error Rate',
+          message: `${health.error} out of ${health.total} cursors have errors (${Math.round((health.error / health.total) * 100)}%)`,
+          service: 'cursor_system',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Many stale cursors
+      if (health.stale > 10) {
+        newAlerts.push({
+          id: 'cursor-many-stale',
+          type: 'warning',
+          severity: 'medium',
+          title: 'Many Stale Cursors',
+          message: `${health.stale} cursors are stale and may need cleanup`,
+          service: 'cursor_system',
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
     setAlerts(newAlerts);
   };
 
@@ -584,7 +688,7 @@ const AdminUnifiedMonitoring: React.FC = () => {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="quotas">User Quotas</TabsTrigger>
           <TabsTrigger value="mentions">Mention Analytics</TabsTrigger>
@@ -596,6 +700,14 @@ const AdminUnifiedMonitoring: React.FC = () => {
             {queueData?.summary.byStatus.failed > 0 && (
               <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
                 {queueData.summary.byStatus.failed}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="cursors" className="relative">
+            Cursor Monitoring
+            {cursorData?.issues && cursorData.issues.length > 0 && (
+              <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
+                {cursorData.issues.length}
               </Badge>
             )}
           </TabsTrigger>
@@ -1349,6 +1461,187 @@ const AdminUnifiedMonitoring: React.FC = () => {
                 ) : (
                   <div className="text-center py-8">
                     <div className="text-muted-foreground">No queue data available</div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Cursor Monitoring Tab */}
+        <TabsContent value="cursors" className="space-y-6">
+          <div className="grid grid-cols-1 gap-6">
+            {/* Cursor Status Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  Cursor Monitoring Overview
+                  <div className="ml-auto flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={runCursorHealthCheck}
+                      disabled={cursorLoading}
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${cursorLoading ? 'animate-spin' : ''}`} />
+                      Health Check
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={fetchCursorStatus}
+                      disabled={cursorLoading}
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${cursorLoading ? 'animate-spin' : ''}`} />
+                      Refresh
+                    </Button>
+                  </div>
+                </CardTitle>
+                <CardDescription>
+                  Monitor API cursor continuity and pagination state across all users and brands
+                  {cursorData?.timestamp && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      Last updated: {format(new Date(cursorData.timestamp), 'HH:mm:ss')}
+                    </span>
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {cursorLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                  </div>
+                ) : cursorData ? (
+                  <div className="space-y-6">
+                    {/* Health Overview */}
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                      <div className="text-center p-4 border rounded-lg">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <Database className="h-4 w-4 text-blue-500" />
+                        </div>
+                        <div className="text-2xl font-bold text-blue-600">{cursorData.health.total}</div>
+                        <div className="text-sm text-muted-foreground">Total Cursors</div>
+                      </div>
+                      
+                      <div className="text-center p-4 border rounded-lg">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <Activity className="h-4 w-4 text-green-500" />
+                        </div>
+                        <div className="text-2xl font-bold text-green-600">{cursorData.health.active}</div>
+                        <div className="text-sm text-muted-foreground">Active</div>
+                      </div>
+                      
+                      <div className="text-center p-4 border rounded-lg">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <CheckCircle className="h-4 w-4 text-blue-500" />
+                        </div>
+                        <div className="text-2xl font-bold text-blue-600">{cursorData.health.completed}</div>
+                        <div className="text-sm text-muted-foreground">Completed</div>
+                      </div>
+                      
+                      <div className="text-center p-4 border rounded-lg">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        </div>
+                        <div className="text-2xl font-bold text-red-600">{cursorData.health.error}</div>
+                        <div className="text-sm text-muted-foreground">Errors</div>
+                      </div>
+                      
+                      <div className="text-center p-4 border rounded-lg">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                        </div>
+                        <div className="text-2xl font-bold text-yellow-600">{cursorData.health.stale}</div>
+                        <div className="text-sm text-muted-foreground">Stale</div>
+                      </div>
+                    </div>
+
+                    {/* Issues */}
+                    {cursorData.issues && cursorData.issues.length > 0 && (
+                      <div>
+                        <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                          <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                          Issues Detected ({cursorData.issues.length})
+                        </h4>
+                        <div className="space-y-4">
+                          {cursorData.issues.map((issue: any, index: number) => (
+                            <Alert key={index} variant={getSeverityColor(issue.severity)}>
+                              <AlertTriangle className="h-4 w-4" />
+                              <AlertDescription>
+                                <div className="font-medium">{issue.message}</div>
+                                {issue.examples && issue.examples.length > 0 && (
+                                  <div className="mt-2 text-sm">
+                                    <div className="font-medium">Examples:</div>
+                                    <ul className="list-disc list-inside mt-1">
+                                      {issue.examples.slice(0, 3).map((example: any, idx: number) => (
+                                        <li key={idx}>
+                                          {example.user_id} - {example.api_source} 
+                                          {example.hours_stale && ` (${example.hours_stale}h old)`}
+                                          {example.error_message && ` - ${example.error_message}`}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </AlertDescription>
+                            </Alert>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Detailed View */}
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold">All Cursors ({cursorData.cursors?.length || 0})</h4>
+                      <div className="border rounded-lg overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-4 py-2 text-left text-sm font-medium">Status</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium">User</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium">Brand</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium">Source</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium">Last Fetched</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium">Cursor Data</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {cursorData.cursors?.slice(0, 20).map((cursor: any) => (
+                                <tr key={cursor.id} className="border-t">
+                                  <td className="px-4 py-2">
+                                    <div className="flex items-center gap-2">
+                                      {getCursorStatusIcon(cursor.status)}
+                                      <Badge variant={cursor.status === 'active' ? 'default' : 'secondary'}>
+                                        {cursor.status}
+                                      </Badge>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-2 text-sm">{cursor.user_email || cursor.user_id}</td>
+                                  <td className="px-4 py-2 text-sm">{cursor.brand_name || 'Unknown'}</td>
+                                  <td className="px-4 py-2">
+                                    <Badge variant="outline">{cursor.api_source}</Badge>
+                                  </td>
+                                  <td className="px-4 py-2 text-sm text-muted-foreground">
+                                    {new Date(cursor.last_fetched_at).toLocaleString()}
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    <div className="max-w-xs truncate text-sm">
+                                      {cursor.cursor_data ? JSON.stringify(cursor.cursor_data).substring(0, 50) + '...' : 'None'}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-muted-foreground">No cursor data available</div>
                   </div>
                 )}
               </CardContent>
