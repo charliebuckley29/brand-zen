@@ -57,19 +57,29 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
         
         if (!cursorsResponse.ok) {
           const errorData = await cursorsResponse.json();
-          console.warn('Failed to clear API cursors:', errorData);
-          // Don't throw here - cursors clearing is nice-to-have, not critical
+          console.error('Failed to clear API cursors:', errorData);
+          toast({ 
+            title: 'Warning', 
+            description: 'Mentions cleared but cursors may not have been reset. Next fetch might continue from previous position.', 
+            variant: 'destructive' 
+          });
+        } else {
+          console.log('✅ API cursors cleared successfully');
         }
       } catch (cursorsError) {
-        console.warn('Failed to clear API cursors:', cursorsError);
-        // Don't throw here - cursors clearing is nice-to-have, not critical
+        console.error('Failed to clear API cursors:', cursorsError);
+        toast({ 
+          title: 'Warning', 
+          description: 'Mentions cleared but cursors may not have been reset. Next fetch might continue from previous position.', 
+          variant: 'destructive' 
+        });
       }
       
       await onMentionsUpdated();
       const message = alsoDeleteRemovedMentions 
-        ? 'All mentions, removed mentions, and API cursors were cleared. Fetching will start fresh.' 
-        : 'All your mentions and API cursors were cleared. Fetching will start fresh.';
-      toast({ title: 'Mentions cleared', description: message });
+        ? 'All mentions, removed mentions, and API cursors cleared successfully. Fetching will start fresh.' 
+        : 'All mentions and API cursors cleared successfully. Fetching will start fresh.';
+      toast({ title: 'Data cleared', description: message });
     } catch (err) {
       console.error('Error clearing mentions:', err);
       toast({ title: 'Clear failed', description: 'Could not delete mentions.', variant: 'destructive' });
