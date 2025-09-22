@@ -1,7 +1,7 @@
 import { useUserRole } from "@/hooks/use-user-role";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare, Activity, BarChart3, GitBranch } from "lucide-react";
+import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare, Activity, BarChart3, GitBranch, TestTube } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function AdminDashboard() {
@@ -191,6 +191,29 @@ export default function AdminDashboard() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">
                   Track API pagination cursors, verify continuity, and detect cursor-related issues.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/admin/test-debug">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <TestTube className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Test & Debug Tools</CardTitle>
+                    <CardDescription>
+                      Comprehensive testing and debugging tools for troubleshooting
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Run system tests, debug API issues, test cursor continuity, and generate test data for monitoring.
                 </p>
               </CardContent>
             </Card>
