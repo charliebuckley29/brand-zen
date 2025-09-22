@@ -114,6 +114,7 @@ const App = () => {
                   
                   {/* Admin routes - protected by role-based access */}
                   <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/" element={<AdminDashboard />} />
                   <Route path="/admin/api" element={<AdminUserQuotaManagement />} />
                   <Route path="/admin/moderators" element={<AdminModeratorsPanel />} />
                   <Route path="/admin/bug-reports" element={<AdminBugReportsPage />} />
