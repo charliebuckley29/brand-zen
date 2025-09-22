@@ -120,6 +120,7 @@ const App = () => {
                   <Route path="/admin/twilio" element={<AdminTwilioPanel />} />
                   <Route path="/admin/monitoring" element={<AdminMonitoringPanel />} />
                   <Route path="/admin/unified-monitoring" element={<AdminUnifiedMonitoring />} />
+                  <Route path="/admin/unified-monitoring/" element={<AdminUnifiedMonitoring />} />
                   <Route path="/admin/api-limits" element={<AdminApiLimitsPanel />} />
                   <Route path="/admin/test-debug" element={<AdminTestDebugTools />} />
                   <Route path="/admin/test-debug/" element={<AdminTestDebugTools />} />
