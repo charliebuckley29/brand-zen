@@ -2,51 +2,14 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, ChevronDown, ChevronRight, Clock, CheckCircle, XCircle, Activity, Trash2 } from "lucide-react";
+import { FileText, ChevronDown, ChevronRight, Clock, CheckCircle, XCircle, Activity, Trash2, RefreshCw, AlertTriangle, Users, Database } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useTimezone } from "@/contexts/TimezoneContext";
 import { useToast } from "@/hooks/use-toast";
-
-interface SourceStats {
-  google_alerts: number;
-  youtube: number;
-  reddit: number;
-  instagram: number;
-  x: number;
-}
-
-function parseSourceStats(log: string): SourceStats {
-  const stats: SourceStats = {
-    google_alerts: 0,
-    youtube: 0,
-    reddit: 0,
-    instagram: 0,
-    x: 0
-  };
-
-  if (!log) return stats;
-
-  // Parse patterns like "20 Google Alerts", "5 YouTube", etc.
-  const googleMatch = log.match(/(\d+)\s+Google\s+Alerts?/i);
-  if (googleMatch) stats.google_alerts = parseInt(googleMatch[1]);
-
-  const youtubeMatch = log.match(/(\d+)\s+YouTube/i);
-  if (youtubeMatch) stats.youtube = parseInt(youtubeMatch[1]);
-
-  const redditMatch = log.match(/(\d+)\s+Reddit/i);
-  if (redditMatch) stats.reddit = parseInt(redditMatch[1]);
-
-  const instagramMatch = log.match(/(\d+)\s+Instagram/i);
-  if (instagramMatch) stats.instagram = parseInt(instagramMatch[1]);
-
-  const xMatch = log.match(/(\d+)\s+X/i);
-  if (xMatch) stats.x = parseInt(xMatch[1]);
-
-  return stats;
-}
 
 interface FetchLog {
   id: string;
@@ -82,8 +45,27 @@ interface FetchLog {
   created_at: string;
 }
 
+interface DetailedFetchLog {
+  fetchHistory: FetchLog[];
+  automationLogs: any[];
+  queueStatus: any[];
+  summary: {
+    totalFetches: number;
+    recentLogs: number;
+    queueEntries: number;
+    lastFetch: string | null;
+    sourcesInQueue: string[];
+    recentErrors: number;
+    logsByType: Array<{
+      eventType: string;
+      count: number;
+      latest: string;
+    }>;
+  };
+}
+
 export function FetchLogsModal() {
-  const [logs, setLogs] = useState<FetchLog[]>([]);
+  const [detailedLogs, setDetailedLogs] = useState<DetailedFetchLog | null>(null);
   const [loading, setLoading] = useState(false);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
   const [clearing, setClearing] = useState(false);
@@ -93,16 +75,22 @@ export function FetchLogsModal() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('user_fetch_history')
-        .select('*')
-        .order('started_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      setLogs(data || []);
+      const backendUrl = 'https://mentions-backend.vercel.app';
+      const response = await fetch(`${backendUrl}/api/debug/detailed-fetch-logs`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch detailed logs: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setDetailedLogs(data);
     } catch (error) {
-      console.error('Error fetching logs:', error);
+      console.error('Error fetching detailed logs:', error);
+      toast({
+        title: "Failed to load fetch logs",
+        description: "Could not retrieve detailed fetch information",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -114,11 +102,10 @@ export function FetchLogsModal() {
       const { error } = await supabase
         .from('user_fetch_history')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+        .neq('id', '00000000-0000-0000-0000-000000000000');
 
       if (error) throw error;
-      
-      setLogs([]);
+      setDetailedLogs(null);
       toast({
         title: "Fetch logs cleared",
         description: "All fetch logs have been successfully removed.",
@@ -135,10 +122,48 @@ export function FetchLogsModal() {
     }
   };
 
-  useEffect(() => {
-    // Only fetch when modal opens (when component mounts)
-    fetchLogs();
-  }, []);
+  // Helper function to get source status from logs
+  const getSourceStatus = (fetchLog: FetchLog, sourceName: string) => {
+    if (!fetchLog.results_summary?.sourceAttempts) return 'unknown';
+    
+    const sourceAttempt = fetchLog.results_summary.sourceAttempts[sourceName];
+    if (!sourceAttempt) return 'not_attempted';
+    
+    if (sourceAttempt.succeeded) return 'success';
+    if (sourceAttempt.failed) return 'failed';
+    if (sourceAttempt.skipped) return 'skipped';
+    
+    return 'unknown';
+  };
+
+  // Helper function to get source count
+  const getSourceCount = (fetchLog: FetchLog, sourceName: string) => {
+    if (!fetchLog.results_summary?.sourceBreakdown) return 0;
+    return fetchLog.results_summary.sourceBreakdown[sourceName] || 0;
+  };
+
+  // Helper function to get source icon
+  const getSourceIcon = (sourceName: string) => {
+    switch (sourceName) {
+      case 'google_alerts': return '🔍';
+      case 'youtube': return '📺';
+      case 'reddit': return '🤖';
+      case 'x': return '🐦';
+      case 'instagram': return '📷';
+      default: return '📡';
+    }
+  };
+
+  // Helper function to get status color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'success': return 'text-green-600 bg-green-50 border-green-200';
+      case 'failed': return 'text-red-600 bg-red-50 border-red-200';
+      case 'skipped': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'not_attempted': return 'text-gray-600 bg-gray-50 border-gray-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
 
   const toggleLogExpanded = (logId: string) => {
     const newExpanded = new Set(expandedLogs);
@@ -158,27 +183,9 @@ export function FetchLogsModal() {
     return `${Math.round(durationMs / 1000)}s`;
   };
 
-  const getStatusIcon = (log: FetchLog) => {
-    if (!log.completed_at) {
-      return <Activity className="h-4 w-4 text-yellow-500 animate-spin" />;
-    }
-    if (log.failed_keywords > 0) {
-      return <XCircle className="h-4 w-4 text-orange-500" />;
-    }
-    return <CheckCircle className="h-4 w-4 text-green-500" />;
-  };
-
-  const getStatusText = (log: FetchLog) => {
-    if (!log.completed_at) return 'In Progress';
-    if (log.failed_keywords > 0) return 'Partial Success';
-    return 'Completed';
-  };
-
-  const getStatusColor = (log: FetchLog) => {
-    if (!log.completed_at) return 'bg-yellow-100 text-yellow-800';
-    if (log.failed_keywords > 0) return 'bg-orange-100 text-orange-800';
-    return 'bg-green-100 text-green-800';
-  };
+  useEffect(() => {
+    fetchLogs();
+  }, []);
 
   return (
     <Dialog>
@@ -188,14 +195,14 @@ export function FetchLogsModal() {
           View Fetch Logs
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Fetch Logs
+              <Database className="h-5 w-5" />
+              Detailed Fetch Logs
             </div>
-            {logs.length > 0 && (
+            {detailedLogs?.fetchHistory && detailedLogs.fetchHistory.length > 0 && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
@@ -214,7 +221,7 @@ export function FetchLogsModal() {
                     <AlertDialogDescription>
                       This action cannot be undone. This will permanently delete all fetch logs from the system.
                       <br /><br />
-                      <strong>{logs.length} log entries</strong> will be removed.
+                      <strong>{detailedLogs.fetchHistory.length} log entries</strong> will be removed.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -232,255 +239,204 @@ export function FetchLogsModal() {
           </DialogTitle>
         </DialogHeader>
         
-        <div className="flex-1 overflow-y-auto space-y-3">
+        <div className="flex-1 overflow-y-auto space-y-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Activity className="h-6 w-6 animate-spin mr-2" />
-              Loading logs...
+              Loading detailed logs...
             </div>
-          ) : logs.length === 0 ? (
+          ) : !detailedLogs || detailedLogs.fetchHistory.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No fetch logs found
+              <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium">No fetch logs found</p>
+              <p className="text-sm">Automated fetching will create logs here</p>
             </div>
           ) : (
-            logs.map((log) => {
+            detailedLogs.fetchHistory.map((log) => {
               const isExpanded = expandedLogs.has(log.id);
-              const totalKeywords = log.successful_keywords + log.failed_keywords;
+              const sources = ['google_alerts', 'youtube', 'reddit', 'x', 'instagram'];
               
               return (
-                <Collapsible
-                  key={log.id}
-                  open={isExpanded}
-                  onOpenChange={() => toggleLogExpanded(log.id)}
-                  className="border rounded-lg p-4"
-                >
-                  <CollapsibleTrigger className="w-full">
-                    <div className="flex items-center justify-between text-left">
+                <Card key={log.id} className="border-l-4 border-l-blue-500">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        {getStatusIcon(log)}
+                        {log.completed_at ? (
+                          log.failed_keywords > 0 ? (
+                            <AlertTriangle className="h-5 w-5 text-orange-500" />
+                          ) : (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          )
+                        ) : (
+                          <Activity className="h-5 w-5 text-blue-500 animate-pulse" />
+                        )}
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">
-                              {log.fetch_type === 'manual' ? 'Manual' : 'Automated'} Fetch
+                            <span className="font-semibold">
+                              {log.fetch_type === 'manual' ? 'Manual' : 'Automated'} Fetch Cycle
                             </span>
-                            <Badge className={getStatusColor(log)}>
-                              {getStatusText(log)}
+                            <Badge variant={log.completed_at ? (log.failed_keywords > 0 ? "secondary" : "default") : "outline"}>
+                              {log.completed_at ? (log.failed_keywords > 0 ? 'Partial Success' : 'Completed') : 'In Progress'}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            {formatRelativeTime(log.started_at)}
+                          <p className="text-sm text-muted-foreground font-normal">
+                            {formatRelativeTime(log.started_at)} • {log.completed_at ? getFetchDuration(log.started_at, log.completed_at) : 'Running...'}
                           </p>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-3">
-                        {totalKeywords > 0 && (
-                          <div className="text-right text-sm">
-                            <div className="text-green-600 font-medium">
-                              {log.successful_keywords} successful
-                            </div>
-                            {log.failed_keywords > 0 && (
-                              <div className="text-red-600">
-                                {log.failed_keywords} failed
-                              </div>
-                            )}
-                          </div>
-                        )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleLogExpanded(log.id)}
+                      >
                         {isExpanded ? (
                           <ChevronDown className="h-4 w-4" />
                         ) : (
                           <ChevronRight className="h-4 w-4" />
                         )}
-                      </div>
-                    </div>
-                  </CollapsibleTrigger>
+                      </Button>
+                    </CardTitle>
+                  </CardHeader>
                   
-                  <CollapsibleContent className="pt-4 border-t mt-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <div className="font-medium text-muted-foreground">Start Time</div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {formatDateTime(log.started_at)}
+                  {/* Source Status Grid */}
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                      {sources.map((source) => {
+                        const status = getSourceStatus(log, source);
+                        const count = getSourceCount(log, source);
+                        const icon = getSourceIcon(source);
+                        
+                        return (
+                          <div key={source} className={`p-3 rounded-lg border ${getStatusColor(status)}`}>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-lg">{icon}</span>
+                              <span className="text-sm font-medium capitalize">
+                                {source.replace('_', ' ')}
+                              </span>
+                            </div>
+                            <div className="text-xs">
+                              <div className="font-semibold">
+                                {count > 0 ? `${count} mentions` : 'No mentions'}
+                              </div>
+                              <div className="capitalize opacity-75">
+                                {status.replace('_', ' ')}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Summary Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-blue-500" />
+                        <div>
+                          <div className="text-sm font-medium">{log.successful_keywords + log.failed_keywords} Keywords</div>
+                          <div className="text-xs text-muted-foreground">
+                            {log.successful_keywords} successful, {log.failed_keywords} failed
+                          </div>
                         </div>
                       </div>
-                      
-                      <div>
-                        <div className="font-medium text-muted-foreground">End Time</div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {log.completed_at 
-                            ? formatDateTime(log.completed_at)
-                            : 'In progress...'
-                          }
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-green-500" />
+                        <div>
+                          <div className="text-sm font-medium">{log.successful_fetches} Mentions</div>
+                          <div className="text-xs text-muted-foreground">Total fetched</div>
                         </div>
                       </div>
-                      
-                      <div>
-                        <div className="font-medium text-muted-foreground">Duration</div>
-                        <div>{getFetchDuration(log.started_at, log.completed_at)}</div>
-                      </div>
-                      
-                      <div>
-                        <div className="font-medium text-muted-foreground">Type</div>
-                        <Badge variant={log.fetch_type === 'manual' ? 'default' : 'secondary'}>
-                          {log.fetch_type === 'manual' ? 'Manual' : 'Automated'}
-                        </Badge>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-purple-500" />
+                        <div>
+                          <div className="text-sm font-medium">
+                            {log.completed_at ? getFetchDuration(log.started_at, log.completed_at) : 'Running...'}
+                          </div>
+                          <div className="text-xs text-muted-foreground">Duration</div>
+                        </div>
                       </div>
                     </div>
                     
-                    {/* Enhanced Results Summary */}
-                    <div className="mt-4 p-3 bg-muted/50 rounded-md">
-                      <div className="font-medium text-sm mb-3">Results Summary</div>
-                      <div className="space-y-3">
-                        {/* Enhanced Summary with new data structure */}
-                        {log.results_summary ? (
-                          <>
-                            {/* Overall Statistics */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                              <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4 text-blue-500" />
-                                <div>
-                                  <div className="font-medium">{log.results_summary.totalFetched}</div>
-                                  <div className="text-xs text-muted-foreground">Total Fetched</div>
-                                </div>
-                              </div>
+                    {/* Expanded Details */}
+                    {isExpanded && (
+                      <CollapsibleContent className="mt-4 space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-sm flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              Timing Details
+                            </h4>
+                            <div className="space-y-1 text-sm text-muted-foreground">
+                              <div>Started: {formatDateTime(log.started_at)}</div>
+                              {log.completed_at && (
+                                <div>Completed: {formatDateTime(log.completed_at)}</div>
+                              )}
+                              <div>Duration: {getFetchDuration(log.started_at, log.completed_at)}</div>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-sm flex items-center gap-2">
+                              <Activity className="h-4 w-4" />
+                              Processing Results
+                            </h4>
+                            <div className="space-y-1 text-sm">
                               <div className="flex items-center gap-2">
                                 <CheckCircle className="h-4 w-4 text-green-500" />
-                                <div>
-                                  <div className="font-medium">{log.results_summary.totalInserted}</div>
-                                  <div className="text-xs text-muted-foreground">New Mentions</div>
-                                </div>
+                                <span>{log.successful_keywords} keywords processed successfully</span>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <XCircle className="h-4 w-4 text-orange-500" />
-                                <div>
-                                  <div className="font-medium">{log.results_summary.totalDuplicates}</div>
-                                  <div className="text-xs text-muted-foreground">Duplicates</div>
+                              {log.failed_keywords > 0 && (
+                                <div className="flex items-center gap-2">
+                                  <XCircle className="h-4 w-4 text-red-500" />
+                                  <span>{log.failed_keywords} keywords failed</span>
                                 </div>
-                              </div>
+                              )}
                               <div className="flex items-center gap-2">
-                                <Activity className="h-4 w-4 text-purple-500" />
-                                <div>
-                                  <div className="font-medium">{log.successful_keywords}</div>
-                                  <div className="text-xs text-muted-foreground">Keywords</div>
-                                </div>
+                                <FileText className="h-4 w-4 text-blue-500" />
+                                <span>{log.successful_fetches} mentions fetched total</span>
                               </div>
                             </div>
-
-                            {/* Source Breakdown */}
-                            {log.results_summary.sourceBreakdown && (
-                              <div className="pt-3 border-t">
-                                <div className="text-xs font-medium text-muted-foreground mb-2">Source Breakdown:</div>
-                                <div className="flex flex-wrap gap-2 text-xs">
-                                  {log.results_summary.sourceBreakdown.google_alerts > 0 && (
-                                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                      📰 {log.results_summary.sourceBreakdown.google_alerts} Google Alerts
-                                    </span>
-                                  )}
-                                  {log.results_summary.sourceBreakdown.youtube > 0 && (
-                                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded">
-                                      🎥 {log.results_summary.sourceBreakdown.youtube} YouTube
-                                    </span>
-                                  )}
-                                  {log.results_summary.sourceBreakdown.reddit > 0 && (
-                                    <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                                      🔴 {log.results_summary.sourceBreakdown.reddit} Reddit
-                                    </span>
-                                  )}
-                                  {log.results_summary.sourceBreakdown.instagram > 0 && (
-                                    <span className="bg-pink-100 text-pink-800 px-2 py-1 rounded">
-                                      📸 {log.results_summary.sourceBreakdown.instagram} Instagram
-                                    </span>
-                                  )}
-                                  {log.results_summary.sourceBreakdown.x > 0 && (
-                                    <span className="bg-sky-100 text-sky-800 px-2 py-1 rounded">
-                                      🐦 {log.results_summary.sourceBreakdown.x} X
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Source Attempts Status */}
-                            {log.results_summary.sourceAttempts && (
-                              <div className="pt-3 border-t">
-                                <div className="text-xs font-medium text-muted-foreground mb-2">Source Status:</div>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                                  {Object.entries(log.results_summary.sourceAttempts).map(([source, attempt]) => (
-                                    <div key={source} className="flex items-center gap-2">
-                                      {attempt.succeeded ? (
-                                        <CheckCircle className="h-3 w-3 text-green-500" />
-                                      ) : attempt.failed ? (
-                                        <XCircle className="h-3 w-3 text-red-500" />
-                                      ) : (
-                                        <Clock className="h-3 w-3 text-gray-400" />
-                                      )}
-                                      <span className="capitalize">{source.replace('_', ' ')}</span>
-                                      {attempt.reason && attempt.reason !== '' && (
-                                        <span className="text-muted-foreground">({attempt.reason})</span>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          /* Fallback to old format */
-                          <>
-                            {/* Keywords Summary */}
-                            {totalKeywords > 0 && (
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <CheckCircle className="h-4 w-4 text-green-500" />
-                                  <span>{log.successful_keywords} keywords processed successfully</span>
-                                </div>
-                                {log.failed_keywords > 0 && (
-                                  <div className="flex items-center gap-2">
-                                    <XCircle className="h-4 w-4 text-red-500" />
-                                    <span>{log.failed_keywords} keywords failed</span>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            
-                            {/* Mentions Summary */}
-                            {log.successful_fetches > 0 && (
-                              <div className="flex items-center gap-2 text-sm">
-                                <FileText className="h-4 w-4 text-blue-500" />
-                                <span className="font-medium">{log.successful_fetches} mentions fetched</span>
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Full Logs Section */}
-                    {log.log && log.log.trim() !== '' && (
-                      <div className="mt-4 p-3 bg-muted/30 rounded-md">
-                        <details className="text-sm">
-                          <summary className="cursor-pointer font-medium text-muted-foreground hover:text-foreground mb-2">
-                            📋 Full Logs
-                          </summary>
-                          <div className="mt-2 pt-2 border-t">
-                            <pre className="text-xs bg-background p-3 rounded border whitespace-pre-wrap overflow-x-auto">
-                              {log.log}
-                            </pre>
                           </div>
-                        </details>
-                      </div>
+                        </div>
+                        
+                        {/* Raw Logs */}
+                        {log.log && log.log.trim() !== '' && (
+                          <div className="mt-4 p-4 bg-muted/30 rounded-lg">
+                            <details className="text-sm">
+                              <summary className="cursor-pointer font-medium text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2">
+                                <FileText className="h-4 w-4" />
+                                Raw Log Data
+                              </summary>
+                              <div className="mt-2 pt-2 border-t">
+                                <pre className="text-xs bg-background p-3 rounded border whitespace-pre-wrap overflow-x-auto max-h-48">
+                                  {log.log}
+                                </pre>
+                              </div>
+                            </details>
+                          </div>
+                        )}
+                      </CollapsibleContent>
                     )}
-                  </CollapsibleContent>
-                </Collapsible>
+                  </CardContent>
+                </Card>
               );
             })
           )}
         </div>
         
-        <div className="flex justify-end pt-4 border-t">
+        <div className="flex justify-between items-center pt-4 border-t">
+          <div className="text-sm text-muted-foreground">
+            {detailedLogs && (
+              <>
+                {detailedLogs.summary.totalFetches} total fetches • 
+                {detailedLogs.summary.recentErrors > 0 && (
+                  <span className="text-red-600 ml-1">{detailedLogs.summary.recentErrors} errors</span>
+                )}
+              </>
+            )}
+          </div>
           <Button variant="outline" onClick={fetchLogs} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh Logs
           </Button>
         </div>
