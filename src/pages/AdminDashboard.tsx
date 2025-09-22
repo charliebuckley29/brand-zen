@@ -172,6 +172,29 @@ export default function AdminDashboard() {
             </Card>
           </Link>
 
+          <Link to="/admin/unified-monitoring">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Unified Monitoring</CardTitle>
+                    <CardDescription>
+                      Comprehensive API & quota analytics
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  View API usage, user quotas, mention analytics, and system performance in one place.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
           <Link to="/admin/api-limits">
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <CardHeader>

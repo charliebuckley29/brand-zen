@@ -1,0 +1,682 @@
+import React, { useState, useEffect } from 'react';
+import { useUserRole } from '../hooks/use-user-role';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import { Input } from '../components/ui/input';
+import { 
+  ArrowLeft, 
+  Activity, 
+  TrendingUp, 
+  TrendingDown,
+  AlertTriangle, 
+  RefreshCw, 
+  Clock, 
+  Zap, 
+  BarChart3, 
+  AlertCircle,
+  Users,
+  Database,
+  Shield,
+  Wifi,
+  WifiOff,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Eye,
+  EyeOff,
+  Calendar,
+  Filter,
+  Download,
+  Settings,
+  MessageSquare
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
+import { toast } from 'sonner';
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer, 
+  BarChart, 
+  Bar, 
+  PieChart, 
+  Pie, 
+  Cell,
+  AreaChart,
+  Area
+} from 'recharts';
+
+// Types for the unified monitoring data
+interface UserQuotaUsage {
+  user_id: string;
+  full_name: string;
+  quota_usage: Array<{
+    source_type: string;
+    monthly_limit: number;
+    current_usage: number;
+    remaining_quota: number;
+    utilization_percentage: number;
+  }>;
+}
+
+interface MonthlyMentionsData {
+  month: string;
+  total_mentions: number;
+  mentions_by_source: Array<{
+    source_type: string;
+    total_mentions: number;
+    unique_users: number;
+    avg_mentions_per_user: number;
+  }>;
+  mentions_by_user: Array<{
+    user_id: string;
+    total_mentions: number;
+    mentions_by_source: Record<string, number>;
+    full_name: string;
+  }>;
+  unique_users: number;
+}
+
+interface ApiVsQuotaData {
+  external_api_usage: {
+    apify?: {
+      available: boolean;
+      data?: {
+        computeUnitsUsed: number;
+        computeUnitsLimit: number;
+        usagePercentage: number;
+      };
+      error?: string;
+    };
+    scraperapi?: {
+      available: boolean;
+      data?: {
+        creditsRemaining: number;
+        plan: string;
+      };
+      error?: string;
+    };
+    [key: string]: any;
+  };
+  user_quota_usage: {
+    total_users: number;
+    total_monthly_quota: number;
+    quota_utilization_percentage: number;
+    quota_usage_by_source: Record<string, any>;
+  };
+  warnings: Array<{
+    type: string;
+    service?: string;
+    message: string;
+    severity: 'low' | 'medium' | 'high';
+  }>;
+}
+
+interface QuotaAnalyticsData {
+  period_days: number;
+  current_month: string;
+  overall_stats: {
+    total_mentions: number;
+    total_api_calls: number;
+    total_users: number;
+    total_limits: number;
+    avg_mentions_per_user: number;
+  };
+  source_analytics: Array<{
+    source_type: string;
+    total_mentions: number;
+    total_api_calls: number;
+    unique_users: number;
+    active_limits: number;
+    current_month_mentions: number;
+    avg_mentions_per_user: number;
+  }>;
+  top_users: Array<{
+    user_id: string;
+    full_name: string;
+    total_mentions: number;
+    source_breakdown: Record<string, number>;
+  }>;
+}
+
+const AdminUnifiedMonitoring: React.FC = () => {
+  const { isAdmin, loading: roleLoading } = useUserRole();
+  
+  // State management
+  const [activeTab, setActiveTab] = useState('overview');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [selectedSource, setSelectedSource] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+
+  // Data state
+  const [userQuotaUsage, setUserQuotaUsage] = useState<UserQuotaUsage[]>([]);
+  const [monthlyMentions, setMonthlyMentions] = useState<MonthlyMentionsData | null>(null);
+  const [apiVsQuota, setApiVsQuota] = useState<ApiVsQuotaData | null>(null);
+  const [quotaAnalytics, setQuotaAnalytics] = useState<QuotaAnalyticsData | null>(null);
+  const [apiLimits, setApiLimits] = useState<any>(null);
+
+  // Fetch data function
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      const backendUrl = 'https://mentions-backend.vercel.app';
+      
+          const [userQuotaRes, monthlyRes, apiVsQuotaRes, analyticsRes, apiLimitsRes] = await Promise.allSettled([
+            fetch(`${backendUrl}/api/admin/user-quota-usage?month=${selectedMonth}&source_type=${selectedSource}`),
+            fetch(`${backendUrl}/api/admin/monthly-mentions?month=${selectedMonth}&source_type=${selectedSource}`),
+            fetch(`${backendUrl}/api/admin/api-vs-quota-limits`),
+            fetch(`${backendUrl}/api/admin/quota-analytics?days=30`),
+            fetch(`${backendUrl}/api/admin/api-limits`)
+          ]);
+
+      // Process user quota usage
+      if (userQuotaRes.status === 'fulfilled' && userQuotaRes.value.ok) {
+        const data = await userQuotaRes.value.json();
+        setUserQuotaUsage(data.data.users || []);
+      }
+
+      // Process monthly mentions
+      if (monthlyRes.status === 'fulfilled' && monthlyRes.value.ok) {
+        const data = await monthlyRes.value.json();
+        setMonthlyMentions(data.data);
+      }
+
+      // Process API vs quota
+      if (apiVsQuotaRes.status === 'fulfilled' && apiVsQuotaRes.value.ok) {
+        const data = await apiVsQuotaRes.value.json();
+        setApiVsQuota(data.data);
+      }
+
+      // Process quota analytics
+      if (analyticsRes.status === 'fulfilled' && analyticsRes.value.ok) {
+        const data = await analyticsRes.value.json();
+        setQuotaAnalytics(data.data);
+      }
+
+      // Process API limits
+      if (apiLimitsRes.status === 'fulfilled' && apiLimitsRes.value.ok) {
+        const data = await apiLimitsRes.value.json();
+        setApiLimits(data.limits);
+      }
+
+      setLastRefresh(new Date());
+      toast.success('Monitoring data refreshed successfully');
+    } catch (error) {
+      console.error('Error fetching monitoring data:', error);
+      toast.error('Failed to refresh monitoring data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial data fetch
+  useEffect(() => {
+    if (isAdmin) {
+      fetchAllData();
+    }
+  }, [isAdmin, selectedMonth, selectedSource]);
+
+  // Loading state
+  if (roleLoading || loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading monitoring data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Access control
+  if (!isAdmin) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-muted-foreground mb-6">
+            You don't have permission to access this page.
+          </p>
+          <Link to="/dashboard" className="text-primary hover:underline">
+            Return to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Helper functions
+  const getStatusColor = (percentage: number) => {
+    if (percentage >= 90) return 'text-red-600';
+    if (percentage >= 75) return 'text-yellow-600';
+    return 'text-green-600';
+  };
+
+  const getStatusBadge = (percentage: number) => {
+    if (percentage >= 90) return <Badge variant="destructive">Critical</Badge>;
+    if (percentage >= 75) return <Badge variant="secondary">Warning</Badge>;
+    return <Badge variant="default">Healthy</Badge>;
+  };
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat().format(num);
+  };
+
+  const sourceColors = {
+    youtube: '#FF0000',
+    reddit: '#FF4500',
+    x: '#1DA1F2',
+    google_alert: '#4285F4',
+    rss_news: '#34A853',
+    openai: '#10A37F'
+  };
+
+  return (
+    <div className="container mx-auto py-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Link to="/admin">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Admin
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold">Unified Monitoring Dashboard</h1>
+            <p className="text-muted-foreground">
+              Comprehensive view of API usage, quotas, and system performance
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button onClick={fetchAllData} disabled={loading} variant="outline" size="sm">
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <div className="text-sm text-muted-foreground">
+            Last updated: {format(lastRefresh, 'HH:mm:ss')}
+          </div>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-4 w-4" />
+              <span className="text-sm font-medium">Month:</span>
+              <Input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="w-40"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4" />
+              <span className="text-sm font-medium">Source:</span>
+              <Select value={selectedSource} onValueChange={setSelectedSource}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  <SelectItem value="youtube">YouTube</SelectItem>
+                  <SelectItem value="reddit">Reddit</SelectItem>
+                  <SelectItem value="x">X (Twitter)</SelectItem>
+                  <SelectItem value="google_alert">Google Alerts</SelectItem>
+                  <SelectItem value="rss_news">RSS News</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Warnings */}
+      {apiVsQuota?.warnings && apiVsQuota.warnings.length > 0 && (
+        <div className="space-y-2">
+          {apiVsQuota.warnings.map((warning, index) => (
+            <Alert key={index} variant={warning.severity === 'high' ? 'destructive' : 'default'}>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>{warning.service || warning.type}:</strong> {warning.message}
+              </AlertDescription>
+            </Alert>
+          ))}
+        </div>
+      )}
+
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="quotas">User Quotas</TabsTrigger>
+          <TabsTrigger value="mentions">Mention Analytics</TabsTrigger>
+          <TabsTrigger value="api-limits">API Limits</TabsTrigger>
+        </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Mentions</CardTitle>
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatNumber(monthlyMentions?.total_mentions || 0)}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {selectedMonth} • {monthlyMentions?.unique_users || 0} users
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">API Calls</CardTitle>
+                <Zap className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatNumber(quotaAnalytics?.overall_stats.total_api_calls || 0)}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Last 30 days
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Quota Utilization</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${getStatusColor(apiVsQuota?.user_quota_usage.quota_utilization_percentage || 0)}`}>
+                  {Math.round(apiVsQuota?.user_quota_usage.quota_utilization_percentage || 0)}%
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {getStatusBadge(apiVsQuota?.user_quota_usage.quota_utilization_percentage || 0)}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {apiVsQuota?.user_quota_usage.total_users || 0}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  With quota limits
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Mentions by Source */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Mentions by Source</CardTitle>
+                <CardDescription>Distribution of mentions across different sources</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={monthlyMentions?.mentions_by_source || []}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ source_type, total_mentions }) => `${source_type}: ${total_mentions}`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="total_mentions"
+                    >
+                      {(monthlyMentions?.mentions_by_source || []).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={sourceColors[entry.source_type as keyof typeof sourceColors] || '#8884d8'} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* API Usage by Source */}
+            <Card>
+              <CardHeader>
+                <CardTitle>API Usage by Source</CardTitle>
+                <CardDescription>API calls distribution across sources</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={quotaAnalytics?.source_analytics || []}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="source_type" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="total_api_calls" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* User Quotas Tab */}
+        <TabsContent value="quotas" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>User Quota Usage</CardTitle>
+              <CardDescription>
+                Current quota usage for all users in {selectedMonth}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {userQuotaUsage.map((user) => (
+                  <Card key={user.user_id} className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold">{user.full_name}</h3>
+                      <Badge variant="outline">{user.user_id.slice(0, 8)}...</Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                      {user.quota_usage.map((quota) => (
+                        <div key={quota.source_type} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium capitalize">
+                              {quota.source_type.replace('_', ' ')}
+                            </span>
+                            <span className={`text-xs ${getStatusColor(quota.utilization_percentage)}`}>
+                              {Math.round(quota.utilization_percentage)}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full ${
+                                quota.utilization_percentage >= 90 
+                                  ? 'bg-red-500' 
+                                  : quota.utilization_percentage >= 75 
+                                  ? 'bg-yellow-500' 
+                                  : 'bg-green-500'
+                              }`}
+                              style={{ width: `${Math.min(quota.utilization_percentage, 100)}%` }}
+                            />
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {quota.current_usage} / {quota.monthly_limit}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Mention Analytics Tab */}
+        <TabsContent value="mentions" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Mentions by User */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Users by Mentions</CardTitle>
+                <CardDescription>Users with the most mentions in {selectedMonth}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {monthlyMentions?.mentions_by_user.slice(0, 10).map((user, index) => (
+                    <div key={user.user_id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium">{user.full_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {Object.keys(user.mentions_by_source).length} sources
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{formatNumber(user.total_mentions)}</p>
+                        <p className="text-xs text-muted-foreground">mentions</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Source Breakdown */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Source Performance</CardTitle>
+                <CardDescription>Detailed breakdown by source</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {monthlyMentions?.mentions_by_source.map((source) => (
+                    <div key={source.source_type} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div 
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: sourceColors[source.source_type as keyof typeof sourceColors] || '#8884d8' }}
+                        />
+                        <div>
+                          <p className="font-medium capitalize">
+                            {source.source_type.replace('_', ' ')}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {source.unique_users} users
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{formatNumber(source.total_mentions)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {source.avg_mentions_per_user} avg/user
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* API Limits Tab */}
+        <TabsContent value="api-limits" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* External API Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle>External API Status</CardTitle>
+                <CardDescription>Status of external API services</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {Object.entries(apiLimits || {}).map(([service, data]: [string, any]) => (
+                    <div key={service} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-3 h-3 rounded-full ${
+                          data.available ? 'bg-green-500' : 'bg-red-500'
+                        }`} />
+                        <div>
+                          <p className="font-medium capitalize">{service}</p>
+                          {data.data && (
+                            <p className="text-sm text-muted-foreground">
+                              {data.data.message}
+                              {data.data.estimatedLimit && ` - ${data.data.estimatedLimit}`}
+                            </p>
+                          )}
+                          {data.error && (
+                            <p className="text-sm text-red-500">{data.error}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {data.available ? (
+                          <Badge variant="default">Active</Badge>
+                        ) : (
+                          <Badge variant="destructive">Error</Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* API Usage Trends */}
+            <Card>
+              <CardHeader>
+                <CardTitle>API Usage Trends</CardTitle>
+                <CardDescription>Recent API usage patterns</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={quotaAnalytics?.source_analytics || []}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="source_type" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="total_api_calls" fill="#8884d8" />
+                    <Bar dataKey="total_mentions" fill="#82ca9d" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default AdminUnifiedMonitoring;

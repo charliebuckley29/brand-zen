@@ -35,6 +35,7 @@ import AdminModeratorsPanel from "./pages/AdminModeratorsPanel";
 import AdminBugReportsPage from "./pages/AdminBugReportsPage";
 import AdminTwilioPanel from "./pages/AdminTwilioPanel";
 import AdminMonitoringPanel from "./pages/AdminMonitoringPanel";
+import AdminUnifiedMonitoring from "./pages/AdminUnifiedMonitoring";
 import AdminApiLimitsPanel from "./pages/AdminApiLimitsPanel";
 import CursorMonitoringPage from "./pages/CursorMonitoringPage";
 import NotFound from "./pages/NotFound";
@@ -117,6 +118,7 @@ const App = () => {
                   <Route path="/admin/bug-reports" element={<AdminBugReportsPage />} />
                   <Route path="/admin/twilio" element={<AdminTwilioPanel />} />
                   <Route path="/admin/monitoring" element={<AdminMonitoringPanel />} />
+                  <Route path="/admin/unified-monitoring" element={<AdminUnifiedMonitoring />} />
                   <Route path="/admin/api-limits" element={<AdminApiLimitsPanel />} />
                   <Route path="/admin/cursor-monitoring" element={<CursorMonitoringPage />} />
                   
