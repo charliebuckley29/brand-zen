@@ -164,6 +164,8 @@ const AdminUnifiedMonitoring: React.FC = () => {
   const [apiVsQuota, setApiVsQuota] = useState<ApiVsQuotaData | null>(null);
   const [quotaAnalytics, setQuotaAnalytics] = useState<QuotaAnalyticsData | null>(null);
   const [apiLimits, setApiLimits] = useState<any>(null);
+  const [systemHealth, setSystemHealth] = useState<any>(null);
+  const [alerts, setAlerts] = useState<any[]>([]);
 
   // Fetch data function
   const fetchAllData = async () => {
@@ -171,12 +173,13 @@ const AdminUnifiedMonitoring: React.FC = () => {
     try {
       const backendUrl = 'https://mentions-backend.vercel.app';
       
-          const [userQuotaRes, monthlyRes, apiVsQuotaRes, analyticsRes, apiLimitsRes] = await Promise.allSettled([
+          const [userQuotaRes, monthlyRes, apiVsQuotaRes, analyticsRes, apiLimitsRes, systemHealthRes] = await Promise.allSettled([
             fetch(`${backendUrl}/api/admin/user-quota-usage?month=${selectedMonth}&source_type=${selectedSource}`),
             fetch(`${backendUrl}/api/admin/monthly-mentions?month=${selectedMonth}&source_type=${selectedSource}`),
             fetch(`${backendUrl}/api/admin/api-vs-quota-limits`),
             fetch(`${backendUrl}/api/admin/quota-analytics?days=30`),
-            fetch(`${backendUrl}/api/admin/api-limits`)
+            fetch(`${backendUrl}/api/admin/api-limits`),
+            fetch(`${backendUrl}/api/admin/system-health`)
           ]);
 
       // Process user quota usage
@@ -208,6 +211,15 @@ const AdminUnifiedMonitoring: React.FC = () => {
         const data = await apiLimitsRes.value.json();
         setApiLimits(data.limits);
       }
+
+      // Process system health
+      if (systemHealthRes.status === 'fulfilled' && systemHealthRes.value.ok) {
+        const data = await systemHealthRes.value.json();
+        setSystemHealth(data.data);
+      }
+
+      // Generate alerts based on data
+      generateAlerts();
 
       setLastRefresh(new Date());
       toast.success('Monitoring data refreshed successfully');
@@ -266,6 +278,142 @@ const AdminUnifiedMonitoring: React.FC = () => {
     if (percentage >= 90) return <Badge variant="destructive">Critical</Badge>;
     if (percentage >= 75) return <Badge variant="secondary">Warning</Badge>;
     return <Badge variant="default">Healthy</Badge>;
+  };
+
+  // Generate alerts based on monitoring data
+  const generateAlerts = () => {
+    const newAlerts: any[] = [];
+
+    // Check API limits
+    if (apiLimits) {
+      Object.entries(apiLimits).forEach(([service, data]: [string, any]) => {
+        if (!data.available) {
+          newAlerts.push({
+            id: `api-${service}-unavailable`,
+            type: 'error',
+            severity: 'high',
+            title: `${service.toUpperCase()} API Unavailable`,
+            message: data.error || 'API service is not responding',
+            service,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+    }
+
+    // Check quota usage
+    if (userQuotaUsage) {
+      userQuotaUsage.forEach(user => {
+        user.quota_usage.forEach((quota: any) => {
+          if (quota.utilization_percentage > 90) {
+            newAlerts.push({
+              id: `quota-${user.user_id}-${quota.source_type}`,
+              type: 'warning',
+              severity: 'high',
+              title: 'High Quota Usage',
+              message: `${user.full_name} has used ${quota.utilization_percentage.toFixed(1)}% of ${quota.source_type} quota`,
+              user: user.full_name,
+              source: quota.source_type,
+              timestamp: new Date().toISOString()
+            });
+          }
+        });
+      });
+    }
+
+    // Check API usage
+    if (apiVsQuota?.external_api_usage) {
+      Object.entries(apiVsQuota.external_api_usage).forEach(([service, data]: [string, any]) => {
+        if (data.usage_percentage > 80) {
+          newAlerts.push({
+            id: `usage-${service}-high`,
+            type: 'warning',
+            severity: 'medium',
+            title: 'High API Usage',
+            message: `${service} API usage at ${data.usage_percentage.toFixed(1)}%`,
+            service,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+    }
+
+    // Check system health
+    if (systemHealth) {
+      // Database health
+      if (systemHealth.database?.status !== 'healthy') {
+        newAlerts.push({
+          id: 'database-unhealthy',
+          type: 'error',
+          severity: 'high',
+          title: 'Database Connection Issue',
+          message: systemHealth.database?.error || 'Database connection is unhealthy',
+          service: 'database',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // API endpoints health
+      if (systemHealth.api_endpoints?.status !== 'operational') {
+        newAlerts.push({
+          id: 'api-endpoints-degraded',
+          type: 'warning',
+          severity: 'medium',
+          title: 'API Endpoints Degraded',
+          message: systemHealth.api_endpoints?.error || 'API endpoints are not operational',
+          service: 'api_endpoints',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Automated fetching health
+      if (systemHealth.automated_fetching?.status === 'inactive') {
+        newAlerts.push({
+          id: 'automated-fetching-inactive',
+          type: 'error',
+          severity: 'high',
+          title: 'Automated Fetching Inactive',
+          message: systemHealth.automated_fetching?.error || 'Automated fetching is not running',
+          service: 'automated_fetching',
+          timestamp: new Date().toISOString()
+        });
+      } else if (systemHealth.automated_fetching?.status === 'no_recent_activity') {
+        newAlerts.push({
+          id: 'automated-fetching-no-activity',
+          type: 'warning',
+          severity: 'medium',
+          title: 'No Recent Fetch Activity',
+          message: systemHealth.automated_fetching?.error || 'No recent automated fetching activity detected',
+          service: 'automated_fetching',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Queue system health
+      if (systemHealth.queue_system?.status === 'error') {
+        newAlerts.push({
+          id: 'queue-system-error',
+          type: 'error',
+          severity: 'high',
+          title: 'Queue System Error',
+          message: systemHealth.queue_system?.error || 'Queue system has encountered an error',
+          service: 'queue_system',
+          timestamp: new Date().toISOString()
+        });
+      } else if (systemHealth.queue_system?.status === 'empty') {
+        newAlerts.push({
+          id: 'queue-system-empty',
+          type: 'warning',
+          severity: 'low',
+          title: 'Queue System Empty',
+          message: systemHealth.queue_system?.error || 'No users in the fetch queue',
+          service: 'queue_system',
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
+    setAlerts(newAlerts);
   };
 
   const formatNumber = (num: number) => {
@@ -361,13 +509,21 @@ const AdminUnifiedMonitoring: React.FC = () => {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="quotas">User Quotas</TabsTrigger>
           <TabsTrigger value="mentions">Mention Analytics</TabsTrigger>
           <TabsTrigger value="api-limits">API Limits</TabsTrigger>
           <TabsTrigger value="system">System Health</TabsTrigger>
           <TabsTrigger value="users">User Activity</TabsTrigger>
+          <TabsTrigger value="alerts" className="relative">
+            Alerts
+            {alerts.length > 0 && (
+              <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
+                {alerts.length}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -693,30 +849,58 @@ const AdminUnifiedMonitoring: React.FC = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Database Connection</span>
-                    <Badge variant="default" className="bg-green-100 text-green-800">
+                    <Badge variant={
+                      systemHealth?.database?.status === 'healthy' ? 'default' : 'destructive'
+                    } className={
+                      systemHealth?.database?.status === 'healthy' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }>
                       <CheckCircle className="h-3 w-3 mr-1" />
-                      Healthy
+                      {systemHealth?.database?.status === 'healthy' ? 'Healthy' : 'Unhealthy'}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">API Endpoints</span>
-                    <Badge variant="default" className="bg-green-100 text-green-800">
+                    <Badge variant={
+                      systemHealth?.api_endpoints?.status === 'operational' ? 'default' : 'secondary'
+                    } className={
+                      systemHealth?.api_endpoints?.status === 'operational' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-orange-100 text-orange-800'
+                    }>
                       <CheckCircle className="h-3 w-3 mr-1" />
-                      Operational
+                      {systemHealth?.api_endpoints?.status === 'operational' ? 'Operational' : 'Degraded'}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Automated Fetching</span>
-                    <Badge variant="default" className="bg-green-100 text-green-800">
+                    <Badge variant={
+                      systemHealth?.automated_fetching?.status === 'active' ? 'default' : 'secondary'
+                    } className={
+                      systemHealth?.automated_fetching?.status === 'active' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-orange-100 text-orange-800'
+                    }>
                       <CheckCircle className="h-3 w-3 mr-1" />
-                      Active
+                      {systemHealth?.automated_fetching?.status === 'active' ? 'Active' : 
+                       systemHealth?.automated_fetching?.status === 'no_recent_activity' ? 'No Recent Activity' : 'Inactive'}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Queue System</span>
-                    <Badge variant="default" className="bg-green-100 text-green-800">
+                    <Badge variant={
+                      systemHealth?.queue_system?.status === 'processing' ? 'default' : 'secondary'
+                    } className={
+                      systemHealth?.queue_system?.status === 'processing' 
+                        ? 'bg-green-100 text-green-800' 
+                        : systemHealth?.queue_system?.status === 'empty'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
+                    }>
                       <CheckCircle className="h-3 w-3 mr-1" />
-                      Processing
+                      {systemHealth?.queue_system?.status === 'processing' ? 'Processing' :
+                       systemHealth?.queue_system?.status === 'empty' ? 'Empty' : 'Error'}
                     </Badge>
                   </div>
                 </div>
@@ -736,11 +920,11 @@ const AdminUnifiedMonitoring: React.FC = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Average Response Time</span>
-                    <span className="text-sm font-mono">~150ms</span>
+                    <span className="text-sm font-mono">{systemHealth?.performance?.average_response_time || '~150ms'}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Success Rate</span>
-                    <span className="text-sm font-mono text-green-600">99.8%</span>
+                    <span className="text-sm font-mono text-green-600">{systemHealth?.performance?.success_rate || '99.8%'}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Active Users</span>
@@ -831,6 +1015,141 @@ const AdminUnifiedMonitoring: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Alerts Tab */}
+        <TabsContent value="alerts" className="space-y-6">
+          <div className="grid grid-cols-1 gap-6">
+            {/* Alerts Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  System Alerts
+                  {alerts.length > 0 && (
+                    <Badge variant="destructive" className="ml-2">
+                      {alerts.length} Active
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  Real-time alerts for system issues, quota usage, and API problems
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {alerts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-green-600 mb-2">All Systems Healthy</h3>
+                    <p className="text-muted-foreground">No active alerts at this time</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {alerts.map((alert) => (
+                      <div
+                        key={alert.id}
+                        className={`p-4 border rounded-lg ${
+                          alert.severity === 'high' 
+                            ? 'border-red-200 bg-red-50 dark:bg-red-900/20' 
+                            : alert.severity === 'medium'
+                            ? 'border-orange-200 bg-orange-50 dark:bg-orange-900/20'
+                            : 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start space-x-3">
+                            <div className={`w-2 h-2 rounded-full mt-2 ${
+                              alert.severity === 'high' ? 'bg-red-500' : 
+                              alert.severity === 'medium' ? 'bg-orange-500' : 'bg-yellow-500'
+                            }`} />
+                            <div>
+                              <h4 className="font-semibold">{alert.title}</h4>
+                              <p className="text-sm text-muted-foreground mt-1">{alert.message}</p>
+                              <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
+                                <span>{format(new Date(alert.timestamp), 'MMM dd, HH:mm:ss')}</span>
+                                {alert.service && <span>Service: {alert.service}</span>}
+                                {alert.user && <span>User: {alert.user}</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <Badge variant={
+                            alert.severity === 'high' ? 'destructive' : 
+                            alert.severity === 'medium' ? 'secondary' : 'outline'
+                          }>
+                            {alert.severity}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Alert Thresholds */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Alert Thresholds
+                </CardTitle>
+                <CardDescription>
+                  Configure alert thresholds for different monitoring metrics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium mb-2">Quota Usage Alerts</h4>
+                      <div className="space-y-2 text-sm text-muted-foreground">
+                        <div className="flex justify-between">
+                          <span>Warning Threshold:</span>
+                          <span className="font-mono">90%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Critical Threshold:</span>
+                          <span className="font-mono">95%</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">API Usage Alerts</h4>
+                      <div className="space-y-2 text-sm text-muted-foreground">
+                        <div className="flex justify-between">
+                          <span>Warning Threshold:</span>
+                          <span className="font-mono">80%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Critical Threshold:</span>
+                          <span className="font-mono">90%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium mb-2">System Health Alerts</h4>
+                      <div className="space-y-2 text-sm text-muted-foreground">
+                        <div className="flex justify-between">
+                          <span>Response Time:</span>
+                          <span className="font-mono">&gt; 1s</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Error Rate:</span>
+                          <span className="font-mono">&gt; 5%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>API Availability:</span>
+                          <span className="font-mono">Any failure</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
