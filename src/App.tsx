@@ -124,6 +124,7 @@ const App = () => {
                   <Route path="/admin/api-limits" element={<AdminApiLimitsPanel />} />
                   <Route path="/admin/cursor-monitoring" element={<CursorMonitoringPage />} />
                   <Route path="/admin/test-debug" element={<AdminTestDebugTools />} />
+                  <Route path="/admin/test-debug/" element={<AdminTestDebugTools />} />
                   
                   {/* Catch-all route for 404 pages */}
                   <Route path="*" element={<NotFound />} />

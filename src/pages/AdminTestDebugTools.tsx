@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useUserRole } from '@/hooks/use-user-role';
 
 interface TestResult {
   id: string;
@@ -47,6 +48,7 @@ interface DebugInfo {
 }
 
 export default function AdminTestDebugTools() {
+  const { isAdmin, loading: roleLoading } = useUserRole();
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [cursorTestParams, setCursorTestParams] = useState({
@@ -54,6 +56,38 @@ export default function AdminTestDebugTools() {
     keywordId: '02d81c19-0665-4f38-b5ab-aa07d3d111c9',
     testSource: 'youtube'
   });
+
+  // Access control
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">Access Denied</CardTitle>
+            <CardDescription className="text-center">
+              You need admin privileges to access the Test & Debug Tools.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Link to="/">
+              <Button variant="outline" className="w-full">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Available test and debug tools
   const testTools = [
