@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -151,12 +150,12 @@ export function FetchLogsModal() {
   const getSourceStatus = (fetchLog: FetchLog, sourceName: string) => {
     // If we have detailed results_summary, use it
     if (fetchLog.results_summary?.sourceAttempts) {
-      const sourceAttempt = fetchLog.results_summary.sourceAttempts[sourceName];
-      if (!sourceAttempt) return 'not_attempted';
-      
-      if (sourceAttempt.succeeded) return 'success';
-      if (sourceAttempt.failed) return 'failed';
-      if (sourceAttempt.skipped) return 'skipped';
+    const sourceAttempt = fetchLog.results_summary.sourceAttempts[sourceName];
+    if (!sourceAttempt) return 'not_attempted';
+    
+    if (sourceAttempt.succeeded) return 'success';
+    if (sourceAttempt.failed) return 'failed';
+    if (sourceAttempt.skipped) return 'skipped';
       return 'unknown';
     }
     
@@ -176,7 +175,7 @@ export function FetchLogsModal() {
   const getSourceCount = (fetchLog: FetchLog, sourceName: string) => {
     // If we have detailed results_summary, use it
     if (fetchLog.results_summary?.sourceBreakdown) {
-      return fetchLog.results_summary.sourceBreakdown[sourceName] || 0;
+    return fetchLog.results_summary.sourceBreakdown[sourceName] || 0;
     }
     
     // Fallback: Distribute total successful_fetches across sources
@@ -392,6 +391,10 @@ export function FetchLogsModal() {
           </DialogTitle>
         </DialogHeader>
         
+        <DialogDescription className="sr-only">
+          Detailed fetch logs showing API processing results, error analysis, and system health metrics for brand monitoring automation.
+        </DialogDescription>
+        
         <div className="flex-1 overflow-y-auto space-y-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
@@ -547,7 +550,7 @@ export function FetchLogsModal() {
                           
                           {/* Expanded Details */}
                           {expandedLogs.has(`cycle-${cycleIndex}`) && (
-                            <CollapsibleContent className="mt-4 space-y-4">
+                            <div className="mt-4 space-y-4">
                               {/* Error Details */}
                               {cycle.apiResults.some(r => r.status === 'failed' || r.error) && (
                                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -609,7 +612,7 @@ export function FetchLogsModal() {
                                   </div>
                                 </details>
                               </div>
-                            </CollapsibleContent>
+                            </div>
                           )}
                         </CardContent>
                       </Card>
@@ -733,7 +736,7 @@ export function FetchLogsModal() {
                     
                     {/* Expanded Details */}
                     {isExpanded && (
-                      <CollapsibleContent className="mt-4 space-y-4">
+                      <div className="mt-4 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <h4 className="font-medium text-sm flex items-center gap-2">
@@ -789,11 +792,11 @@ export function FetchLogsModal() {
                             </details>
                           </div>
                         )}
-                      </CollapsibleContent>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
-                    );
+              );
                   })}
                   </div>
                 </div>
