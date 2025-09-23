@@ -215,15 +215,28 @@ export function FetchLogsModal() {
       if (log.event_type === 'fetch.begin') {
         // Start new cycle
         if (currentCycle) {
+          // Calculate duration for previous cycle
+          if (currentCycle.endTime) {
+            const start = new Date(currentCycle.startTime);
+            const end = new Date(currentCycle.endTime);
+            currentCycle.duration = `${Math.round((end.getTime() - start.getTime()) / 1000)}s`;
+          }
           cycles.push(currentCycle);
         }
         currentCycle = {
           startTime: log.created_at,
+          endTime: null,
+          duration: null,
           apiResults: [],
           logs: [log]
         };
       } else if (currentCycle) {
         currentCycle.logs.push(log);
+        
+        // Mark end of cycle
+        if (log.event_type === 'fetch.complete') {
+          currentCycle.endTime = log.created_at;
+        }
         
         // Process API results
         if (log.event_type === 'fetch.api_final_result' && log.data) {
@@ -238,7 +251,8 @@ export function FetchLogsModal() {
         } else if (log.event_type === 'process-api.youtube.start' || 
                    log.event_type === 'process-api.reddit.start' ||
                    log.event_type === 'process-api.x.start' ||
-                   log.event_type === 'process-api.google_alert.start') {
+                   log.event_type === 'process-api.google_alert.start' ||
+                   log.event_type === 'process-api.rss_news.start') {
           // Track API start
           const source = log.event_type.split('.')[1];
           const existingResult = currentCycle.apiResults.find(r => r.source === source);
@@ -254,7 +268,8 @@ export function FetchLogsModal() {
         } else if (log.event_type === 'process-api.youtube.success' ||
                    log.event_type === 'process-api.reddit.success' ||
                    log.event_type === 'process-api.x.success' ||
-                   log.event_type === 'process-api.google_alert.success') {
+                   log.event_type === 'process-api.google_alert.success' ||
+                   log.event_type === 'process-api.rss_news.success') {
           // Update API success
           const source = log.event_type.split('.')[1];
           const existingResult = currentCycle.apiResults.find(r => r.source === source);
@@ -265,7 +280,8 @@ export function FetchLogsModal() {
         } else if (log.event_type === 'process-api.youtube.error' ||
                    log.event_type === 'process-api.reddit.error' ||
                    log.event_type === 'process-api.x.error' ||
-                   log.event_type === 'process-api.google_alert.error') {
+                   log.event_type === 'process-api.google_alert.error' ||
+                   log.event_type === 'process-api.rss_news.error') {
           // Update API error
           const source = log.event_type.split('.')[1];
           const existingResult = currentCycle.apiResults.find(r => r.source === source);
@@ -279,6 +295,12 @@ export function FetchLogsModal() {
     
     // Add the last cycle
     if (currentCycle) {
+      // Calculate duration for last cycle
+      if (currentCycle.endTime) {
+        const start = new Date(currentCycle.startTime);
+        const end = new Date(currentCycle.endTime);
+        currentCycle.duration = `${Math.round((end.getTime() - start.getTime()) / 1000)}s`;
+      }
       cycles.push(currentCycle);
     }
     
@@ -419,113 +441,178 @@ export function FetchLogsModal() {
                 </div>
               )}
 
-              {/* API Breakdown Section */}
+              {/* Fetch Cycles Section */}
               {detailedLogs.automationLogs && detailedLogs.automationLogs.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                     <Activity className="h-5 w-5" />
-                    API Processing Breakdown
+                    Recent Fetch Cycles
                   </h3>
                   {(() => {
                     // Group logs by fetch cycle
                     const fetchCycles = groupLogsByFetchCycle(detailedLogs.automationLogs);
-                    return fetchCycles.slice(0, 3).map((cycle, cycleIndex) => (
-                      <div key={cycleIndex} className="mb-6 p-4 bg-muted/20 rounded-lg border">
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="font-medium text-sm">
-                            Fetch Cycle {cycleIndex + 1}
-                          </h4>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(cycle.startTime).toLocaleString()}
-                          </span>
-                        </div>
-                        
-                        {/* API Results Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                          {cycle.apiResults.map((apiResult, apiIndex) => (
-                            <div key={apiIndex} className={`p-3 rounded-lg border ${
-                              apiResult.status === 'success' ? 'bg-green-50 border-green-200' :
-                              apiResult.status === 'failed' ? 'bg-red-50 border-red-200' :
-                              apiResult.status === 'skipped' ? 'bg-yellow-50 border-yellow-200' :
-                              'bg-gray-50 border-gray-200'
-                            }`}>
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-lg">{getSourceIcon(apiResult.source)}</span>
-                                <span className="font-medium text-sm capitalize">
-                                  {apiResult.source.replace('_', ' ')}
-                                </span>
-                                <span className={`text-xs px-2 py-1 rounded ${
-                                  apiResult.status === 'success' ? 'bg-green-100 text-green-700' :
-                                  apiResult.status === 'failed' ? 'bg-red-100 text-red-700' :
-                                  apiResult.status === 'skipped' ? 'bg-yellow-100 text-yellow-700' :
-                                  'bg-gray-100 text-gray-700'
-                                }`}>
-                                  {apiResult.status}
-                                </span>
-                              </div>
-                              
-                              <div className="text-xs space-y-1">
-                                <div>Processed: {apiResult.processed || 0} mentions</div>
-                                {apiResult.error && (
-                                  <div className="text-red-600 font-medium">
-                                    Error: {apiResult.error}
-                                  </div>
-                                )}
-                                {apiResult.reason && (
-                                  <div className="text-muted-foreground">
-                                    Reason: {apiResult.reason}
-                                  </div>
-                                )}
-                                {apiResult.duration && (
-                                  <div className="text-muted-foreground">
-                                    Duration: {apiResult.duration}ms
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        
-                        {/* Cycle Summary */}
-                        <div className="text-xs text-muted-foreground">
-                          <div className="flex items-center gap-4">
-                            <span>Total APIs: {cycle.apiResults.length}</span>
-                            <span>Successful: {cycle.apiResults.filter(r => r.status === 'success').length}</span>
-                            <span>Failed: {cycle.apiResults.filter(r => r.status === 'failed').length}</span>
-                            <span>Total Mentions: {cycle.apiResults.reduce((sum, r) => sum + (r.processed || 0), 0)}</span>
-                          </div>
-                        </div>
-                        
-                        {/* Error Details */}
-                        {cycle.apiResults.some(r => r.status === 'failed' || r.error) && (
-                          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <h5 className="text-sm font-medium text-red-800 mb-2">Error Details:</h5>
-                            <div className="space-y-1">
-                              {cycle.apiResults.filter(r => r.status === 'failed' || r.error).map((result, idx) => (
-                                <div key={idx} className="text-xs text-red-700">
-                                  <span className="font-medium capitalize">{result.source.replace('_', ' ')}:</span> {result.error || 'Unknown error'}
+                    return fetchCycles.slice(0, 5).map((cycle, cycleIndex) => (
+                      <Card key={cycleIndex} className="border-l-4 border-l-blue-500">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold">
+                                    Fetch Cycle {cycleIndex + 1}
+                                  </span>
+                                  <Badge variant="default">
+                                    Completed
+                                  </Badge>
                                 </div>
-                              ))}
+                                <p className="text-sm text-muted-foreground font-normal">
+                                  {new Date(cycle.startTime).toLocaleString()}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        )}
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleLogExpanded(`cycle-${cycleIndex}`)}
+                            >
+                              {expandedLogs.has(`cycle-${cycleIndex}`) ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </CardTitle>
+                        </CardHeader>
                         
-                        {/* No Results Analysis */}
-                        {cycle.apiResults.every(r => r.processed === 0) && (
-                          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <h5 className="text-sm font-medium text-yellow-800 mb-2">No Mentions Found:</h5>
-                            <div className="text-xs text-yellow-700">
-                              All APIs completed successfully but found 0 mentions. This could be due to:
-                              <ul className="mt-1 ml-4 list-disc">
-                                <li>Search terms not matching any recent content</li>
-                                <li>API rate limits or quota restrictions</li>
-                                <li>Content not available in the specified time range</li>
-                                <li>API configuration issues</li>
-                              </ul>
+                        <CardContent className="pt-0">
+                          {/* API Results Grid */}
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                            {cycle.apiResults.map((apiResult, apiIndex) => (
+                              <div key={apiIndex} className={`p-3 rounded-lg border ${
+                                apiResult.status === 'success' ? 'bg-green-50 border-green-200' :
+                                apiResult.status === 'failed' ? 'bg-red-50 border-red-200' :
+                                apiResult.status === 'skipped' ? 'bg-yellow-50 border-yellow-200' :
+                                'bg-gray-50 border-gray-200'
+                              }`}>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-lg">{getSourceIcon(apiResult.source)}</span>
+                                  <span className="text-sm font-medium capitalize">
+                                    {apiResult.source.replace('_', ' ')}
+                                  </span>
+                                </div>
+                                <div className="text-xs">
+                                  <div className="font-semibold">
+                                    {apiResult.processed || 0} mentions
+                                  </div>
+                                  <div className="capitalize opacity-75">
+                                    {apiResult.status}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Summary Stats */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-blue-500" />
+                              <div>
+                                <div className="text-sm font-medium">{cycle.apiResults.length} APIs</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {cycle.apiResults.filter(r => r.status === 'success').length} successful
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-green-500" />
+                              <div>
+                                <div className="text-sm font-medium">
+                                  {cycle.apiResults.reduce((sum, r) => sum + (r.processed || 0), 0)} Mentions
+                                </div>
+                                <div className="text-xs text-muted-foreground">Total fetched</div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-purple-500" />
+                              <div>
+                                <div className="text-sm font-medium">
+                                  {cycle.duration || 'N/A'}
+                                </div>
+                                <div className="text-xs text-muted-foreground">Duration</div>
+                              </div>
                             </div>
                           </div>
-                        )}
-                      </div>
+                          
+                          {/* Expanded Details */}
+                          {expandedLogs.has(`cycle-${cycleIndex}`) && (
+                            <CollapsibleContent className="mt-4 space-y-4">
+                              {/* Error Details */}
+                              {cycle.apiResults.some(r => r.status === 'failed' || r.error) && (
+                                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                                  <h5 className="text-sm font-medium text-red-800 mb-2">Error Details:</h5>
+                                  <div className="space-y-1">
+                                    {cycle.apiResults.filter(r => r.status === 'failed' || r.error).map((result, idx) => (
+                                      <div key={idx} className="text-xs text-red-700">
+                                        <span className="font-medium capitalize">{result.source.replace('_', ' ')}:</span> {result.error || 'Unknown error'}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* No Results Analysis */}
+                              {cycle.apiResults.every(r => r.processed === 0) && (
+                                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                  <h5 className="text-sm font-medium text-yellow-800 mb-2">No Mentions Found:</h5>
+                                  <div className="text-xs text-yellow-700">
+                                    All APIs completed successfully but found 0 mentions. This could be due to:
+                                    <ul className="mt-1 ml-4 list-disc">
+                                      <li>Search terms not matching any recent content</li>
+                                      <li>API rate limits or quota restrictions</li>
+                                      <li>Content not available in the specified time range</li>
+                                      <li>API configuration issues</li>
+                                    </ul>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Detailed Logs */}
+                              <div className="p-4 bg-muted/30 rounded-lg">
+                                <details className="text-sm">
+                                  <summary className="cursor-pointer font-medium text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2">
+                                    <FileText className="h-4 w-4" />
+                                    Detailed Processing Logs
+                                  </summary>
+                                  <div className="mt-2 pt-2 border-t">
+                                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                                      {cycle.logs.map((log: any, logIndex: number) => (
+                                        <div key={logIndex} className="text-xs bg-background p-2 rounded border">
+                                          <div className="flex items-center justify-between mb-1">
+                                            <span className="font-medium text-blue-600">
+                                              {log.event_type}
+                                            </span>
+                                            <span className="text-muted-foreground">
+                                              {new Date(log.created_at).toLocaleTimeString()}
+                                            </span>
+                                          </div>
+                                          <p className="text-muted-foreground mb-1">{log.message}</p>
+                                          {log.data && (
+                                            <pre className="text-xs bg-muted p-1 rounded whitespace-pre-wrap">
+                                              {JSON.stringify(log.data, null, 2)}
+                                            </pre>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </details>
+                              </div>
+                            </CollapsibleContent>
+                          )}
+                        </CardContent>
+                      </Card>
                     ));
                   })()}
                 </div>
