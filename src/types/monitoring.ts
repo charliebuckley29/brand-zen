@@ -116,3 +116,4 @@ export interface MonitoringConfig {
   cacheTimeout: number; // milliseconds
   enableRealTime: boolean;
 }
+
