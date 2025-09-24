@@ -1,8 +1,8 @@
-import { Globe, MessageSquare, Youtube, FileText, Twitter } from "lucide-react";
+import { MessageSquare, Youtube, Twitter } from "lucide-react";
 
-export type SourceType = "web" | "news" | "reddit" | "youtube" | "x" | "google_alert";
+export type SourceType = "reddit" | "youtube" | "x" | "google_alert";
 
-export type SourceCategory = "news" | "social" | "web" | "video";
+export type SourceCategory = "news" | "social" | "video";
 
 export interface SourceConfig {
   id: SourceType;
@@ -43,12 +43,6 @@ export const SOURCE_CATEGORIES: Record<SourceCategory, SourceCategoryConfig> = {
     description: "Social platforms and community forums",
     icon: "users"
   },
-  web: {
-    id: "web",
-    name: "Web & Blogs", 
-    description: "General web content, blogs, and websites",
-    icon: "globe"
-  },
   video: {
     id: "video",
     name: "Video Platforms",
@@ -58,32 +52,6 @@ export const SOURCE_CATEGORIES: Record<SourceCategory, SourceCategoryConfig> = {
 };
 
 export const SOURCES: Record<SourceType, SourceConfig> = {
-  news: {
-    id: "news",
-    name: "News Articles",
-    category: "news",
-    description: "News articles from major publications and industry outlets",
-    examples: [
-      "BBC News",
-      "CNN",
-      "Reuters", 
-      "TechCrunch",
-      "The Guardian",
-      "Industry trade publications"
-    ],
-    implemented: true,
-    apiProvider: "GNews API",
-    implementationNotes: "Covers major news sources globally with real-time updates",
-    icon: FileText,
-    configFields: [
-      {
-        name: "country",
-        label: "Country Code",
-        placeholder: "e.g., us, gb, ca",
-        type: "text"
-      }
-    ]
-  },
   reddit: {
     id: "reddit",
     name: "Reddit",
@@ -132,35 +100,6 @@ export const SOURCES: Record<SourceType, SourceConfig> = {
       "Cannot access private videos or comments"
     ],
     icon: Youtube
-  },
-  web: {
-    id: "web",
-    name: "Web & Blogs",
-    category: "web",
-    description: "General web content including blogs, forums, and websites",
-    examples: [
-      "Company blogs",
-      "Personal websites", 
-      "Industry forums",
-      "Product review sites",
-      "General web content"
-    ],
-    implemented: true,
-    apiProvider: "Google Custom Search API",
-    implementationNotes: "Uses Google Custom Search to find web mentions",
-    limitations: [
-      "Limited by Google CSE quotas",
-      "May not index all web content immediately"
-    ],
-    icon: Globe,
-    configFields: [
-      {
-        name: "search_engine_id",
-        label: "Custom Search Engine ID",
-        placeholder: "Your Google CSE ID",
-        type: "text"
-      }
-    ]
   },
   x: {
     id: "x",

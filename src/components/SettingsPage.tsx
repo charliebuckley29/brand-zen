@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X as XIcon, Globe, Newspaper, Youtube, MessageSquare, Rss, AlertCircle, TrendingUp } from "lucide-react";
+import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X as XIcon, Globe, Youtube, MessageSquare, Rss, AlertCircle, TrendingUp } from "lucide-react";
 import { SOURCES, type SourceType } from "@/config/sources";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { TimezoneSettings } from "@/components/TimezoneSettings";
@@ -84,7 +84,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const { profileData, loading: profileLoading, updateProfile, updateNotificationPreferences } = useProfileCompletion();
 
   const { loading: prefsLoading, prefs, setPref, setAllForSource } = useSourcePreferences();
-  const [rssEnabled, setRssEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('rss_news_ingestion') !== 'false' : true));
   const [googleAlertsEnabled, setGoogleAlertsEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('google_alerts_enabled') !== 'false' : true));
   
   // Quota management
@@ -1032,29 +1031,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
               );
             })}
 
-            {/* RSS News Ingestion */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Newspaper className="h-4 w-4" />
-                <div>
-                  <h4 className="text-sm font-medium">RSS News ingestion</h4>
-                  <p className="text-xs text-muted-foreground">Use Google News RSS (server-side)</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{rssEnabled ? 'On' : 'Off'}</span>
-                <Switch
-                  checked={rssEnabled}
-                  onCheckedChange={(v) => {
-                    setRssEnabled(v);
-                    try {
-                      localStorage.setItem('rss_news_ingestion', v ? 'true' : 'false');
-                      toast({ title: v ? 'RSS ingestion enabled' : 'RSS ingestion disabled' });
-                    } catch {}
-                  }}
-                />
-              </div>
-            </div>
 
             {/* Google Alerts */}
             <div className="flex items-center justify-between">

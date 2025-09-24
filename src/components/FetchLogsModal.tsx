@@ -36,6 +36,7 @@ interface FetchLog {
         succeeded: boolean;
         failed: boolean;
         skipped: boolean;
+        quotaExceeded?: boolean;
         reason: string;
       };
     };
@@ -150,12 +151,14 @@ export function FetchLogsModal() {
   const getSourceStatus = (fetchLog: FetchLog, sourceName: string) => {
     // If we have detailed results_summary, use it
     if (fetchLog.results_summary?.sourceAttempts) {
-    const sourceAttempt = fetchLog.results_summary.sourceAttempts[sourceName];
-    if (!sourceAttempt) return 'not_attempted';
-    
-    if (sourceAttempt.succeeded) return 'success';
-    if (sourceAttempt.failed) return 'failed';
-    if (sourceAttempt.skipped) return 'skipped';
+      const sourceAttempt = fetchLog.results_summary.sourceAttempts[sourceName];
+      if (!sourceAttempt) return 'not_attempted';
+      
+      // ✅ FIX: Handle quota exceeded as a distinct status
+      if (sourceAttempt.quotaExceeded) return 'quota_exceeded';
+      if (sourceAttempt.succeeded) return 'success';
+      if (sourceAttempt.failed) return 'failed';
+      if (sourceAttempt.skipped) return 'skipped';
       return 'unknown';
     }
     
@@ -195,7 +198,6 @@ export function FetchLogsModal() {
       case 'reddit': return '🤖';
       case 'x': return '🐦';
       case 'instagram': return '📷';
-      case 'rss_news': return '📰';
       default: return '📡';
     }
   };
@@ -241,17 +243,17 @@ export function FetchLogsModal() {
         if (log.event_type === 'fetch.api_final_result' && log.data) {
           const apiResult = {
             source: log.data.apiSource,
-            status: log.data.success ? 'success' : 'failed',
+            status: log.data.quotaExceeded ? 'quota_exceeded' : (log.data.success ? 'success' : 'failed'),
             processed: log.data.processed || 0,
             error: log.data.hasError ? 'API call failed' : null,
-            reason: log.data.skipped > 0 ? 'Skipped due to quota/rate limits' : null
+            reason: log.data.quotaExceeded ? 'Quota exceeded - no new content available' : 
+                   (log.data.skipped > 0 ? 'Skipped due to quota/rate limits' : null)
           };
           currentCycle.apiResults.push(apiResult);
         } else if (log.event_type === 'process-api.youtube.start' || 
                    log.event_type === 'process-api.reddit.start' ||
                    log.event_type === 'process-api.x.start' ||
-                   log.event_type === 'process-api.google_alert.start' ||
-                   log.event_type === 'process-api.rss_news.start') {
+                   log.event_type === 'process-api.google_alert.start') {
           // Track API start
           const source = log.event_type.split('.')[1];
           const existingResult = currentCycle.apiResults.find(r => r.source === source);
@@ -267,8 +269,7 @@ export function FetchLogsModal() {
         } else if (log.event_type === 'process-api.youtube.success' ||
                    log.event_type === 'process-api.reddit.success' ||
                    log.event_type === 'process-api.x.success' ||
-                   log.event_type === 'process-api.google_alert.success' ||
-                   log.event_type === 'process-api.rss_news.success') {
+                   log.event_type === 'process-api.google_alert.success') {
           // Update API success
           const source = log.event_type.split('.')[1];
           const existingResult = currentCycle.apiResults.find(r => r.source === source);
@@ -279,14 +280,24 @@ export function FetchLogsModal() {
         } else if (log.event_type === 'process-api.youtube.error' ||
                    log.event_type === 'process-api.reddit.error' ||
                    log.event_type === 'process-api.x.error' ||
-                   log.event_type === 'process-api.google_alert.error' ||
-                   log.event_type === 'process-api.rss_news.error') {
+                   log.event_type === 'process-api.google_alert.error') {
           // Update API error
           const source = log.event_type.split('.')[1];
           const existingResult = currentCycle.apiResults.find(r => r.source === source);
           if (existingResult) {
             existingResult.status = 'failed';
             existingResult.error = log.message || 'Unknown error';
+          }
+        } else if (log.event_type === 'process-api.youtube.quota_exceeded' ||
+                   log.event_type === 'process-api.reddit.quota_exceeded' ||
+                   log.event_type === 'process-api.x.quota_exceeded' ||
+                   log.event_type === 'process-api.google_alert.quota_exceeded') {
+          // Update API quota exceeded
+          const source = log.event_type.split('.')[1];
+          const existingResult = currentCycle.apiResults.find(r => r.source === source);
+          if (existingResult) {
+            existingResult.status = 'quota_exceeded';
+            existingResult.reason = 'Quota exceeded - no new content available';
           }
         }
       }
@@ -311,8 +322,10 @@ export function FetchLogsModal() {
     switch (status) {
       case 'success': return 'text-green-600 bg-green-50 border-green-200';
       case 'failed': return 'text-red-600 bg-red-50 border-red-200';
+      case 'quota_exceeded': return 'text-orange-600 bg-orange-50 border-orange-200';
       case 'skipped': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
       case 'not_attempted': return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'running': return 'text-blue-600 bg-blue-50 border-blue-200';
       default: return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
@@ -444,6 +457,39 @@ export function FetchLogsModal() {
                 </div>
               )}
 
+              {/* Quota Insights */}
+              {detailedLogs.automationLogs && detailedLogs.automationLogs.length > 0 && (() => {
+                const recentCycles = groupLogsByFetchCycle(detailedLogs.automationLogs).slice(0, 3);
+                const quotaExceededCount = recentCycles.reduce((count, cycle) => 
+                  count + cycle.apiResults.filter(r => r.status === 'quota_exceeded').length, 0
+                );
+                const totalApiCalls = recentCycles.reduce((count, cycle) => 
+                  count + cycle.apiResults.length, 0
+                );
+                
+                if (quotaExceededCount > 0) {
+                  return (
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-orange-800">
+                        <AlertTriangle className="h-5 w-5" />
+                        Quota Usage Insights
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="text-sm text-orange-700">
+                          <strong>{quotaExceededCount} out of {totalApiCalls}</strong> API calls in recent cycles hit quota limits.
+                        </div>
+                        <div className="text-xs text-orange-600 space-y-1">
+                          <div>💡 <strong>What this means:</strong> Your automated fetching is working correctly, but some APIs have reached their monthly limits.</div>
+                          <div>✅ <strong>Good news:</strong> Other APIs continue working normally - no cascade failures!</div>
+                          <div>🔄 <strong>Next steps:</strong> Quotas reset monthly, or consider upgrading your plan for higher limits.</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
               {/* Fetch Cycles Section */}
               {detailedLogs.automationLogs && detailedLogs.automationLogs.length > 0 && (
                 <div>
@@ -496,6 +542,7 @@ export function FetchLogsModal() {
                               <div key={apiIndex} className={`p-3 rounded-lg border ${
                                 apiResult.status === 'success' ? 'bg-green-50 border-green-200' :
                                 apiResult.status === 'failed' ? 'bg-red-50 border-red-200' :
+                                apiResult.status === 'quota_exceeded' ? 'bg-orange-50 border-orange-200' :
                                 apiResult.status === 'skipped' ? 'bg-yellow-50 border-yellow-200' :
                                 'bg-gray-50 border-gray-200'
                               }`}>
@@ -551,6 +598,23 @@ export function FetchLogsModal() {
                           {/* Expanded Details */}
                           {expandedLogs.has(`cycle-${cycleIndex}`) && (
                             <div className="mt-4 space-y-4">
+                              {/* Quota Exceeded Details */}
+                              {cycle.apiResults.some(r => r.status === 'quota_exceeded') && (
+                                <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                  <h5 className="text-sm font-medium text-orange-800 mb-2">Quota Exceeded:</h5>
+                                  <div className="space-y-1">
+                                    {cycle.apiResults.filter(r => r.status === 'quota_exceeded').map((result, idx) => (
+                                      <div key={idx} className="text-xs text-orange-700">
+                                        <span className="font-medium capitalize">{result.source.replace('_', ' ')}:</span> {result.reason || 'Monthly quota limit reached'}
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div className="mt-2 text-xs text-orange-600">
+                                    💡 <strong>Note:</strong> Quota exceeded means the API worked correctly but you've reached your monthly limit. Other APIs continue working normally.
+                                  </div>
+                                </div>
+                              )}
+
                               {/* Error Details */}
                               {cycle.apiResults.some(r => r.status === 'failed' || r.error) && (
                                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -566,16 +630,16 @@ export function FetchLogsModal() {
                               )}
                               
                               {/* No Results Analysis */}
-                              {cycle.apiResults.every(r => r.processed === 0) && (
+                              {cycle.apiResults.every(r => r.processed === 0) && !cycle.apiResults.some(r => r.status === 'quota_exceeded') && (
                                 <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                                   <h5 className="text-sm font-medium text-yellow-800 mb-2">No Mentions Found:</h5>
                                   <div className="text-xs text-yellow-700">
                                     All APIs completed successfully but found 0 mentions. This could be due to:
                                     <ul className="mt-1 ml-4 list-disc">
                                       <li>Search terms not matching any recent content</li>
-                                      <li>API rate limits or quota restrictions</li>
                                       <li>Content not available in the specified time range</li>
                                       <li>API configuration issues</li>
+                                      <li>All sources have reached their quota limits</li>
                                     </ul>
                                   </div>
                                 </div>
@@ -631,7 +695,7 @@ export function FetchLogsModal() {
                   <div className="space-y-4">
                     {detailedLogs.fetchHistory.map((log) => {
               const isExpanded = expandedLogs.has(log.id);
-              const sources = ['google_alerts', 'youtube', 'reddit', 'x', 'instagram'];
+              const sources = ['google_alerts', 'youtube', 'reddit', 'x'];
               
               return (
                 <Card key={log.id} className="border-l-4 border-l-blue-500">
@@ -825,4 +889,7 @@ export function FetchLogsModal() {
     </Dialog>
   );
 }
+
+
+
 

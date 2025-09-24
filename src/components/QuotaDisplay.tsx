@@ -26,16 +26,14 @@ const sourceDisplayNames: Record<string, string> = {
   youtube: 'YouTube',
   reddit: 'Reddit',
   x: 'X (Twitter)',
-  google_alert: 'Google Alerts',
-  rss_news: 'RSS News'
+  google_alert: 'Google Alerts'
 };
 
 const sourceIcons: Record<string, string> = {
   youtube: '📺',
   reddit: '🔴',
   x: '🐦',
-  google_alert: '🔔',
-  rss_news: '📰'
+  google_alert: '🔔'
 };
 
 export function QuotaDisplay({ quotaData, showDetails = false, className = '' }: QuotaDisplayProps) {
