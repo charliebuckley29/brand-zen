@@ -7,8 +7,13 @@ interface ProfileData {
   pr_team_email: string | null;
   legal_team_email: string | null;
   notification_preferences?: {
-    sms?: boolean;
-    whatsapp?: boolean;
+    email?: {
+      enabled: boolean;
+      frequency: 'immediate' | 'daily' | 'weekly';
+    };
+    // SMS/WhatsApp will be implemented later
+    // sms?: boolean;
+    // whatsapp?: boolean;
   };
 }
 

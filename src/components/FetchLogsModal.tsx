@@ -825,3 +825,4 @@ export function FetchLogsModal() {
     </Dialog>
   );
 }
+

@@ -42,10 +42,10 @@ export const API_LIMITS: ApiLimit[] = [
     warningThreshold: 0.8
   },
   {
-    name: 'Resend',
+    name: 'SendGrid',
     free: 100,
     paid: 50000,
-    unit: 'emails/month',
+    unit: 'emails/day',
     description: 'Email delivery service',
     warningThreshold: 0.9
   }
@@ -65,4 +65,5 @@ export const REFRESH_INTERVALS = {
 
 export const MAX_RETRIES = 3;
 export const CACHE_TIMEOUT = 300000; // 5 minutes
+
 

@@ -52,8 +52,13 @@ export interface ProfileData {
   legal_team_email: string | null;
   timezone?: string;
   notification_preferences?: {
-    sms?: boolean;
-    whatsapp?: boolean;
+    email?: {
+      enabled: boolean;
+      frequency: 'immediate' | 'daily' | 'weekly';
+    };
+    // SMS/WhatsApp will be implemented later
+    // sms?: boolean;
+    // whatsapp?: boolean;
   };
 }
 

@@ -344,3 +344,4 @@ export function AlertMonitoring({ onRefresh, loading }: AlertMonitoringProps) {
     </div>
   );
 }
+
