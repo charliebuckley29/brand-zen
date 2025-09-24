@@ -485,17 +485,17 @@ export function FetchLogsModal() {
                         </CardHeader>
                         <CardContent>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="text-center p-4 bg-green-50 rounded-lg">
-                              <div className="text-2xl font-bold text-green-600">{totalMentions}</div>
-                              <div className="text-sm text-green-700">New mentions found</div>
+                            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{totalMentions}</div>
+                              <div className="text-sm text-green-700 dark:text-green-300">New mentions found</div>
                             </div>
-                            <div className="text-center p-4 bg-blue-50 rounded-lg">
-                              <div className="text-2xl font-bold text-blue-600">{recentCycles.length}</div>
-                              <div className="text-sm text-blue-700">Recent checks</div>
+                            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{recentCycles.length}</div>
+                              <div className="text-sm text-blue-700 dark:text-blue-300">Recent checks</div>
                             </div>
-                            <div className="text-center p-4 bg-orange-50 rounded-lg">
-                              <div className="text-2xl font-bold text-orange-600">{quotaExceededCount}</div>
-                              <div className="text-sm text-orange-700">Sources at limit</div>
+                            <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{quotaExceededCount}</div>
+                              <div className="text-sm text-orange-700 dark:text-orange-300">Sources at limit</div>
                             </div>
                           </div>
                         </CardContent>
@@ -534,14 +534,14 @@ export function FetchLogsModal() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                                   {cycle.apiResults.map((apiResult, apiIndex) => (
                                     <div key={apiIndex} className={`p-3 rounded-lg border ${
-                                      apiResult.status === 'success' ? 'bg-green-50 border-green-200' :
-                                      apiResult.status === 'quota_exceeded' ? 'bg-orange-50 border-orange-200' :
-                                      apiResult.status === 'failed' ? 'bg-red-50 border-red-200' :
-                                      'bg-gray-50 border-gray-200'
+                                      apiResult.status === 'success' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' :
+                                      apiResult.status === 'quota_exceeded' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800' :
+                                      apiResult.status === 'failed' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
+                                      'bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800'
                                     }`}>
                                       <div className="flex items-center gap-2 mb-2">
                                         <span className="text-lg">{getSourceIcon(apiResult.source)}</span>
-                                        <span className="text-sm font-medium">
+                                        <span className="text-sm font-medium text-foreground">
                                           {getSourceDisplayName(apiResult.source)}
                                         </span>
                                       </div>
@@ -555,7 +555,7 @@ export function FetchLogsModal() {
                                 {/* Summary */}
                                 <div className="p-3 bg-muted/30 rounded-lg">
                                   <div className="flex items-center justify-between text-sm">
-                                    <span className="font-medium">
+                                    <span className="font-medium text-foreground">
                                       Total: {cycle.apiResults.reduce((sum, r) => sum + (r.processed || 0), 0)} mentions found
                                     </span>
                                     <span className="text-muted-foreground">
@@ -571,15 +571,15 @@ export function FetchLogsModal() {
 
                       {/* Quota Information */}
                       {quotaExceededCount > 0 && (
-                        <Card className="border-orange-200 bg-orange-50">
+                        <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
                           <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-orange-800">
+                            <CardTitle className="flex items-center gap-2 text-orange-800 dark:text-orange-200">
                               <AlertTriangle className="h-5 w-5" />
                               Monthly Limits
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <div className="text-sm text-orange-700 space-y-2">
+                            <div className="text-sm text-orange-700 dark:text-orange-300 space-y-2">
                               <p><strong>{quotaExceededCount} source{quotaExceededCount !== 1 ? 's' : ''}</strong> have reached their monthly limit.</p>
                               <p>✅ <strong>Good news:</strong> Your monitoring is working correctly! Other sources continue to work normally.</p>
                               <p>🔄 <strong>What happens next:</strong> Limits reset monthly, or you can upgrade your plan for higher limits.</p>
@@ -713,23 +713,23 @@ export function FetchLogsModal() {
                           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
                             {cycle.apiResults.map((apiResult, apiIndex) => (
                               <div key={apiIndex} className={`p-3 rounded-lg border ${
-                                apiResult.status === 'success' ? 'bg-green-50 border-green-200' :
-                                apiResult.status === 'failed' ? 'bg-red-50 border-red-200' :
-                                apiResult.status === 'quota_exceeded' ? 'bg-orange-50 border-orange-200' :
-                                apiResult.status === 'skipped' ? 'bg-yellow-50 border-yellow-200' :
-                                'bg-gray-50 border-gray-200'
+                                apiResult.status === 'success' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' :
+                                apiResult.status === 'failed' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
+                                apiResult.status === 'quota_exceeded' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800' :
+                                apiResult.status === 'skipped' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' :
+                                'bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800'
                               }`}>
                                 <div className="flex items-center gap-2 mb-1">
                                   <span className="text-lg">{getSourceIcon(apiResult.source)}</span>
-                                  <span className="text-sm font-medium">
+                                  <span className="text-sm font-medium text-foreground">
                                     {getSourceDisplayName(apiResult.source)}
                                   </span>
                                 </div>
                                 <div className="text-xs">
-                                  <div className="font-semibold">
+                                  <div className="font-semibold text-foreground">
                                     {apiResult.processed || 0} mentions
                                   </div>
-                                  <div className="capitalize opacity-75">
+                                  <div className="capitalize opacity-75 text-foreground">
                                     {apiResult.status}
                                   </div>
                                 </div>
@@ -1064,6 +1064,8 @@ export function FetchLogsModal() {
     </Dialog>
   );
 }
+
+
 
 
 
