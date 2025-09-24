@@ -4,18 +4,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2, Plus, X } from "lucide-react";
 
-export function StaffSignUp() {
+export function NewUserSignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [brandName, setBrandName] = useState("");
+  const [variants, setVariants] = useState<string[]>([]);
+  const [newVariant, setNewVariant] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
+
+  const addVariant = () => {
+    if (newVariant.trim() && !variants.includes(newVariant.trim())) {
+      setVariants([...variants, newVariant.trim()]);
+      setNewVariant("");
+    }
+  };
+
+  const removeVariant = (index: number) => {
+    setVariants(variants.filter((_, i) => i !== index));
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +39,15 @@ export function StaffSignUp() {
       toast({
         title: "Missing information",
         description: "Please enter your full name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!brandName.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please enter your brand name.",
         variant: "destructive",
       });
       return;
@@ -63,6 +87,22 @@ export function StaffSignUp() {
         if (profileError) {
           console.error('Profile creation error:', profileError);
           // Don't throw here - user is created, just profile creation failed
+        }
+
+        // Create initial keyword with brand information
+        const { error: keywordError } = await supabase
+          .from('keywords')
+          .insert({
+            user_id: authData.user.id,
+            brand_name: brandName.trim(),
+            variants: variants.length > 0 ? variants : null,
+            google_alerts_enabled: false, // Will be enabled after RSS URL setup
+            google_alert_rss_url: null
+          });
+
+        if (keywordError) {
+          console.error('Keyword creation error:', keywordError);
+          // Don't throw here - user and profile are created
         }
 
         setIsSuccess(true);
@@ -121,58 +161,107 @@ export function StaffSignUp() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Staff Sign-Up</CardTitle>
+          <CardTitle className="text-2xl">New User Sign-Up</CardTitle>
           <CardDescription>
             Create your account - approval required before access
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullname">Full Name</Label>
+                <Input
+                  id="fullname"
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number (Optional)</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Create a password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="fullname">Full Name</Label>
+              <Label htmlFor="brandname">Brand Name</Label>
               <Input
-                id="fullname"
+                id="brandname"
                 type="text"
-                placeholder="Enter your full name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Enter your brand name"
+                value={brandName}
+                onChange={(e) => setBrandName(e.target.value)}
                 required
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+              <Label>Brand Variants (Optional)</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add a variant (e.g., product name, slogan)"
+                  value={newVariant}
+                  onChange={(e) => setNewVariant(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addVariant())}
+                />
+                <Button type="button" onClick={addVariant} size="sm" variant="outline">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {variants.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {variants.map((variant, index) => (
+                    <div key={index} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md text-sm">
+                      <span>{variant}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeVariant(index)}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number (Optional)</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="Enter your phone number"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Create a password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
