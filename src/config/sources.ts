@@ -1,4 +1,4 @@
-import { MessageSquare, Youtube, Twitter } from "lucide-react";
+import { MessageSquare, Youtube, Twitter, Rss } from "lucide-react";
 
 export type SourceType = "reddit" | "youtube" | "x" | "google_alert";
 
@@ -141,7 +141,7 @@ export const SOURCES: Record<SourceType, SourceConfig> = {
       "Requires manual setup of Google Alerts",
       "Depends on Google's indexing speed"
     ],
-    icon: Globe
+    icon: Rss
   }
 };
 

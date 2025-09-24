@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X as XIcon, Globe, Youtube, MessageSquare, Rss, AlertCircle, TrendingUp } from "lucide-react";
+import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X as XIcon, Youtube, MessageSquare, Rss, AlertCircle, TrendingUp } from "lucide-react";
 import { SOURCES, type SourceType } from "@/config/sources";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { TimezoneSettings } from "@/components/TimezoneSettings";
@@ -30,18 +30,16 @@ interface SettingsPageProps {
 // Helper function to get the appropriate icon for each source
 const getSourceIcon = (sourceType: SourceType) => {
   switch (sourceType) {
-    case 'web':
-      return Globe;
-    case 'news':
-      return Newspaper;
     case 'reddit':
       return MessageSquare;
     case 'youtube':
       return Youtube;
     case 'x':
       return XIcon;
+    case 'google_alert':
+      return Rss;
     default:
-      return Globe;
+      return Rss;
   }
 };
 

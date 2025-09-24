@@ -19,7 +19,7 @@ import {
   BarChart3,
   RefreshCw,
   Users,
-  Globe
+  Rss
 } from 'lucide-react';
 
 interface DefaultQuotaLimit {
@@ -268,7 +268,7 @@ export function AdminQuotaManagerV2() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
+            <Rss className="h-5 w-5" />
             Default Quotas by Source
           </CardTitle>
           <CardDescription>

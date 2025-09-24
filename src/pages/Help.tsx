@@ -18,7 +18,7 @@ import {
   Bug,
   Search,
   Bell,
-  Globe,
+  Rss,
   Users,
   FileText,
   Eye,
@@ -263,7 +263,7 @@ const Help = () => {
                         
                         const IconComponent = category.icon === "newspaper" ? Newspaper : 
                                             category.icon === "users" ? Users :
-                                            category.icon === "video" ? Video : Globe;
+                                            category.icon === "video" ? Video : Rss;
                         
                         return (
                           <div key={category.id} className="space-y-2">
@@ -341,7 +341,7 @@ const Help = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
+                  <Rss className="h-5 w-5" />
                   Source Implementation Details
                 </CardTitle>
                 <CardDescription>
@@ -355,7 +355,7 @@ const Help = () => {
                   
                   const IconComponent = category.icon === "newspaper" ? Newspaper : 
                                       category.icon === "users" ? Users :
-                                      category.icon === "video" ? Video : Globe;
+                                      category.icon === "video" ? Video : Rss;
                   
                   return (
                     <div key={category.id} className="space-y-4">
