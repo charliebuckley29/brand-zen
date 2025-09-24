@@ -212,7 +212,8 @@ export function ModeratorPanel() {
         .update({ 
           brand_name: brandName,
           variants: variantsArray,
-          google_alert_rss_url: rssUrl || null
+          google_alert_rss_url: rssUrl || null,
+          google_alerts_enabled: rssUrl ? true : false
         })
         .eq("id", keywordId);
 
