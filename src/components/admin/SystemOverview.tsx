@@ -39,7 +39,8 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
       const healthResponse = await fetch('https://mentions-backend.vercel.app/api/admin/system-health');
       if (healthResponse.ok) {
         const healthData = await healthResponse.json();
-        setSystemHealth(healthData);
+        console.log('System health data:', healthData); // Debug log
+        setSystemHealth(healthData.data || healthData);
       } else {
         console.warn('System health endpoint not available');
         setSystemHealth(null);
@@ -49,7 +50,8 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
       const cacheResponse = await fetch('https://mentions-backend.vercel.app/api/admin/cache-stats');
       if (cacheResponse.ok) {
         const cacheData = await cacheResponse.json();
-        setCacheStats(cacheData);
+        console.log('Cache stats data:', cacheData); // Debug log
+        setCacheStats(cacheData.data || cacheData);
       } else {
         console.warn('Cache stats endpoint not available');
         setCacheStats(null);
@@ -117,7 +119,7 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
                       {systemHealth.database?.status || 'Unknown'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {systemHealth.database?.responseTime || 'N/A'}ms
+                      {systemHealth.database?.last_checked ? 'Connected' : 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -128,11 +130,11 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
                 <div>
                   <div className="text-sm font-medium">External APIs</div>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="default" className={getHealthStatus(systemHealth.apis?.overall || 'unknown').bg}>
-                      {systemHealth.apis?.overall || 'Unknown'}
+                    <Badge variant="default" className={getHealthStatus(systemHealth.api_endpoints?.status || 'unknown').bg}>
+                      {systemHealth.api_endpoints?.status || 'Unknown'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {systemHealth.apis?.healthyCount || 0}/{systemHealth.apis?.totalCount || 0}
+                      {systemHealth.api_endpoints?.status || 'Unknown'}
                     </span>
                   </div>
                 </div>
@@ -143,11 +145,11 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
                 <div>
                   <div className="text-sm font-medium">Security</div>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="default" className={getHealthStatus(systemHealth.security?.status || 'unknown').bg}>
-                      {systemHealth.security?.status || 'Unknown'}
+                    <Badge variant="default" className={getHealthStatus(systemHealth.queue_system?.status || 'unknown').bg}>
+                      {systemHealth.queue_system?.status || 'Unknown'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {systemHealth.security?.threatsBlocked || 0} blocked
+                      {systemHealth.queue_system?.status || 'Unknown'}
                     </span>
                   </div>
                 </div>
@@ -158,11 +160,11 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
                 <div>
                   <div className="text-sm font-medium">Performance</div>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="default" className={getHealthStatus(systemHealth.performance?.status || 'unknown').bg}>
-                      {systemHealth.performance?.status || 'Unknown'}
+                    <Badge variant="default" className={getHealthStatus('healthy').bg}>
+                      {systemHealth.performance?.success_rate || 'Unknown'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {systemHealth.performance?.avgResponseTime || 'N/A'}ms
+                      {systemHealth.performance?.average_response_time || 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -188,19 +190,19 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
-                  {cacheStats.hitRate ? `${(cacheStats.hitRate * 100).toFixed(1)}%` : 'N/A'}
+                  {cacheStats?.hitRate ? `${(cacheStats.hitRate * 100).toFixed(1)}%` : 'N/A'}
                 </div>
                 <div className="text-sm text-muted-foreground">Hit Rate</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  {cacheStats.totalKeys || 'N/A'}
+                  {cacheStats?.totalKeys || 'N/A'}
                 </div>
                 <div className="text-sm text-muted-foreground">Total Keys</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-600">
-                  {cacheStats.memoryUsage ? `${(cacheStats.memoryUsage / 1024 / 1024).toFixed(1)}MB` : 'N/A'}
+                  {cacheStats?.memoryUsage ? `${(cacheStats.memoryUsage / 1024 / 1024).toFixed(1)}MB` : 'N/A'}
                 </div>
                 <div className="text-sm text-muted-foreground">Memory Usage</div>
               </div>
