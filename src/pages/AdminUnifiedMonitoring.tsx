@@ -326,7 +326,7 @@ const AdminUnifiedMonitoring: React.FC = () => {
 
   const getStatusBadge = (percentage: number) => {
     if (percentage >= 90) return <Badge variant="destructive">Critical</Badge>;
-    if (percentage >= 75) return <Badge variant="secondary">Warning</Badge>;
+    if (percentage >= 75) return <Badge variant="default">Warning</Badge>;
     return <Badge variant="default">Healthy</Badge>;
   };
 
@@ -415,8 +415,8 @@ const AdminUnifiedMonitoring: React.FC = () => {
     switch (severity) {
       case 'error': return 'destructive';
       case 'warning': return 'default';
-      case 'info': return 'secondary';
-      default: return 'secondary';
+      case 'info': return 'default';
+      default: return 'default';
     }
   };
 
@@ -753,7 +753,7 @@ const AdminUnifiedMonitoring: React.FC = () => {
           <TabsTrigger value="users">User Activity</TabsTrigger>
           <TabsTrigger value="queue" className="relative">
             Queue Status
-            {queueData?.summary.byStatus.failed > 0 && (
+            {queueData?.summary?.byStatus?.failed && queueData.summary.byStatus.failed > 0 && (
               <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
                 {queueData.summary.byStatus.failed}
               </Badge>
@@ -762,7 +762,7 @@ const AdminUnifiedMonitoring: React.FC = () => {
           <TabsTrigger value="sentiment" className="relative">
             Sentiment Worker
             {sentimentData?.queue.pendingCount > 0 && (
-              <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
+              <Badge variant="default" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
                 {sentimentData.queue.pendingCount}
               </Badge>
             )}
@@ -1581,7 +1581,7 @@ const AdminUnifiedMonitoring: React.FC = () => {
                     <div className="flex items-center space-x-2">
                       <div className={`h-3 w-3 rounded-full ${sentimentData.queue.pendingCount > 0 ? 'bg-yellow-500' : 'bg-green-500'}`} />
                       <span className="text-sm font-medium">Queue Status</span>
-                      <Badge variant={sentimentData.queue.pendingCount > 0 ? 'secondary' : 'default'}>
+                      <Badge variant={sentimentData.queue.pendingCount > 0 ? 'default' : 'default'}>
                         {sentimentData.queue.pendingCount > 0 ? 'Pending' : 'Empty'}
                       </Badge>
                     </div>
