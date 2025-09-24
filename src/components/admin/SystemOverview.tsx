@@ -21,7 +21,6 @@ import {
   XCircle,
   Loader2
 } from 'lucide-react';
-import { format } from 'date-fns';
 import { toast } from 'sonner';
 
 interface SystemOverviewProps {
@@ -69,9 +68,24 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
   const getHealthStatus = (status: string) => {
     switch (status) {
       case 'healthy': return { color: 'text-green-600', icon: CheckCircle, bg: 'bg-green-100' };
+      case 'operational': return { color: 'text-green-600', icon: CheckCircle, bg: 'bg-green-100' };
+      case 'active': return { color: 'text-green-600', icon: CheckCircle, bg: 'bg-green-100' };
+      case 'processing': return { color: 'text-blue-600', icon: Activity, bg: 'bg-blue-100' };
       case 'warning': return { color: 'text-yellow-600', icon: AlertTriangle, bg: 'bg-yellow-100' };
+      case 'degraded': return { color: 'text-yellow-600', icon: AlertTriangle, bg: 'bg-yellow-100' };
       case 'error': return { color: 'text-red-600', icon: XCircle, bg: 'bg-red-100' };
+      case 'unhealthy': return { color: 'text-red-600', icon: XCircle, bg: 'bg-red-100' };
+      case 'inactive': return { color: 'text-red-600', icon: XCircle, bg: 'bg-red-100' };
       default: return { color: 'text-gray-600', icon: AlertCircle, bg: 'bg-gray-100' };
+    }
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    if (!timestamp) return 'N/A';
+    try {
+      return new Date(timestamp).toLocaleTimeString();
+    } catch {
+      return 'Invalid';
     }
   };
 
@@ -119,39 +133,54 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
                       {systemHealth.database?.status || 'Unknown'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {systemHealth.database?.last_checked ? 'Connected' : 'N/A'}
+                      {formatTimestamp(systemHealth.database?.last_checked)}
                     </span>
                   </div>
+                  {systemHealth.database?.error && (
+                    <div className="text-xs text-red-600 mt-1">
+                      {systemHealth.database.error}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="flex items-center space-x-3 p-3 border rounded-lg">
                 <Wifi className="h-8 w-8 text-green-600" />
                 <div>
-                  <div className="text-sm font-medium">External APIs</div>
+                  <div className="text-sm font-medium">API Endpoints</div>
                   <div className="flex items-center space-x-2">
                     <Badge variant="default" className={getHealthStatus(systemHealth.api_endpoints?.status || 'unknown').bg}>
                       {systemHealth.api_endpoints?.status || 'Unknown'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {systemHealth.api_endpoints?.status || 'Unknown'}
+                      {formatTimestamp(systemHealth.api_endpoints?.last_checked)}
                     </span>
                   </div>
+                  {systemHealth.api_endpoints?.error && (
+                    <div className="text-xs text-red-600 mt-1">
+                      {systemHealth.api_endpoints.error}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="flex items-center space-x-3 p-3 border rounded-lg">
                 <Shield className="h-8 w-8 text-purple-600" />
                 <div>
-                  <div className="text-sm font-medium">Security</div>
+                  <div className="text-sm font-medium">Queue System</div>
                   <div className="flex items-center space-x-2">
                     <Badge variant="default" className={getHealthStatus(systemHealth.queue_system?.status || 'unknown').bg}>
                       {systemHealth.queue_system?.status || 'Unknown'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {systemHealth.queue_system?.status || 'Unknown'}
+                      {formatTimestamp(systemHealth.queue_system?.last_checked)}
                     </span>
                   </div>
+                  {systemHealth.queue_system?.error && (
+                    <div className="text-xs text-red-600 mt-1">
+                      {systemHealth.queue_system.error}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -167,8 +196,21 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
                       {systemHealth.performance?.average_response_time || 'N/A'}
                     </span>
                   </div>
+                  {systemHealth.performance?.last_updated && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Updated: {formatTimestamp(systemHealth.performance.last_updated)}
+                    </div>
+                  )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {!systemHealth && (
+            <div className="text-center py-8 text-muted-foreground">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-500" />
+              <p>System health data not available</p>
+              <p className="text-sm mt-2">Check console for debug information</p>
             </div>
           )}
         </CardContent>
@@ -187,26 +229,32 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {cacheStats?.hitRate ? `${(cacheStats.hitRate * 100).toFixed(1)}%` : 'N/A'}
+            {cacheStats.cache_stats ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {cacheStats.cache_stats.hitRate ? `${(cacheStats.cache_stats.hitRate * 100).toFixed(1)}%` : 'N/A'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Hit Rate</div>
                 </div>
-                <div className="text-sm text-muted-foreground">Hit Rate</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {cacheStats?.totalKeys || 'N/A'}
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {cacheStats.cache_stats.totalKeys || 'N/A'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Total Keys</div>
                 </div>
-                <div className="text-sm text-muted-foreground">Total Keys</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">
-                  {cacheStats?.memoryUsage ? `${(cacheStats.memoryUsage / 1024 / 1024).toFixed(1)}MB` : 'N/A'}
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {cacheStats.cache_stats.memoryUsage ? `${(cacheStats.cache_stats.memoryUsage / 1024 / 1024).toFixed(1)}MB` : 'N/A'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Memory Usage</div>
                 </div>
-                <div className="text-sm text-muted-foreground">Memory Usage</div>
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                <p>Cache statistics not available</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

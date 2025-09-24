@@ -15,20 +15,6 @@ import {
   Calendar,
   Filter
 } from 'lucide-react';
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar,
-  AreaChart,
-  Area
-} from 'recharts';
 import { toast } from 'sonner';
 
 interface UserMonitoringProps {
@@ -38,32 +24,41 @@ interface UserMonitoringProps {
 
 export function UserMonitoring({ onRefresh, loading }: UserMonitoringProps) {
   const [userStats, setUserStats] = useState<any>(null);
-  const [userActivity, setUserActivity] = useState<any>(null);
+  const [monthlyMentions, setMonthlyMentions] = useState<any>(null);
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
 
   const fetchUserData = async () => {
     try {
-      // Fetch user statistics from users endpoint
-      const statsResponse = await fetch('https://mentions-backend.vercel.app/api/admin/users');
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
-        console.log('Users data:', statsData); // Debug log
+      // Fetch real user statistics from multiple endpoints
+      const [usersResponse, mentionsResponse] = await Promise.all([
+        fetch('https://mentions-backend.vercel.app/api/admin/users'),
+        fetch(`https://mentions-backend.vercel.app/api/admin/monthly-mentions?month=${new Date().toISOString().slice(0, 7)}`)
+      ]);
+
+      if (usersResponse.ok) {
+        const usersData = await usersResponse.json();
+        console.log('Users data:', usersData); // Debug log
         
-        // Transform the data to match expected structure
-        const users = statsData.data || [];
-        const transformedStats = {
-          totalUsers: users.length,
-          activeUsers: users.length, // Assume all users are active for now
-          totalMentions: 0, // Will need to fetch from mentions table
-          totalKeywords: 0, // Will need to fetch from keywords table
-          userGrowth: 0,
-          activeGrowth: 0,
-          mentionGrowth: 0,
-          keywordGrowth: 0,
+        // Get real user statistics
+        const users = usersData.data || [];
+        const totalUsers = users.length;
+        
+        // Calculate active users (users with automation enabled)
+        const activeUsers = users.length; // All users in the system are considered active for now
+        
+        setUserStats({
+          totalUsers,
+          activeUsers,
+          totalMentions: 0, // Will be updated from mentions data
+          totalKeywords: 0, // Will be calculated separately
+          userGrowth: 0, // Would need historical data
+          activeGrowth: 0, // Would need historical data
+          mentionGrowth: 0, // Would need historical data
+          keywordGrowth: 0, // Would need historical data
           engagement: {
             avgMentionsPerUser: 0,
             avgKeywordsPerUser: 0,
-            retentionRate: 95.0
+            retentionRate: 95.0 // Default value
           },
           topUsers: users.slice(0, 10).map((user: any) => ({
             id: user.user_id,
@@ -72,22 +67,33 @@ export function UserMonitoring({ onRefresh, loading }: UserMonitoringProps) {
             keyword_count: 0,
             last_active: true
           }))
-        };
-        setUserStats(transformedStats);
+        });
       } else {
         console.warn('Users endpoint not available');
         setUserStats(null);
       }
 
-      // Fetch monthly mentions data as activity data
-      const activityResponse = await fetch(`https://mentions-backend.vercel.app/api/admin/monthly-mentions?timeRange=${selectedTimeRange}`);
-      if (activityResponse.ok) {
-        const activityData = await activityResponse.json();
-        console.log('Monthly mentions data:', activityData); // Debug log
-        setUserActivity(activityData.data || activityData);
+      if (mentionsResponse.ok) {
+        const mentionsData = await mentionsResponse.json();
+        console.log('Monthly mentions data:', mentionsData); // Debug log
+        setMonthlyMentions(mentionsData.data || mentionsData);
+        
+        // Update user stats with real mention data
+        if (mentionsData.data && userStats) {
+          setUserStats(prev => ({
+            ...prev,
+            totalMentions: mentionsData.data.total_mentions || 0,
+            engagement: {
+              ...prev.engagement,
+              avgMentionsPerUser: mentionsData.data.unique_users > 0 
+                ? (mentionsData.data.total_mentions / mentionsData.data.unique_users) 
+                : 0
+            }
+          }));
+        }
       } else {
         console.warn('Monthly mentions endpoint not available');
-        setUserActivity(null);
+        setMonthlyMentions(null);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -165,128 +171,133 @@ export function UserMonitoring({ onRefresh, loading }: UserMonitoringProps) {
             </div>
           </div>
 
-          {userStats && (
+          {userStats ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">
-                  {formatNumber(userStats.totalUsers || 0)}
+                  {formatNumber(userStats.totalUsers)}
                 </div>
                 <div className="text-sm text-muted-foreground">Total Users</div>
                 <div className="flex items-center justify-center gap-1 mt-1">
-                  {getGrowthIcon(userStats.userGrowth || 0)}
-                  <span className={`text-xs ${getGrowthColor(userStats.userGrowth || 0)}`}>
-                    {userStats.userGrowth > 0 ? '+' : ''}{userStats.userGrowth || 0}%
+                  {getGrowthIcon(userStats.userGrowth)}
+                  <span className={`text-xs ${getGrowthColor(userStats.userGrowth)}`}>
+                    {userStats.userGrowth > 0 ? '+' : ''}{userStats.userGrowth}%
                   </span>
                 </div>
               </div>
 
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
-                  {formatNumber(userStats.activeUsers || 0)}
+                  {formatNumber(userStats.activeUsers)}
                 </div>
                 <div className="text-sm text-muted-foreground">Active Users</div>
                 <div className="flex items-center justify-center gap-1 mt-1">
-                  {getGrowthIcon(userStats.activeGrowth || 0)}
-                  <span className={`text-xs ${getGrowthColor(userStats.activeGrowth || 0)}`}>
-                    {userStats.activeGrowth > 0 ? '+' : ''}{userStats.activeGrowth || 0}%
+                  {getGrowthIcon(userStats.activeGrowth)}
+                  <span className={`text-xs ${getGrowthColor(userStats.activeGrowth)}`}>
+                    {userStats.activeGrowth > 0 ? '+' : ''}{userStats.activeGrowth}%
                   </span>
                 </div>
               </div>
 
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-purple-600">
-                  {formatNumber(userStats.totalMentions || 0)}
+                  {formatNumber(userStats.totalMentions)}
                 </div>
                 <div className="text-sm text-muted-foreground">Total Mentions</div>
                 <div className="flex items-center justify-center gap-1 mt-1">
-                  {getGrowthIcon(userStats.mentionGrowth || 0)}
-                  <span className={`text-xs ${getGrowthColor(userStats.mentionGrowth || 0)}`}>
-                    {userStats.mentionGrowth > 0 ? '+' : ''}{userStats.mentionGrowth || 0}%
+                  {getGrowthIcon(userStats.mentionGrowth)}
+                  <span className={`text-xs ${getGrowthColor(userStats.mentionGrowth)}`}>
+                    {userStats.mentionGrowth > 0 ? '+' : ''}{userStats.mentionGrowth}%
                   </span>
                 </div>
               </div>
 
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-orange-600">
-                  {formatNumber(userStats.totalKeywords || 0)}
+                  {formatNumber(userStats.totalKeywords)}
                 </div>
                 <div className="text-sm text-muted-foreground">Total Keywords</div>
                 <div className="flex items-center justify-center gap-1 mt-1">
-                  {getGrowthIcon(userStats.keywordGrowth || 0)}
-                  <span className={`text-xs ${getGrowthColor(userStats.keywordGrowth || 0)}`}>
-                    {userStats.keywordGrowth > 0 ? '+' : ''}{userStats.keywordGrowth || 0}%
+                  {getGrowthIcon(userStats.keywordGrowth)}
+                  <span className={`text-xs ${getGrowthColor(userStats.keywordGrowth)}`}>
+                    {userStats.keywordGrowth > 0 ? '+' : ''}{userStats.keywordGrowth}%
                   </span>
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-500" />
+              <p>User statistics not available</p>
+              <p className="text-sm mt-2">Check console for debug information</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* User Activity Trends */}
-      {userActivity && userActivity.trends && (
+      {/* Monthly Mentions Breakdown */}
+      {monthlyMentions && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              User Activity Trends
+              Monthly Mentions Breakdown
             </CardTitle>
             <CardDescription>
-              User registration and activity patterns over time
+              Mentions by source and user for {monthlyMentions.month}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={userActivity.trends}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="time" 
-                    tickFormatter={(value) => {
-                      if (selectedTimeRange === '1h') return `${value}:00`;
-                      if (selectedTimeRange === '24h') return `${value}:00`;
-                      return value;
-                    }}
-                  />
-                  <YAxis />
-                  <Tooltip 
-                    labelFormatter={(value) => `Time: ${value}`}
-                    formatter={(value, name) => [value, name]}
-                  />
-                  <Legend />
-                  <Area 
-                    type="monotone" 
-                    dataKey="newUsers" 
-                    stackId="1"
-                    stroke="#8884d8" 
-                    fill="#8884d8"
-                    name="New Users"
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="activeUsers" 
-                    stackId="1"
-                    stroke="#82ca9d" 
-                    fill="#82ca9d"
-                    name="Active Users"
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="mentions" 
-                    stackId="1"
-                    stroke="#ffc658" 
-                    fill="#ffc658"
-                    name="Mentions"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="space-y-4">
+              {/* Mentions by Source */}
+              <div>
+                <h4 className="text-sm font-medium mb-3">Mentions by Source</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {monthlyMentions.mentions_by_source.map((source: any) => (
+                    <div key={source.source_type} className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium capitalize">{source.source_type}</span>
+                        <Badge variant="outline">{source.total_mentions}</Badge>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {source.unique_users} users • {source.avg_mentions_per_user.toFixed(1)} avg/user
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Top Users */}
+              {monthlyMentions.mentions_by_user && monthlyMentions.mentions_by_user.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium mb-3">Top Users by Mentions</h4>
+                  <div className="space-y-2">
+                    {monthlyMentions.mentions_by_user.slice(0, 10).map((user: any) => (
+                      <div key={user.user_id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <div className="font-medium">{user.full_name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            User ID: {user.user_id.slice(0, 8)}...
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">{user.total_mentions} mentions</div>
+                          <div className="text-sm text-muted-foreground">
+                            {Object.keys(user.mentions_by_source).length} sources
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* User Engagement Metrics */}
-      {userStats && userStats.engagement && (
+      {userStats && (
         <Card>
           <CardHeader>
             <CardTitle>User Engagement Metrics</CardTitle>
@@ -295,71 +306,25 @@ export function UserMonitoring({ onRefresh, loading }: UserMonitoringProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">
-                  {userStats.engagement.avgMentionsPerUser?.toFixed(1) || '0'}
+                  {userStats.engagement.avgMentionsPerUser.toFixed(1)}
                 </div>
                 <div className="text-sm text-muted-foreground">Avg Mentions/User</div>
               </div>
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
-                  {userStats.engagement.avgKeywordsPerUser?.toFixed(1) || '0'}
+                  {userStats.engagement.avgKeywordsPerUser.toFixed(1)}
                 </div>
                 <div className="text-sm text-muted-foreground">Avg Keywords/User</div>
               </div>
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-purple-600">
-                  {userStats.engagement.retentionRate?.toFixed(1) || '0'}%
+                  {userStats.engagement.retentionRate.toFixed(1)}%
                 </div>
                 <div className="text-sm text-muted-foreground">Retention Rate</div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Top Users */}
-      {userStats && userStats.topUsers && userStats.topUsers.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Active Users</CardTitle>
-            <CardDescription>
-              Users with the highest activity and mention counts
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {userStats.topUsers.slice(0, 10).map((user: any, index: number) => (
-                <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 rounded-full text-sm font-medium">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium">
-                        User {user.id.slice(0, 8)}...
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Joined: {new Date(user.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-center">
-                      <div className="text-sm font-medium">{user.mention_count || 0}</div>
-                      <div className="text-xs text-muted-foreground">Mentions</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-sm font-medium">{user.keyword_count || 0}</div>
-                      <div className="text-xs text-muted-foreground">Keywords</div>
-                    </div>
-                    <Badge variant="default">
-                      {user.last_active ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
             </div>
           </CardContent>
         </Card>
