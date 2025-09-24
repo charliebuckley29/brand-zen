@@ -123,5 +123,4 @@ export function PendingApproval({ userStatus }: PendingApprovalProps) {
     </div>
   );
 }
-}
 
