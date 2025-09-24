@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { MainDashboard } from "@/components/MainDashboard";
 import { Auth } from "@/components/Auth";
 import { ProfileCompletion } from "@/components/ProfileCompletion";
+import { PendingApproval } from "@/components/PendingApproval";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { useUserStatus } from "@/hooks/useUserStatus";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { NavigationProvider } from "@/contexts/NavigationContext";
@@ -24,6 +26,7 @@ const IndexContent = () => {
   const [hasKeywords, setHasKeywords] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { profileData, isProfileComplete, loading: profileLoading, updateProfile, refreshProfile } = useProfileCompletion();
+  const { status: userStatus, hasRssUrl, profile, keywords } = useUserStatus();
   const { unreadCount } = useNotifications();
 
   useEffect(() => {
@@ -73,7 +76,7 @@ const IndexContent = () => {
     await supabase.auth.signOut();
   };
 
-  if (isLoading || profileLoading) {
+  if (isLoading || profileLoading || userStatus === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -87,6 +90,20 @@ const IndexContent = () => {
   // Show authentication if not logged in
   if (!user) {
     return <Auth />;
+  }
+
+  // Show pending approval if user status is not approved or doesn't have RSS URL
+  if (user && (userStatus === 'pending_approval' || userStatus === 'rejected' || userStatus === 'suspended' || userStatus === 'error')) {
+    return (
+      <PendingApproval 
+        userStatus={{
+          status: userStatus,
+          hasRssUrl,
+          profile,
+          keywords: keywords || []
+        }}
+      />
+    );
   }
 
   // Show profile completion if profile is incomplete

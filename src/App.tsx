@@ -38,6 +38,7 @@ import AdminMonitoringPanel from "./pages/AdminMonitoringPanel";
 import AdminUnifiedMonitoring from "./pages/AdminUnifiedMonitoring";
 import AdminApiLimitsPanel from "./pages/AdminApiLimitsPanel";
 import AdminTestDebugTools from "./pages/AdminTestDebugTools";
+import StaffSignUp from "./pages/StaffSignUp";
 import NotFound from "./pages/NotFound";
 
 /**
@@ -110,6 +111,7 @@ const App = () => {
                   {/* Public routes */}
                   <Route path="/" element={<Index />} />
                   <Route path="/help" element={<Help />} />
+                  <Route path="/staff-signup" element={<StaffSignUp />} />
                   
                   {/* Admin routes - protected by role-based access */}
                   <Route path="/admin" element={<AdminDashboard />} />
