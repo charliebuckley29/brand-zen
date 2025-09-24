@@ -35,66 +35,76 @@ export function UserMonitoring({ onRefresh, loading }: UserMonitoringProps) {
         fetch(`https://mentions-backend.vercel.app/api/admin/monthly-mentions?month=${new Date().toISOString().slice(0, 7)}`)
       ]);
 
+      let usersData = null;
+      let mentionsData = null;
+
       if (usersResponse.ok) {
-        const usersData = await usersResponse.json();
+        usersData = await usersResponse.json();
         console.log('Users data:', usersData); // Debug log
-        
-        // Get real user statistics
-        const users = usersData.data || [];
-        const totalUsers = users.length;
-        
-        // Calculate active users (users with automation enabled)
-        const activeUsers = users.length; // All users in the system are considered active for now
-        
-        setUserStats({
-          totalUsers,
-          activeUsers,
-          totalMentions: 0, // Will be updated from mentions data
-          totalKeywords: 0, // Will be calculated separately
-          userGrowth: 0, // Would need historical data
-          activeGrowth: 0, // Would need historical data
-          mentionGrowth: 0, // Would need historical data
-          keywordGrowth: 0, // Would need historical data
-          engagement: {
-            avgMentionsPerUser: 0,
-            avgKeywordsPerUser: 0,
-            retentionRate: 95.0 // Default value
-          },
-          topUsers: users.slice(0, 10).map((user: any) => ({
-            id: user.user_id,
-            created_at: new Date().toISOString(),
-            mention_count: 0,
-            keyword_count: 0,
-            last_active: true
-          }))
-        });
       } else {
         console.warn('Users endpoint not available');
-        setUserStats(null);
       }
 
       if (mentionsResponse.ok) {
-        const mentionsData = await mentionsResponse.json();
+        mentionsData = await mentionsResponse.json();
         console.log('Monthly mentions data:', mentionsData); // Debug log
         setMonthlyMentions(mentionsData.data || mentionsData);
-        
-        // Update user stats with real mention data
-        if (mentionsData.data && userStats) {
-          setUserStats(prev => ({
-            ...prev,
-            totalMentions: mentionsData.data.total_mentions || 0,
-            engagement: {
-              ...prev.engagement,
-              avgMentionsPerUser: mentionsData.data.unique_users > 0 
-                ? (mentionsData.data.total_mentions / mentionsData.data.unique_users) 
-                : 0
-            }
-          }));
-        }
       } else {
         console.warn('Monthly mentions endpoint not available');
         setMonthlyMentions(null);
       }
+
+      // Calculate combined user statistics
+      const users = usersData?.data || [];
+      const totalUsers = users.length;
+      const activeUsers = users.length; // All users in the system are considered active for now
+      
+      // Calculate engagement metrics from mentions data
+      const mentions = mentionsData?.data || null;
+      const totalMentions = mentions?.total_mentions || 0;
+      const uniqueUsers = mentions?.unique_users || 0;
+      const avgMentionsPerUser = uniqueUsers > 0 ? (totalMentions / uniqueUsers) : 0;
+      
+      // Calculate total keywords (would need separate endpoint)
+      const totalKeywords = 0; // TODO: Add keywords endpoint
+      const avgKeywordsPerUser = totalUsers > 0 ? (totalKeywords / totalUsers) : 0;
+
+      // Create top users from mentions data if available
+      let topUsers = users.slice(0, 10).map((user: any) => ({
+        id: user.user_id,
+        created_at: new Date().toISOString(),
+        mention_count: 0,
+        keyword_count: 0,
+        last_active: true
+      }));
+
+      if (mentions?.mentions_by_user) {
+        topUsers = mentions.mentions_by_user.slice(0, 10).map((user: any) => ({
+          id: user.user_id,
+          created_at: new Date().toISOString(),
+          mention_count: user.total_mentions,
+          keyword_count: 0, // Would need separate calculation
+          last_active: true
+        }));
+      }
+
+      setUserStats({
+        totalUsers,
+        activeUsers,
+        totalMentions,
+        totalKeywords,
+        userGrowth: 0, // Would need historical data
+        activeGrowth: 0, // Would need historical data
+        mentionGrowth: 0, // Would need historical data
+        keywordGrowth: 0, // Would need historical data
+        engagement: {
+          avgMentionsPerUser,
+          avgKeywordsPerUser,
+          retentionRate: 95.0 // Default value
+        },
+        topUsers
+      });
+
     } catch (error) {
       console.error('Error fetching user data:', error);
       // Don't show toast for missing endpoints, just log the error
