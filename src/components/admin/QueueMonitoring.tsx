@@ -218,5 +218,4 @@ export function QueueMonitoring() {
     </div>
   );
 }
-}
 
