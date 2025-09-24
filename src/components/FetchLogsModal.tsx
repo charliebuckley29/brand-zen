@@ -462,7 +462,7 @@ export function FetchLogsModal() {
                 </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="overview" className="flex-1 overflow-y-auto space-y-4 mt-4">
+              <TabsContent value="overview" className="flex-1 overflow-y-auto space-y-4 mt-4 max-h-[60vh]">
                 {/* User-Friendly Overview */}
                 {(() => {
                   const recentCycles = detailedLogs.automationLogs ? groupLogsByFetchCycle(detailedLogs.automationLogs).slice(0, 5) : [];
@@ -592,7 +592,7 @@ export function FetchLogsModal() {
                 })()}
               </TabsContent>
               
-              <TabsContent value="debug" className="flex-1 overflow-y-auto space-y-4 mt-4">
+              <TabsContent value="debug" className="flex-1 overflow-y-auto space-y-4 mt-4 max-h-[60vh]">
                 {/* Technical Debug Information */}
                 <div className="space-y-6">
               {/* System Health Summary */}
@@ -721,8 +721,8 @@ export function FetchLogsModal() {
                               }`}>
                                 <div className="flex items-center gap-2 mb-1">
                                   <span className="text-lg">{getSourceIcon(apiResult.source)}</span>
-                                  <span className="text-sm font-medium capitalize">
-                                    {apiResult.source.replace('_', ' ')}
+                                  <span className="text-sm font-medium">
+                                    {getSourceDisplayName(apiResult.source)}
                                   </span>
                                 </div>
                                 <div className="text-xs">
@@ -1064,6 +1064,7 @@ export function FetchLogsModal() {
     </Dialog>
   );
 }
+
 
 
 
