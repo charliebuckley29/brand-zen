@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
+import { Globe, Check } from 'lucide-react';
 import { useTimezone } from '@/contexts/TimezoneContext';
 import { toast } from 'sonner';
 
@@ -96,7 +96,7 @@ export const TimezoneSettings: React.FC = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Check className="h-5 w-5" />
+          <Globe className="h-5 w-5" />
           Timezone Settings
         </CardTitle>
         <CardDescription>
@@ -136,7 +136,7 @@ export const TimezoneSettings: React.FC = () => {
             onClick={detectBrowserTimezone}
             className="flex items-center gap-2"
           >
-            <Check className="h-4 w-4" />
+            <Globe className="h-4 w-4" />
             Auto-detect
           </Button>
           
