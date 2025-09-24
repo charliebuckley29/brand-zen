@@ -56,11 +56,17 @@ export function SentimentWorkerMonitoring() {
     setSentimentLoading(true);
     try {
       const response = await fetch('https://mentions-backend.vercel.app/api/debug/check-sentiment-queue');
-      const result = await response.json();
-      setSentimentData(result);
+      if (response.ok) {
+        const result = await response.json();
+        setSentimentData(result);
+      } else {
+        console.warn('Sentiment queue endpoint not available');
+        setSentimentData(null);
+      }
     } catch (error) {
       console.error('Error fetching sentiment data:', error);
-      toast.error('Failed to fetch sentiment worker data');
+      // Don't show toast for CORS or network errors, just log
+      setSentimentData(null);
     } finally {
       setSentimentLoading(false);
     }
@@ -78,13 +84,18 @@ export function SentimentWorkerMonitoring() {
         })
       });
       
-      const result = await response.json();
-      
-      if (result.success) {
-        toast.success(`Sentiment worker completed: ${result.stats.totalProcessed} mentions processed`);
-        await fetchSentimentData();
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.success) {
+          toast.success(`Sentiment worker completed: ${result.stats.totalProcessed} mentions processed`);
+          await fetchSentimentData();
+        } else {
+          toast.error('Sentiment worker failed');
+        }
       } else {
-        toast.error('Sentiment worker failed');
+        console.warn('Sentiment worker endpoint not available');
+        toast.error('Sentiment worker endpoint not available');
       }
     } catch (error) {
       console.error('Error triggering sentiment worker:', error);

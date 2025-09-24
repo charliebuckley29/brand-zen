@@ -43,18 +43,28 @@ export function UserMonitoring({ onRefresh, loading }: UserMonitoringProps) {
 
   const fetchUserData = async () => {
     try {
-      // Fetch user statistics
-      const statsResponse = await fetch('https://mentions-backend.vercel.app/api/admin/user-stats');
-      const statsData = await statsResponse.json();
-      setUserStats(statsData);
+      // Fetch user statistics from users endpoint
+      const statsResponse = await fetch('https://mentions-backend.vercel.app/api/admin/users');
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setUserStats(statsData);
+      } else {
+        console.warn('Users endpoint not available');
+        setUserStats(null);
+      }
 
-      // Fetch user activity
-      const activityResponse = await fetch(`https://mentions-backend.vercel.app/api/admin/user-activity?timeRange=${selectedTimeRange}`);
-      const activityData = await activityResponse.json();
-      setUserActivity(activityData);
+      // Fetch monthly mentions data as activity data
+      const activityResponse = await fetch(`https://mentions-backend.vercel.app/api/admin/monthly-mentions?timeRange=${selectedTimeRange}`);
+      if (activityResponse.ok) {
+        const activityData = await activityResponse.json();
+        setUserActivity(activityData);
+      } else {
+        console.warn('Monthly mentions endpoint not available');
+        setUserActivity(null);
+      }
     } catch (error) {
       console.error('Error fetching user data:', error);
-      toast.error('Failed to fetch user monitoring data');
+      // Don't show toast for missing endpoints, just log the error
     }
   };
 

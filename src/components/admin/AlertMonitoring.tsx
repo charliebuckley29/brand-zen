@@ -30,18 +30,42 @@ export function AlertMonitoring({ onRefresh, loading }: AlertMonitoringProps) {
 
   const fetchAlertData = async () => {
     try {
-      // Fetch alerts
-      const alertsResponse = await fetch(`https://mentions-backend.vercel.app/api/admin/alerts?timeRange=${selectedTimeRange}&severity=${selectedSeverity}`);
-      const alertsData = await alertsResponse.json();
-      setAlerts(alertsData.alerts || []);
+      // For now, use automation logs as alerts since we don't have a dedicated alerts endpoint
+      const logsResponse = await fetch(`https://mentions-backend.vercel.app/api/debug/logs?limit=50`);
+      if (logsResponse.ok) {
+        const logsData = await logsResponse.json();
+        // Convert logs to alert format
+        const alertLogs = logsData.logs?.filter((log: any) => 
+          log.event_type?.includes('error') || 
+          log.event_type?.includes('failed') ||
+          log.level === 'error'
+        ).map((log: any) => ({
+          id: log.id,
+          timestamp: log.created_at,
+          severity: log.level === 'error' ? 'high' : 'medium',
+          type: log.event_type,
+          message: log.message,
+          source: 'system',
+          status: 'open',
+          details: log.error_details
+        })) || [];
+        setAlerts(alertLogs);
+      } else {
+        console.warn('Logs endpoint not available');
+        setAlerts([]);
+      }
 
-      // Fetch alert statistics
-      const statsResponse = await fetch('https://mentions-backend.vercel.app/api/admin/alert-stats');
-      const statsData = await statsResponse.json();
-      setAlertStats(statsData);
+      // Create mock alert stats from the logs
+      const mockStats = {
+        critical: alerts.filter(a => a.severity === 'critical').length,
+        high: alerts.filter(a => a.severity === 'high').length,
+        medium: alerts.filter(a => a.severity === 'medium').length,
+        low: alerts.filter(a => a.severity === 'low').length
+      };
+      setAlertStats(mockStats);
     } catch (error) {
       console.error('Error fetching alert data:', error);
-      toast.error('Failed to fetch alert monitoring data');
+      // Don't show toast for missing endpoints, just log the error
     }
   };
 

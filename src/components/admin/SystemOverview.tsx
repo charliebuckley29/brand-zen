@@ -37,16 +37,26 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
     try {
       // Fetch system health
       const healthResponse = await fetch('https://mentions-backend.vercel.app/api/admin/system-health');
-      const healthData = await healthResponse.json();
-      setSystemHealth(healthData);
+      if (healthResponse.ok) {
+        const healthData = await healthResponse.json();
+        setSystemHealth(healthData);
+      } else {
+        console.warn('System health endpoint not available');
+        setSystemHealth(null);
+      }
 
       // Fetch cache stats
       const cacheResponse = await fetch('https://mentions-backend.vercel.app/api/admin/cache-stats');
-      const cacheData = await cacheResponse.json();
-      setCacheStats(cacheData);
+      if (cacheResponse.ok) {
+        const cacheData = await cacheResponse.json();
+        setCacheStats(cacheData);
+      } else {
+        console.warn('Cache stats endpoint not available');
+        setCacheStats(null);
+      }
     } catch (error) {
       console.error('Error fetching system data:', error);
-      toast.error('Failed to fetch system data');
+      // Don't show toast for missing endpoints, just log the error
     }
   };
 

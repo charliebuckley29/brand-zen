@@ -46,16 +46,26 @@ export function ApiMonitoring({ onRefresh, loading }: ApiMonitoringProps) {
     try {
       // Fetch API limits
       const limitsResponse = await fetch('https://mentions-backend.vercel.app/api/admin/api-limits');
-      const limitsData = await limitsResponse.json();
-      setApiLimits(limitsData);
+      if (limitsResponse.ok) {
+        const limitsData = await limitsResponse.json();
+        setApiLimits(limitsData);
+      } else {
+        console.warn('API limits endpoint not available');
+        setApiLimits(null);
+      }
 
-      // Fetch API metrics
-      const metricsResponse = await fetch('https://mentions-backend.vercel.app/api/admin/api-metrics');
-      const metricsData = await metricsResponse.json();
-      setApiMetrics(metricsData);
+      // Fetch API usage data instead of metrics
+      const usageResponse = await fetch('https://mentions-backend.vercel.app/api/admin/api-usage');
+      if (usageResponse.ok) {
+        const usageData = await usageResponse.json();
+        setApiMetrics(usageData);
+      } else {
+        console.warn('API usage endpoint not available');
+        setApiMetrics(null);
+      }
     } catch (error) {
       console.error('Error fetching API data:', error);
-      toast.error('Failed to fetch API monitoring data');
+      // Don't show toast for missing endpoints, just log the error
     }
   };
 
