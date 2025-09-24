@@ -56,7 +56,7 @@ export function useUserStatus() {
           .select('id, google_alert_rss_url, google_alerts_enabled')
           .eq('user_id', user.id);
 
-        const hasRssUrl = keywords?.some(k => k.google_alert_rss_url && k.google_alerts_enabled) || false;
+        const hasRssUrl = keywords?.some(k => k.google_alert_rss_url) || false;
 
         // Determine user status
         let status: UserStatus = 'approved'; // Default to approved
