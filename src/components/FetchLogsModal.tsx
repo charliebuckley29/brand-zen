@@ -225,6 +225,10 @@ export function FetchLogsModal() {
         return 'Temporarily unavailable - will retry later';
       case 'skipped':
         return 'Skipped this check';
+      case 'not_attempted':
+        return 'Not checked in this cycle';
+      case 'running':
+        return 'Currently processing...';
       default:
         return 'Status unknown';
     }
@@ -278,6 +282,21 @@ export function FetchLogsModal() {
         // Mark end of cycle
         if (log.event_type === 'fetch.complete') {
           currentCycle.endTime = log.created_at;
+          
+          // Ensure all expected sources are present in the cycle
+          const expectedSources = ['youtube', 'reddit', 'x', 'google_alert'];
+          expectedSources.forEach(source => {
+            const existingResult = currentCycle.apiResults.find(r => r.source === source);
+            if (!existingResult) {
+              currentCycle.apiResults.push({
+                source: source,
+                status: 'not_attempted',
+                processed: 0,
+                error: null,
+                reason: 'Not processed in this cycle'
+              });
+            }
+          });
         }
         
         // Process API results
@@ -290,7 +309,19 @@ export function FetchLogsModal() {
             reason: log.data.quotaExceeded ? 'Quota exceeded - no new content available' : 
                    (log.data.skipped > 0 ? 'Skipped due to quota/rate limits' : null)
           };
-          currentCycle.apiResults.push(apiResult);
+          
+          // Check if this source already exists in the cycle
+          const existingResult = currentCycle.apiResults.find(r => r.source === apiResult.source);
+          if (existingResult) {
+            // Update existing result
+            existingResult.status = apiResult.status;
+            existingResult.processed = apiResult.processed;
+            existingResult.error = apiResult.error;
+            existingResult.reason = apiResult.reason;
+          } else {
+            // Add new result
+            currentCycle.apiResults.push(apiResult);
+          }
         } else if (log.event_type === 'process-api.youtube.start' || 
                    log.event_type === 'process-api.reddit.start' ||
                    log.event_type === 'process-api.x.start' ||
@@ -352,6 +383,22 @@ export function FetchLogsModal() {
         const end = new Date(currentCycle.endTime);
         currentCycle.duration = `${Math.round((end.getTime() - start.getTime()) / 1000)}s`;
       }
+      
+      // Ensure all expected sources are present in the last cycle
+      const expectedSources = ['youtube', 'reddit', 'x', 'google_alert'];
+      expectedSources.forEach(source => {
+        const existingResult = currentCycle.apiResults.find(r => r.source === source);
+        if (!existingResult) {
+          currentCycle.apiResults.push({
+            source: source,
+            status: 'not_attempted',
+            processed: 0,
+            error: null,
+            reason: 'Not processed in this cycle'
+          });
+        }
+      });
+      
       cycles.push(currentCycle);
     }
     
@@ -1064,6 +1111,7 @@ export function FetchLogsModal() {
     </Dialog>
   );
 }
+
 
 
 
