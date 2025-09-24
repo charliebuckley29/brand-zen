@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -7,7 +7,7 @@ import { RefreshCw, Trash2, History, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ExclusionsModal } from "./ExclusionsModal";
-import { FetchLogsModal } from "./FetchLogsModal";
+import { UserQueueModal } from "./UserQueueModal";
 import { AutomationStatus } from "@/components/AutomationStatus";
 
 interface MonitoringControlsProps {
@@ -18,7 +18,18 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
   const [isClearing, setIsClearing] = useState(false);
   const [exclusionsOpen, setExclusionsOpen] = useState(false);
   const [alsoDeleteRemovedMentions, setAlsoDeleteRemovedMentions] = useState(false);
+  const [userId, setUserId] = useState<string>('');
   const { toast } = useToast();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
 
   const handleClearMentions = async () => {
     try {
@@ -103,7 +114,7 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
         <AutomationStatus onMentionsUpdated={onMentionsUpdated} />
         
         <div className="flex flex-col gap-2 sm:flex-row">
-          <FetchLogsModal />
+          <UserQueueModal userId={userId} />
           <Button 
             variant="outline"
             onClick={() => setExclusionsOpen(true)}
