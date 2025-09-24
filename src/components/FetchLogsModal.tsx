@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, ChevronDown, ChevronRight, Clock, CheckCircle, XCircle, Activity, Trash2, RefreshCw, AlertTriangle, Users, Database } from "lucide-react";
+import { FileText, ChevronDown, ChevronRight, Clock, CheckCircle, XCircle, Activity, Trash2, RefreshCw, AlertTriangle, Users, Database, Search, Bug } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useTimezone } from "@/contexts/TimezoneContext";
 import { useToast } from "@/hooks/use-toast";
@@ -202,6 +203,46 @@ export function FetchLogsModal() {
     }
   };
 
+  // Helper function to get user-friendly source name
+  const getSourceDisplayName = (sourceName: string) => {
+    switch (sourceName) {
+      case 'google_alerts': return 'Google Alerts';
+      case 'youtube': return 'YouTube';
+      case 'reddit': return 'Reddit';
+      case 'x': return 'X (Twitter)';
+      default: return sourceName;
+    }
+  };
+
+  // Helper function to get user-friendly status message
+  const getStatusMessage = (status: string, count: number) => {
+    switch (status) {
+      case 'success':
+        return count > 0 ? `Found ${count} new mention${count !== 1 ? 's' : ''}` : 'No new mentions found';
+      case 'quota_exceeded':
+        return 'Monthly limit reached - will resume next month';
+      case 'failed':
+        return 'Temporarily unavailable - will retry later';
+      case 'skipped':
+        return 'Skipped this check';
+      default:
+        return 'Status unknown';
+    }
+  };
+
+  // Helper function to get status color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'success': return 'text-green-600';
+      case 'quota_exceeded': return 'text-orange-600';
+      case 'failed': return 'text-red-600';
+      case 'skipped': return 'text-yellow-600';
+      case 'not_attempted': return 'text-gray-600';
+      case 'running': return 'text-blue-600';
+      default: return 'text-gray-600';
+    }
+  };
+
   // Helper function to group logs by fetch cycle
   const groupLogsByFetchCycle = (logs: any[]) => {
     const cycles: any[] = [];
@@ -317,18 +358,6 @@ export function FetchLogsModal() {
     return cycles.reverse(); // Most recent first
   };
 
-  // Helper function to get status color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'success': return 'text-green-600 bg-green-50 border-green-200';
-      case 'failed': return 'text-red-600 bg-red-50 border-red-200';
-      case 'quota_exceeded': return 'text-orange-600 bg-orange-50 border-orange-200';
-      case 'skipped': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'not_attempted': return 'text-gray-600 bg-gray-50 border-gray-200';
-      case 'running': return 'text-blue-600 bg-blue-50 border-blue-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
-  };
 
   const toggleLogExpanded = (logId: string) => {
     const newExpanded = new Set(expandedLogs);
@@ -364,8 +393,8 @@ export function FetchLogsModal() {
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Detailed Fetch Logs
+              <Search className="h-5 w-5" />
+              Monitoring Activity
             </div>
             {detailedLogs?.fetchHistory && detailedLogs.fetchHistory.length > 0 && (
               <AlertDialog>
@@ -405,23 +434,167 @@ export function FetchLogsModal() {
         </DialogHeader>
         
         <DialogDescription className="sr-only">
-          Detailed fetch logs showing API processing results, error analysis, and system health metrics for brand monitoring automation.
+          View your brand monitoring activity and detailed technical logs for debugging.
         </DialogDescription>
         
-        <div className="flex-1 overflow-y-auto space-y-4">
+        <div className="flex-1 overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Activity className="h-6 w-6 animate-spin mr-2" />
-              Loading detailed logs...
+              Loading monitoring activity...
             </div>
           ) : !detailedLogs || (!detailedLogs.fetchHistory?.length && !detailedLogs.automationLogs?.length) ? (
             <div className="text-center py-8 text-muted-foreground">
-              <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium">No fetch logs found</p>
-              <p className="text-sm">Automated fetching will create logs here</p>
+              <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium">No monitoring activity yet</p>
+              <p className="text-sm">Your automated monitoring will show activity here</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <Tabs defaultValue="overview" className="h-full flex flex-col">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="overview" className="flex items-center gap-2">
+                  <Search className="h-4 w-4" />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="debug" className="flex items-center gap-2">
+                  <Bug className="h-4 w-4" />
+                  Technical Details
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="overview" className="flex-1 overflow-y-auto space-y-4 mt-4">
+                {/* User-Friendly Overview */}
+                {(() => {
+                  const recentCycles = detailedLogs.automationLogs ? groupLogsByFetchCycle(detailedLogs.automationLogs).slice(0, 5) : [];
+                  const totalMentions = recentCycles.reduce((sum, cycle) => 
+                    sum + cycle.apiResults.reduce((cycleSum, result) => cycleSum + (result.processed || 0), 0), 0
+                  );
+                  const quotaExceededCount = recentCycles.reduce((count, cycle) => 
+                    count + cycle.apiResults.filter(r => r.status === 'quota_exceeded').length, 0
+                  );
+                  
+                  return (
+                    <div className="space-y-6">
+                      {/* Summary Card */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                            Monitoring Status
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="text-center p-4 bg-green-50 rounded-lg">
+                              <div className="text-2xl font-bold text-green-600">{totalMentions}</div>
+                              <div className="text-sm text-green-700">New mentions found</div>
+                            </div>
+                            <div className="text-center p-4 bg-blue-50 rounded-lg">
+                              <div className="text-2xl font-bold text-blue-600">{recentCycles.length}</div>
+                              <div className="text-sm text-blue-700">Recent checks</div>
+                            </div>
+                            <div className="text-center p-4 bg-orange-50 rounded-lg">
+                              <div className="text-2xl font-bold text-orange-600">{quotaExceededCount}</div>
+                              <div className="text-sm text-orange-700">Sources at limit</div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Recent Activity */}
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                          <Clock className="h-5 w-5" />
+                          Recent Activity
+                        </h3>
+                        <div className="space-y-4">
+                          {recentCycles.map((cycle, cycleIndex) => (
+                            <Card key={cycleIndex} className="border-l-4 border-l-green-500">
+                              <CardHeader className="pb-3">
+                                <CardTitle className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <CheckCircle className="h-5 w-5 text-green-500" />
+                                    <div>
+                                      <div className="font-semibold">
+                                        {new Date(cycle.startTime).toLocaleDateString()} at {new Date(cycle.startTime).toLocaleTimeString()}
+                                      </div>
+                                      <p className="text-sm text-muted-foreground font-normal">
+                                        {formatDistanceToNow(new Date(cycle.startTime), { addSuffix: true })}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Badge variant="default" className="bg-green-100 text-green-800">
+                                    Completed
+                                  </Badge>
+                                </CardTitle>
+                              </CardHeader>
+                              
+                              <CardContent className="pt-0">
+                                {/* Source Results */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                                  {cycle.apiResults.map((apiResult, apiIndex) => (
+                                    <div key={apiIndex} className={`p-3 rounded-lg border ${
+                                      apiResult.status === 'success' ? 'bg-green-50 border-green-200' :
+                                      apiResult.status === 'quota_exceeded' ? 'bg-orange-50 border-orange-200' :
+                                      apiResult.status === 'failed' ? 'bg-red-50 border-red-200' :
+                                      'bg-gray-50 border-gray-200'
+                                    }`}>
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-lg">{getSourceIcon(apiResult.source)}</span>
+                                        <span className="text-sm font-medium">
+                                          {getSourceDisplayName(apiResult.source)}
+                                        </span>
+                                      </div>
+                                      <div className={`text-sm ${getStatusColor(apiResult.status)}`}>
+                                        {getStatusMessage(apiResult.status, apiResult.processed || 0)}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                                
+                                {/* Summary */}
+                                <div className="p-3 bg-muted/30 rounded-lg">
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="font-medium">
+                                      Total: {cycle.apiResults.reduce((sum, r) => sum + (r.processed || 0), 0)} mentions found
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                      {cycle.duration || 'N/A'} duration
+                                    </span>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Quota Information */}
+                      {quotaExceededCount > 0 && (
+                        <Card className="border-orange-200 bg-orange-50">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-orange-800">
+                              <AlertTriangle className="h-5 w-5" />
+                              Monthly Limits
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-sm text-orange-700 space-y-2">
+                              <p><strong>{quotaExceededCount} source{quotaExceededCount !== 1 ? 's' : ''}</strong> have reached their monthly limit.</p>
+                              <p>✅ <strong>Good news:</strong> Your monitoring is working correctly! Other sources continue to work normally.</p>
+                              <p>🔄 <strong>What happens next:</strong> Limits reset monthly, or you can upgrade your plan for higher limits.</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+                  );
+                })()}
+              </TabsContent>
+              
+              <TabsContent value="debug" className="flex-1 overflow-y-auto space-y-4 mt-4">
+                {/* Technical Debug Information */}
+                <div className="space-y-6">
               {/* System Health Summary */}
               {detailedLogs.summary && (
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -865,7 +1038,9 @@ export function FetchLogsModal() {
                   </div>
                 </div>
               )}
-            </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           )}
         </div>
         
@@ -889,6 +1064,7 @@ export function FetchLogsModal() {
     </Dialog>
   );
 }
+
 
 
 
