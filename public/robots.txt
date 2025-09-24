@@ -16,4 +16,3 @@ Disallow: /new-user-signup
 
 User-agent: *
 Allow: /
-Disallow: /new-user-signup

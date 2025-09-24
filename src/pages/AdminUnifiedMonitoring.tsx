@@ -65,15 +65,15 @@ export default function AdminUnifiedMonitoring() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
+      {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
+      <div className="flex items-center justify-between">
+          <div>
               <h1 className="text-3xl font-bold text-gray-900">Unified Monitoring Dashboard</h1>
               <p className="text-gray-600 mt-2">
                 Comprehensive system monitoring and administration
-              </p>
-            </div>
+            </p>
+          </div>
             <Link 
               to="/admin" 
               className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800"
@@ -81,8 +81,8 @@ export default function AdminUnifiedMonitoring() {
               <ArrowLeft className="h-4 w-4" />
               Back to Admin
             </Link>
-          </div>
         </div>
+      </div>
 
         {/* Main Content */}
         <Tabs defaultValue="system" className="space-y-6">
@@ -93,32 +93,32 @@ export default function AdminUnifiedMonitoring() {
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="alerts">Alerts</TabsTrigger>
             <TabsTrigger value="sentiment">Sentiment</TabsTrigger>
-          </TabsList>
+        </TabsList>
 
           <TabsContent value="system" className="space-y-6">
             <SystemOverview onRefresh={handleRefresh} loading={loading} />
-          </TabsContent>
+        </TabsContent>
 
           <TabsContent value="queue" className="space-y-6">
             <QueueMonitoring />
-          </TabsContent>
+        </TabsContent>
 
           <TabsContent value="api" className="space-y-6">
             <ApiMonitoring onRefresh={handleRefresh} loading={loading} />
-          </TabsContent>
+        </TabsContent>
 
-          <TabsContent value="users" className="space-y-6">
+        <TabsContent value="users" className="space-y-6">
             <UserMonitoring onRefresh={handleRefresh} loading={loading} />
-          </TabsContent>
+        </TabsContent>
 
           <TabsContent value="alerts" className="space-y-6">
             <AlertMonitoring onRefresh={handleRefresh} loading={loading} />
-          </TabsContent>
+        </TabsContent>
 
           <TabsContent value="sentiment" className="space-y-6">
             <SentimentWorkerMonitoring />
-          </TabsContent>
-        </Tabs>
+        </TabsContent>
+      </Tabs>
       </div>
     </div>
   );
