@@ -174,6 +174,70 @@ export function ApiMonitoring({ onRefresh, loading }: ApiMonitoringProps) {
         </CardContent>
       </Card>
 
+      {/* Total API Usage Summary */}
+      {userQuotaUsage && (userQuotaUsage.total_mentions_this_month > 0 || Object.keys(userQuotaUsage.total_mentions_by_source || {}).length > 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Total API Usage Summary
+            </CardTitle>
+            <CardDescription>
+              Overall API usage statistics for the current month
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Total Mentions This Month */}
+              <div className="p-4 border rounded-lg bg-gradient-to-br from-blue-50 to-blue-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-600">Total Mentions</p>
+                    <p className="text-2xl font-bold text-blue-900">
+                      {userQuotaUsage.total_mentions_this_month?.toLocaleString() || 0}
+                    </p>
+                    <p className="text-xs text-blue-600">This Month</p>
+                  </div>
+                  <BarChart3 className="h-8 w-8 text-blue-600" />
+                </div>
+              </div>
+
+              {/* Usage by Source */}
+              {userQuotaUsage.total_mentions_by_source && Object.entries(userQuotaUsage.total_mentions_by_source).map(([source, count]: [string, any]) => (
+                <div key={source} className="p-4 border rounded-lg bg-gradient-to-br from-gray-50 to-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 capitalize">{source.replace('_', ' ')}</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {count?.toLocaleString() || 0}
+                      </p>
+                      <p className="text-xs text-gray-600">Mentions</p>
+                    </div>
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                      source === 'youtube' ? 'bg-red-100' :
+                      source === 'reddit' ? 'bg-orange-100' :
+                      source === 'x' ? 'bg-blue-100' :
+                      source === 'google_alert' ? 'bg-green-100' :
+                      'bg-purple-100'
+                    }`}>
+                      <span className={`text-xs font-bold ${
+                        source === 'youtube' ? 'text-red-600' :
+                        source === 'reddit' ? 'text-orange-600' :
+                        source === 'x' ? 'text-blue-600' :
+                        source === 'google_alert' ? 'text-green-600' :
+                        'text-purple-600'
+                      }`}>
+                        {source.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* User Quota Usage */}
       {userQuotaUsage && userQuotaUsage.users && userQuotaUsage.users.length > 0 && (
         <Card>
@@ -270,4 +334,5 @@ export function ApiMonitoring({ onRefresh, loading }: ApiMonitoringProps) {
     </div>
   );
 }
+
 
