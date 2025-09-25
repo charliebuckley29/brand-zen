@@ -49,7 +49,11 @@ export function useProfileCompletion() {
 
       setProfileData(profile ? {
         ...profile,
-        notification_preferences: profile.notification_preferences ? profile.notification_preferences as { sms?: boolean; whatsapp?: boolean } : undefined
+        notification_preferences: profile.notification_preferences ? profile.notification_preferences as { 
+          email?: { enabled: boolean; frequency: 'immediate' | 'daily' | 'weekly' };
+          sms?: boolean; 
+          whatsapp?: boolean; 
+        } : undefined
       } : null);
 
       // Check if profile is complete (full_name is required, phone_number is optional but encouraged)
@@ -110,7 +114,11 @@ export function useProfileCompletion() {
     }
   };
 
-  const updateNotificationPreferences = async (preferences: { sms?: boolean; whatsapp?: boolean }) => {
+  const updateNotificationPreferences = async (preferences: { 
+    email?: { enabled: boolean; frequency: 'immediate' | 'daily' | 'weekly' };
+    sms?: boolean; 
+    whatsapp?: boolean; 
+  }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");

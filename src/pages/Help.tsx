@@ -673,8 +673,8 @@ const Help = () => {
                 <div>
                   <h3 className="font-semibold mb-2 text-sm sm:text-base">How do I set up Google Alerts integration?</h3>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    Create Google Alerts for your brand keywords, then copy the RSS feed URL from your Google Alerts settings. 
-                    Paste this URL in your brand monitoring configuration to automatically import Google's findings.
+                    Our moderators will set up Google Alerts integration for your account. This includes creating Google Alerts for your brand keywords 
+                    and configuring the RSS feed URL to automatically import Google's findings into your dashboard.
                   </p>
                 </div>
 
