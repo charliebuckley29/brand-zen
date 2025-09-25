@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Bell, Mail, Smartphone, MessageCircle } from "lucide-react";
+import { Bell, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 
@@ -146,51 +146,6 @@ export function NotificationPreferences() {
           )}
         </div>
 
-        {/* SMS Notifications - Coming Soon */}
-        <div className="space-y-4 opacity-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Smartphone className="h-5 w-5 text-green-600" />
-              <div>
-                <Label className="text-base font-medium">
-                  SMS Notifications
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Receive SMS alerts for urgent mentions
-                </p>
-              </div>
-            </div>
-            <Switch disabled />
-          </div>
-          <div className="ml-8">
-            <p className="text-xs text-muted-foreground italic">
-              SMS notifications will be available in a future update
-            </p>
-          </div>
-        </div>
-
-        {/* WhatsApp Notifications - Coming Soon */}
-        <div className="space-y-4 opacity-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <MessageCircle className="h-5 w-5 text-green-600" />
-              <div>
-                <Label className="text-base font-medium">
-                  WhatsApp Notifications
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Receive WhatsApp messages for important mentions
-                </p>
-              </div>
-            </div>
-            <Switch disabled />
-          </div>
-          <div className="ml-8">
-            <p className="text-xs text-muted-foreground italic">
-              WhatsApp notifications will be available in a future update
-            </p>
-          </div>
-        </div>
 
         {/* Save Button */}
         <div className="flex justify-end pt-4">

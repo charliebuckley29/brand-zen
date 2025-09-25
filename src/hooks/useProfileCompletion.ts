@@ -11,9 +11,6 @@ interface ProfileData {
       enabled: boolean;
       frequency: 'immediate' | 'daily' | 'weekly';
     };
-    // SMS/WhatsApp will be implemented later
-    // sms?: boolean;
-    // whatsapp?: boolean;
   };
 }
 
@@ -51,8 +48,6 @@ export function useProfileCompletion() {
         ...profile,
         notification_preferences: profile.notification_preferences ? profile.notification_preferences as { 
           email?: { enabled: boolean; frequency: 'immediate' | 'daily' | 'weekly' };
-          sms?: boolean; 
-          whatsapp?: boolean; 
         } : undefined
       } : null);
 
@@ -116,8 +111,6 @@ export function useProfileCompletion() {
 
   const updateNotificationPreferences = async (preferences: { 
     email?: { enabled: boolean; frequency: 'immediate' | 'daily' | 'weekly' };
-    sms?: boolean; 
-    whatsapp?: boolean; 
   }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();

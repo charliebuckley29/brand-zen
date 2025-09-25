@@ -562,56 +562,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
               </div>
             )}
 
-            {/* SMS and WhatsApp notifications temporarily hidden */}
-            {/* 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-base">SMS Notifications</Label>
-                <div className="text-[0.8rem] text-muted-foreground">
-                  Receive SMS alerts for negative mentions
-                </div>
-              </div>
-              <Switch
-                checked={profileData?.notification_preferences?.sms || false}
-                onCheckedChange={(checked) => {
-                  const preferences = {
-                    ...profileData?.notification_preferences,
-                    sms: checked
-                  };
-                  updateNotificationPreferences(preferences);
-                }}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-base">WhatsApp Notifications</Label>
-                <div className="text-[0.8rem] text-muted-foreground">
-                  Receive WhatsApp messages for negative mentions
-                </div>
-              </div>
-              <Switch
-                checked={profileData?.notification_preferences?.whatsapp || false}
-                onCheckedChange={(checked) => {
-                  const preferences = {
-                    ...profileData?.notification_preferences,
-                    whatsapp: checked
-                  };
-                  updateNotificationPreferences(preferences);
-                }}
-              />
-            </div>
-
-            {(profileData?.notification_preferences?.sms || profileData?.notification_preferences?.whatsapp) && !profileData?.phone_number && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Phone Number Required</AlertTitle>
-                <AlertDescription>
-                  Please add your phone number in the Profile section to receive notifications.
-                </AlertDescription>
-              </Alert>
-            )}
-            */}
           </CardContent>
         </Card>
 
