@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ExclusionsModal } from "./ExclusionsModal";
 import { UserQueueModal } from "./UserQueueModal";
 import { AutomationStatus } from "@/components/AutomationStatus";
+import { apiFetch } from "@/lib/api";
 
 interface MonitoringControlsProps {
   onMentionsUpdated: () => void;
@@ -58,11 +59,8 @@ export function MonitoringControls({ onMentionsUpdated }: MonitoringControlsProp
       
       // Clear API cursors so fetching starts fresh
       try {
-        const backendUrl = 'https://mentions-backend.vercel.app';
-        
-        const cursorsResponse = await fetch(`${backendUrl}/api/admin/clear-cursors`, {
+        const cursorsResponse = await apiFetch('/api/admin/clear-cursors', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: user.id })
         });
         

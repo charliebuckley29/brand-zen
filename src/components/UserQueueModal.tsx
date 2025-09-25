@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { QueueStatusWidget } from "./QueueStatusWidget";
 import { QueueHistoryWidget } from "./QueueHistoryWidget";
 import { formatDistanceToNow } from "date-fns";
+import { apiFetch, API_ENDPOINTS } from "@/lib/api";
 
 interface UserQueueModalProps {
   userId: string;
@@ -30,16 +31,16 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
       setLoadingTechnical(true);
       
       // Fetch raw queue data
-      const queueResponse = await fetch(`https://mentions-backend.vercel.app/api/admin/queue-status`);
-      const queueData = queueResponse.ok ? await queueResponse.json() : null;
+      const queueResponse = await apiFetch(API_ENDPOINTS.QUEUE_STATUS);
+      const queueData = await queueResponse.json();
       
       // Fetch system stats
-      const statsResponse = await fetch(`https://mentions-backend.vercel.app/api/admin/system-health`);
-      const statsData = statsResponse.ok ? await statsResponse.json() : null;
+      const statsResponse = await apiFetch(API_ENDPOINTS.SYSTEM_HEALTH);
+      const statsData = await statsResponse.json();
       
       // Fetch detailed fetch logs
-      const logsResponse = await fetch(`https://mentions-backend.vercel.app/api/debug/detailed-fetch-logs`);
-      const logsData = logsResponse.ok ? await logsResponse.json() : null;
+      const logsResponse = await apiFetch(API_ENDPOINTS.DETAILED_FETCH_LOGS);
+      const logsData = await logsResponse.json();
       
       setTechnicalData({
         rawQueueData: queueData || [],
@@ -48,6 +49,11 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
       });
     } catch (error) {
       console.error('Error fetching technical data:', error);
+      toast({
+        title: "Error loading technical data",
+        description: "Failed to fetch queue information. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoadingTechnical(false);
     }

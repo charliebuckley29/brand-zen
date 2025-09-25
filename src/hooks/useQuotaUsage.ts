@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { QuotaStatus } from '@/components/QuotaDisplay';
+import { apiFetch } from '@/lib/api';
 
 export function useQuotaUsage() {
   const [quotaData, setQuotaData] = useState<QuotaStatus[]>([]);
@@ -18,12 +19,8 @@ export function useQuotaUsage() {
         return;
       }
 
-      const response = await fetch(`https://mentions-backend.vercel.app/api/user/quota-usage?user_id=${user.id}`);
+      const response = await apiFetch(`/api/user/quota-usage?user_id=${user.id}`);
       const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch quota data');
-      }
 
       if (result.success && result.data) {
         setQuotaData(result.data);

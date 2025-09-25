@@ -36,8 +36,7 @@ export function Navigation({ unreadCount: propUnreadCount = 0 }: NavigationProps
   // Use context unread count to ensure real-time updates
   const unreadCount = contextUnreadCount;
 
-  // Debug logging
-  console.log('Navigation: Prop unreadCount:', propUnreadCount, 'Context unreadCount:', contextUnreadCount, 'Using:', unreadCount);
+  // Use context unread count to ensure real-time updates
 
   const navItems = [
     {
