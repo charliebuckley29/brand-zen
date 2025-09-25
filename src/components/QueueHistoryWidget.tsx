@@ -234,7 +234,7 @@ export function QueueHistoryWidget({ userId, limit = 5 }: QueueHistoryWidgetProp
           {/* Sample Queue Entries */}
           <div className="space-y-4">
             <h4 className="text-sm font-medium text-muted-foreground">Sample Queue History (for testing scrollable functionality)</h4>
-            <div className="max-h-96 overflow-y-auto space-y-3">
+            <div className="space-y-3">
               {sampleHistory.queueEntries.map((entry) => (
                 <div key={entry.id} className={`p-4 rounded-lg border ${getStatusColor(entry.status)}`}>
                   <div className="flex items-center justify-between mb-3">
@@ -334,7 +334,7 @@ export function QueueHistoryWidget({ userId, limit = 5 }: QueueHistoryWidgetProp
         {/* Queue Entries */}
         <div className="space-y-4">
           <h4 className="text-sm font-medium text-muted-foreground">Full Queue History</h4>
-          <div className="max-h-96 overflow-y-auto space-y-3">
+          <div className="space-y-3">
             {queueEntries.map((entry) => (
             <div key={entry.id} className={`p-4 rounded-lg border ${getStatusColor(entry.status)}`}>
               <div className="flex items-center justify-between mb-3">

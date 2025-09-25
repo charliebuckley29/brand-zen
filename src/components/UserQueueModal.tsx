@@ -67,7 +67,7 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
           My Queue Activity
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
@@ -79,7 +79,7 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
           View your personal queue status and monitoring activity history.
         </DialogDescription>
         
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1">
           <Tabs defaultValue="overview" className="h-full flex flex-col">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="overview" className="flex items-center gap-2">
@@ -92,7 +92,7 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="overview" className="flex-1 overflow-y-auto space-y-6 mt-4">
+            <TabsContent value="overview" className="flex-1 space-y-6 mt-4">
               {/* User-Centric Overview */}
               <div className="space-y-6">
                 {/* Current Queue Status */}
@@ -103,7 +103,7 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
               </div>
             </TabsContent>
             
-            <TabsContent value="technical" className="flex-1 overflow-y-auto space-y-4 mt-4">
+            <TabsContent value="technical" className="flex-1 space-y-4 mt-4">
               {/* Technical Debug Information */}
               <div className="space-y-6">
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -128,7 +128,7 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
                       <RefreshCw className={`h-4 w-4 ${loadingTechnical ? 'animate-spin' : ''}`} />
                     </Button>
                   </div>
-                  <div className="p-4 bg-muted/30 rounded-lg max-h-64 overflow-y-auto">
+                  <div className="p-4 bg-muted/30 rounded-lg">
                     {loadingTechnical ? (
                       <div className="flex items-center justify-center py-4">
                         <RefreshCw className="h-6 w-6 animate-spin mr-2" />
@@ -152,7 +152,7 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
                     <Users className="h-5 w-5" />
                     System Statistics
                   </h4>
-                  <div className="p-4 bg-muted/30 rounded-lg max-h-64 overflow-y-auto">
+                  <div className="p-4 bg-muted/30 rounded-lg">
                     {technicalData?.systemStats ? (
                       <pre className="text-xs text-muted-foreground whitespace-pre-wrap">
                         {JSON.stringify(technicalData.systemStats, null, 2)}
@@ -171,7 +171,7 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
                     <FileText className="h-5 w-5" />
                     Detailed Fetch Logs
                   </h4>
-                  <div className="p-4 bg-muted/30 rounded-lg max-h-96 overflow-y-auto">
+                  <div className="p-4 bg-muted/30 rounded-lg">
                     {technicalData?.fetchLogs && technicalData.fetchLogs.length > 0 ? (
                       <div className="space-y-3">
                         {technicalData.fetchLogs.slice(0, 20).map((log: any, index: number) => (
