@@ -142,11 +142,17 @@ const Help = () => {
                   </div>
 
                   <div className="space-y-2 sm:space-y-3">
-                    <h3 className="text-base sm:text-lg font-semibold">4. Set Up Google Alerts (Optional)</h3>
+                    <h3 className="text-base sm:text-lg font-semibold">4. Set Up Google Alerts (Highly Recommended)</h3>
                     <p className="text-sm sm:text-base text-muted-foreground">
                       Connect your Google Alerts RSS feed to significantly expand your monitoring coverage. 
-                      This integration brings in mentions that Google discovers across the web.
+                      This integration brings in mentions that Google discovers across the web and has no API quota limits.
                     </p>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-2">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <strong>Why Google Alerts is important:</strong> It provides comprehensive web coverage including news sites, 
+                        blogs, and forums that our other sources don't monitor. It's also the most reliable source with no quota limits.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -297,6 +303,26 @@ const Help = () => {
                       Connect your Google Alerts RSS feed to automatically import mentions that Google discovers. 
                       This significantly expands your monitoring coverage and ensures you don't miss important mentions.
                     </p>
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 mt-2">
+                      <p className="text-sm text-green-800 dark:text-green-200">
+                        <strong>Setup Steps:</strong> 1) Create Google Alerts for your brand keywords, 2) Set frequency to "As-it-happens", 
+                        3) Copy the RSS feed URL, 4) Paste it in your platform settings. This is the most reliable source with no quota limits.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Automated Monitoring & Queue System</h3>
+                    <p className="text-muted-foreground text-sm">
+                      Our system uses a fair queue to automatically monitor all users. Each source (YouTube, Reddit, X, Google Alerts) 
+                      has its own queue, and users are processed based on priority and monitoring frequency.
+                    </p>
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mt-2">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                        <strong>My Queue Activity:</strong> Use this feature to monitor your automated monitoring status, 
+                        view fetch history, and click on sources to see actual mentions found in each fetch cycle.
+                      </p>
+                    </div>
                   </div>
 
                   <div>
@@ -649,6 +675,26 @@ const Help = () => {
                   <p className="text-xs sm:text-sm text-muted-foreground">
                     Create Google Alerts for your brand keywords, then copy the RSS feed URL from your Google Alerts settings. 
                     Paste this URL in your brand monitoring configuration to automatically import Google's findings.
+                  </p>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="font-semibold mb-2 text-sm sm:text-base">What are API quotas and how do they affect monitoring?</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Our system uses various APIs (YouTube, Reddit, X) that have usage limits. Each user has individual quotas, 
+                    and when limits are reached, monitoring for that source pauses until quotas reset. Google Alerts has no limits.
+                  </p>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="font-semibold mb-2 text-sm sm:text-base">How does the queue system work?</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Users are added to separate queues for each source. The system processes users fairly based on priority 
+                    (users who haven't been monitored recently get higher priority) and respects your monitoring frequency settings.
                   </p>
                 </div>
 
