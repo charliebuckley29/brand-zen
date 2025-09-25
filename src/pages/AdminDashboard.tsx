@@ -1,7 +1,7 @@
 import { useUserRole } from "../hooks/use-user-role";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare, Activity, BarChart3, GitBranch, TestTube } from "lucide-react";
+import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare, Activity, BarChart3, GitBranch, TestTube, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function AdminDashboard() {
@@ -172,7 +172,28 @@ export default function AdminDashboard() {
             </Card>
           </Link>
 
-
+          <Link to="/admin/email-delivery">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Mail className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Email Delivery Monitoring</CardTitle>
+                    <CardDescription>
+                      Monitor email notification delivery and performance
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Track email delivery rates, monitor failed deliveries, analyze template performance, and manage retry queues for email notifications.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
 
           <Link to="/admin/test-debug">
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
