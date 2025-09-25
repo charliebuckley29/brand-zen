@@ -142,9 +142,9 @@ const Help = () => {
                   </div>
 
                   <div className="space-y-2 sm:space-y-3">
-                    <h3 className="text-base sm:text-lg font-semibold">4. Set Up Google Alerts (Highly Recommended)</h3>
+                    <h3 className="text-base sm:text-lg font-semibold">4. Google Alerts Integration (Handled by Moderators)</h3>
                     <p className="text-sm sm:text-base text-muted-foreground">
-                      Connect your Google Alerts RSS feed to significantly expand your monitoring coverage. 
+                      Our moderators will set up Google Alerts integration for your account to significantly expand your monitoring coverage. 
                       This integration brings in mentions that Google discovers across the web and has no API quota limits.
                     </p>
                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-2">
@@ -300,13 +300,13 @@ const Help = () => {
                   <div>
                     <h3 className="font-semibold mb-2">Google Alerts Integration</h3>
                     <p className="text-muted-foreground text-sm">
-                      Connect your Google Alerts RSS feed to automatically import mentions that Google discovers. 
+                      Our moderators will set up Google Alerts integration for your account to automatically import mentions that Google discovers. 
                       This significantly expands your monitoring coverage and ensures you don't miss important mentions.
                     </p>
                     <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 mt-2">
                       <p className="text-sm text-green-800 dark:text-green-200">
-                        <strong>Setup Steps:</strong> 1) Create Google Alerts for your brand keywords, 2) Set frequency to "As-it-happens", 
-                        3) Copy the RSS feed URL, 4) Paste it in your platform settings. This is the most reliable source with no quota limits.
+                        <strong>Moderator Setup:</strong> Our moderators will create Google Alerts for your brand keywords, set the frequency to "As-it-happens", 
+                        and configure the RSS feed URL in your platform settings. This is the most reliable source with no quota limits.
                       </p>
                     </div>
                   </div>
