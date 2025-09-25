@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,7 @@ import { isValidPhoneNumber } from "react-phone-number-input";
 import { QuotaDisplay } from "@/components/QuotaDisplay";
 import { useQuotaUsage } from "@/hooks/useQuotaUsage";
 import { NotificationPreferences } from "@/components/NotificationPreferences";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface SettingsPageProps {
   onSignOut: () => void;
 }
@@ -45,6 +47,9 @@ const getSourceIcon = (sourceType: SourceType) => {
 };
 
 export function SettingsPage({ onSignOut }: SettingsPageProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<string>("general");
+  
   const [newEmail, setNewEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -96,6 +101,26 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   useEffect(() => {
     fetchBrandData();
   }, []);
+
+  // Handle URL parameters for tab navigation
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'notifications') {
+      setActiveTab('notifications');
+    } else {
+      setActiveTab('general');
+    }
+  }, [searchParams]);
+
+  // Handle tab changes and update URL
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === 'notifications') {
+      setSearchParams({ tab: 'notifications' });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   // Update profile form when profile data changes
   useEffect(() => {
@@ -433,6 +458,14 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
           Manage your account preferences and application settings
         </p>
       </div>
+
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="general" className="space-y-6">
 
       <div className="grid gap-6">
         {/* Theme Settings */}
@@ -1135,9 +1168,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
           </CardContent>
         </Card>
 
-        {/* Notification Preferences */}
-        <NotificationPreferences />
-
         {/* Account Settings */}
         <Card>
           <CardHeader>
@@ -1309,7 +1339,12 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-6">
+          <NotificationPreferences />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
