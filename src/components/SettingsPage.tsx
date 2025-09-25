@@ -466,8 +466,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
-
-      <div className="grid gap-6">
+          <div className="grid gap-6">
         {/* Theme Settings */}
         <Card>
           <CardHeader>
@@ -1289,6 +1288,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
             </div>
           </CardContent>
         </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-6">
