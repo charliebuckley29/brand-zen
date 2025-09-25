@@ -3,18 +3,61 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Search, Bug, Clock, Users } from "lucide-react";
+import { FileText, Search, Bug, Clock, Users, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { QueueStatusWidget } from "./QueueStatusWidget";
 import { QueueHistoryWidget } from "./QueueHistoryWidget";
+import { formatDistanceToNow } from "date-fns";
 
 interface UserQueueModalProps {
   userId: string;
 }
 
+interface TechnicalData {
+  rawQueueData: any[];
+  systemStats: any;
+  fetchLogs: any[];
+}
+
 export function UserQueueModal({ userId }: UserQueueModalProps) {
   const [open, setOpen] = useState(false);
+  const [technicalData, setTechnicalData] = useState<TechnicalData | null>(null);
+  const [loadingTechnical, setLoadingTechnical] = useState(false);
   const { toast } = useToast();
+
+  const fetchTechnicalData = async () => {
+    try {
+      setLoadingTechnical(true);
+      
+      // Fetch raw queue data
+      const queueResponse = await fetch(`https://mentions-backend.vercel.app/api/admin/queue-status`);
+      const queueData = queueResponse.ok ? await queueResponse.json() : null;
+      
+      // Fetch system stats
+      const statsResponse = await fetch(`https://mentions-backend.vercel.app/api/admin/system-health`);
+      const statsData = statsResponse.ok ? await statsResponse.json() : null;
+      
+      // Fetch detailed fetch logs
+      const logsResponse = await fetch(`https://mentions-backend.vercel.app/api/debug/detailed-fetch-logs`);
+      const logsData = logsResponse.ok ? await logsResponse.json() : null;
+      
+      setTechnicalData({
+        rawQueueData: queueData || [],
+        systemStats: statsData || {},
+        fetchLogs: logsData?.analysis?.fetchLogs || logsData?.fetchLogs || []
+      });
+    } catch (error) {
+      console.error('Error fetching technical data:', error);
+    } finally {
+      setLoadingTechnical(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      fetchTechnicalData();
+    }
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -56,7 +99,7 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
                 <QueueStatusWidget userId={userId} />
                 
                 {/* Queue History */}
-                <QueueHistoryWidget userId={userId} limit={10} />
+                <QueueHistoryWidget userId={userId} limit={50} />
               </div>
             </TabsContent>
             
@@ -76,15 +119,30 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
 
                 {/* Raw Queue Data */}
                 <div className="space-y-4">
-                  <h4 className="text-lg font-semibold flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    Raw Queue Data
-                  </h4>
-                  <div className="p-4 bg-muted/30 rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      Raw queue data and system logs would be displayed here for technical debugging.
-                      This includes detailed API processing logs, error traces, and system metrics.
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-lg font-semibold flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      Raw Queue Data
+                    </h4>
+                    <Button variant="outline" size="sm" onClick={fetchTechnicalData} disabled={loadingTechnical}>
+                      <RefreshCw className={`h-4 w-4 ${loadingTechnical ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </div>
+                  <div className="p-4 bg-muted/30 rounded-lg max-h-64 overflow-y-auto">
+                    {loadingTechnical ? (
+                      <div className="flex items-center justify-center py-4">
+                        <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+                        Loading technical data...
+                      </div>
+                    ) : technicalData?.rawQueueData ? (
+                      <pre className="text-xs text-muted-foreground whitespace-pre-wrap">
+                        {JSON.stringify(technicalData.rawQueueData, null, 2)}
+                      </pre>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No raw queue data available. Click refresh to load.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -94,11 +152,59 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
                     <Users className="h-5 w-5" />
                     System Statistics
                   </h4>
-                  <div className="p-4 bg-muted/30 rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      System-wide statistics and performance metrics would be displayed here.
-                      This includes queue processing times, API usage statistics, and error rates.
-                    </p>
+                  <div className="p-4 bg-muted/30 rounded-lg max-h-64 overflow-y-auto">
+                    {technicalData?.systemStats ? (
+                      <pre className="text-xs text-muted-foreground whitespace-pre-wrap">
+                        {JSON.stringify(technicalData.systemStats, null, 2)}
+                      </pre>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No system statistics available.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Detailed Fetch Logs */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Detailed Fetch Logs
+                  </h4>
+                  <div className="p-4 bg-muted/30 rounded-lg max-h-96 overflow-y-auto">
+                    {technicalData?.fetchLogs && technicalData.fetchLogs.length > 0 ? (
+                      <div className="space-y-3">
+                        {technicalData.fetchLogs.slice(0, 20).map((log: any, index: number) => (
+                          <div key={index} className="p-3 bg-background/50 rounded border text-xs">
+                            <div className="font-medium text-foreground mb-1">
+                              {formatDistanceToNow(new Date(log.started_at), { addSuffix: true })}
+                            </div>
+                            <div className="text-muted-foreground space-y-1">
+                              <div>Type: {log.fetch_type}</div>
+                              <div>Keywords: {log.successful_keywords} successful, {log.failed_keywords} failed</div>
+                              <div>Fetches: {log.successful_fetches} successful, {log.failed_fetches} failed</div>
+                              {log.results_summary && (
+                                <div className="mt-2">
+                                  <div className="font-medium">Results Summary:</div>
+                                  <pre className="text-xs opacity-75 mt-1">
+                                    {JSON.stringify(log.results_summary, null, 2)}
+                                  </pre>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        {technicalData.fetchLogs.length > 20 && (
+                          <div className="text-xs text-muted-foreground text-center py-2">
+                            Showing first 20 of {technicalData.fetchLogs.length} logs
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No detailed fetch logs available.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

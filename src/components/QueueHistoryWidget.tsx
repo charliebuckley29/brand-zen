@@ -203,8 +203,9 @@ export function QueueHistoryWidget({ userId, limit = 5 }: QueueHistoryWidgetProp
 
         {/* Queue Entries */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium text-muted-foreground">Recent Activity</h4>
-          {queueEntries.map((entry) => (
+          <h4 className="text-sm font-medium text-muted-foreground">Full Queue History</h4>
+          <div className="max-h-96 overflow-y-auto space-y-3">
+            {queueEntries.map((entry) => (
             <div key={entry.id} className={`p-4 rounded-lg border ${getStatusColor(entry.status)}`}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -253,7 +254,8 @@ export function QueueHistoryWidget({ userId, limit = 5 }: QueueHistoryWidgetProp
                 })}
               </div>
             </div>
-          ))}
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>
