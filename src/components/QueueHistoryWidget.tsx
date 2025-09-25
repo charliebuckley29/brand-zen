@@ -85,7 +85,7 @@ export function QueueHistoryWidget({ userId, limit = 5 }: QueueHistoryWidgetProp
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/user/queue-history?userId=${userId}&limit=${limit}`);
+      const response = await fetch(`https://mentions-backend.vercel.app/api/user/queue-history?userId=${userId}&limit=${limit}`);
       if (!response.ok) {
         throw new Error('Failed to fetch queue history');
       }
@@ -259,3 +259,4 @@ export function QueueHistoryWidget({ userId, limit = 5 }: QueueHistoryWidgetProp
     </Card>
   );
 }
+

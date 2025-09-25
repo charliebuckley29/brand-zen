@@ -76,7 +76,7 @@ export function QueueStatusWidget({ userId }: QueueStatusWidgetProps) {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/user/queue-status?userId=${userId}`);
+      const response = await fetch(`https://mentions-backend.vercel.app/api/user/queue-status?userId=${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch queue status');
       }
@@ -239,3 +239,4 @@ export function QueueStatusWidget({ userId }: QueueStatusWidgetProps) {
     </Card>
   );
 }
+

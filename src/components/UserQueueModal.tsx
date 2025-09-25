@@ -109,3 +109,4 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
     </Dialog>
   );
 }
+
