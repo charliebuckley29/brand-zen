@@ -126,6 +126,7 @@ const App = () => {
                   <Route path="/admin/unified-monitoring/" element={<AdminUnifiedMonitoring />} />
                   <Route path="/admin/api-limits" element={<AdminApiLimitsPanel />} />
                   <Route path="/admin/email-delivery" element={<AdminEmailDeliveryMonitoring />} />
+                  <Route path="/admin/email-delivery/" element={<AdminEmailDeliveryMonitoring />} />
                   <Route path="/admin/test-debug" element={<AdminTestDebugTools />} />
                   <Route path="/admin/test-debug/" element={<AdminTestDebugTools />} />
                   
