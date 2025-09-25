@@ -23,6 +23,7 @@ import { PhoneInputWithCountry } from "@/components/ui/phone-input-with-country"
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { QuotaDisplay } from "@/components/QuotaDisplay";
 import { useQuotaUsage } from "@/hooks/useQuotaUsage";
+import { NotificationPreferences } from "@/components/NotificationPreferences";
 interface SettingsPageProps {
   onSignOut: () => void;
 }
@@ -1133,6 +1134,9 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
             )}
           </CardContent>
         </Card>
+
+        {/* Notification Preferences */}
+        <NotificationPreferences />
 
         {/* Account Settings */}
         <Card>
