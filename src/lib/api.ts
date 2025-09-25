@@ -23,6 +23,10 @@ export function createApiUrl(endpoint: string): string {
 export const API_ENDPOINTS = {
   // Admin endpoints
   QUEUE_STATUS: '/api/admin/queue-status',
+  QUEUE_HEALTH: '/api/admin/queue-health',
+  QUEUE_MAINTENANCE: '/api/admin/queue-maintenance',
+  QUEUE_MONITOR: '/api/admin/queue-monitor',
+  QUEUE_DASHBOARD: '/api/admin/queue-dashboard',
   SYSTEM_HEALTH: '/api/admin/system-health',
   USER_QUOTA_MANAGEMENT: '/api/admin/user-quota-management',
   SYSTEM_STATUS: '/api/system/status',
