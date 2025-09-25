@@ -5,6 +5,7 @@ import { ReportsPage } from "@/components/ReportsPage";
 import { SettingsPage } from "@/components/SettingsPage";
 import { BrandSetup } from "@/components/BrandSetup";
 import { Navigation } from "@/components/Navigation";
+import { Footer } from "@/components/Footer";
 import { ModeratorPanel } from "@/components/ModeratorPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { startMonitoring } from "@/lib/monitoring";
@@ -53,10 +54,11 @@ export function MainDashboard({ onSignOut, hasKeywords, onKeywordsUpdated, unrea
       />
       
       {/* Main Content */}
-      <div className="lg:ml-64 min-h-screen">
-        <div className="p-3 sm:p-4 lg:p-8 pt-20 sm:pt-16 lg:pt-8">
+      <div className="lg:ml-64 min-h-screen flex flex-col">
+        <div className="flex-1 p-3 sm:p-4 lg:p-8 pt-20 sm:pt-16 lg:pt-8">
           {renderCurrentView()}
         </div>
+        <Footer />
       </div>
     </div>
   );

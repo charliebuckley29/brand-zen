@@ -1,7 +1,7 @@
 /**
  * Main Application Component
  * 
- * This is the root component of the Brand Zen application. It sets up all the
+ * This is the root component of the Brand Protected application. It sets up all the
  * necessary providers and routing for the entire application.
  * 
  * Key responsibilities:
@@ -12,7 +12,7 @@
  * - Initialize performance monitoring in development
  * - Set up global UI components (toasters, tooltips)
  * 
- * @author Brand Zen Team
+ * @author Brand Protected Team
  * @version 1.0.0
  */
 
@@ -29,6 +29,7 @@ import { PerformanceMonitor } from "@/store/performanceStore";
 import { logger } from "@/lib/logger";
 import Index from "./pages/Index";
 import Help from "./pages/Help";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUserQuotaManagement from "./pages/AdminUserQuotaManagement";
 import AdminModeratorsPanel from "./pages/AdminModeratorsPanel";
@@ -112,6 +113,7 @@ const App = () => {
                   {/* Public routes */}
                   <Route path="/" element={<Index />} />
                   <Route path="/help" element={<Help />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/new-user-signup" element={<NewUserSignUp />} />
                   
                   {/* Admin routes - protected by role-based access */}
