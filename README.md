@@ -1,6 +1,6 @@
-# Brand Zen Frontend
+# Brand Protected Frontend
 
-React-based frontend application for the Brand Zen brand monitoring platform, hosted on AWS Amplify.
+React-based frontend application for the Brand Protected brand monitoring platform, hosted on AWS Amplify.
 
 ## 🚀 Quick Start
 

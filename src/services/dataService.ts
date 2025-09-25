@@ -12,7 +12,7 @@
  * All functions are designed to work seamlessly with React Query for
  * automatic caching, background updates, and optimistic updates.
  * 
- * @author Brand Zen Team
+ * @author Brand Protected Team
  * @version 1.0.0
  */
 

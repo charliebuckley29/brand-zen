@@ -153,9 +153,9 @@ const PrivacyPolicy = () => {
                 </ul>
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h3 className="font-semibold mb-2 text-yellow-800">Important Note</h3>
-                <p className="text-sm text-yellow-700">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <h3 className="font-semibold mb-2 text-yellow-800 dark:text-yellow-200">Important Note</h3>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
                   We only collect data from publicly available sources. We do not access private accounts, 
                   protected posts, or any content that requires authentication or special permissions.
                 </p>
@@ -299,9 +299,9 @@ const PrivacyPolicy = () => {
                 and implement appropriate safeguards to protect your information.
               </p>
               
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold mb-2 text-blue-800">Data Processing Locations</h3>
-                <ul className="list-disc list-inside space-y-1 text-sm text-blue-700">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <h3 className="font-semibold mb-2 text-blue-800 dark:text-blue-200">Data Processing Locations</h3>
+                <ul className="list-disc list-inside space-y-1 text-sm text-blue-700 dark:text-blue-300">
                   <li>Primary hosting: United States (Vercel, Supabase)</li>
                   <li>Email services: United States (SendGrid)</li>
                   <li>AI processing: United States (OpenAI)</li>
@@ -349,9 +349,9 @@ const PrivacyPolicy = () => {
                 </p>
               </div>
               
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
                 <ul className="space-y-2 text-sm">
-                  <li><strong>Email:</strong> privacy@reputations.io</li>
+                  <li><strong>Email:</strong> help@reputations.io</li>
                   <li><strong>Support:</strong> Available through your account dashboard</li>
                   <li><strong>Data Requests:</strong> Use the contact methods above for data access, correction, or deletion requests</li>
                 </ul>

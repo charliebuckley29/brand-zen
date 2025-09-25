@@ -5,25 +5,25 @@ const isDebugEnabled = import.meta.env.VITE_ENABLE_DEBUG_LOGGING === 'true';
 export const logger = {
   // Always log errors in production
   error: (...args: any[]) => {
-    console.error('[Brand Zen Error]', ...args);
+    console.error('[Brand Protected Error]', ...args);
   },
 
   // Log warnings in production
   warn: (...args: any[]) => {
-    console.warn('[Brand Zen Warning]', ...args);
+    console.warn('[Brand Protected Warning]', ...args);
   },
 
   // Only log info in development
   info: (...args: any[]) => {
     if (isDev || isDebugEnabled) {
-      console.log('[Brand Zen Info]', ...args);
+      console.log('[Brand Protected Info]', ...args);
     }
   },
 
   // Only log debug in development
   debug: (...args: any[]) => {
     if (isDev || isDebugEnabled) {
-      console.log('[Brand Zen Debug]', ...args);
+      console.log('[Brand Protected Debug]', ...args);
     }
   },
 
@@ -31,14 +31,14 @@ export const logger = {
   performance: (label: string, startTime: number) => {
     if (isDev || isDebugEnabled) {
       const duration = performance.now() - startTime;
-      console.log(`[Brand Zen Performance] ${label}: ${duration.toFixed(2)}ms`);
+      console.log(`[Brand Protected Performance] ${label}: ${duration.toFixed(2)}ms`);
     }
   },
 
   // Group logging for related operations
   group: (label: string, fn: () => void) => {
     if (isDev || isDebugEnabled) {
-      console.group(`[Brand Zen] ${label}`);
+      console.group(`[Brand Protected] ${label}`);
       fn();
       console.groupEnd();
     } else {

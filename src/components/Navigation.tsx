@@ -66,13 +66,6 @@ export function Navigation({ unreadCount: propUnreadCount = 0 }: NavigationProps
       icon: HelpCircle,
       isExternal: true
     },
-    {
-      id: "privacy",
-      label: "Privacy Policy",
-      icon: Shield,
-      isExternal: true,
-      url: '/privacy'
-    },
     ...(isAdmin ? [{
       id: "admin",
       label: "Admin Panel",
@@ -92,8 +85,6 @@ export function Navigation({ unreadCount: propUnreadCount = 0 }: NavigationProps
       if (item.isExternal) {
         if (item.id === 'admin') {
           window.location.href = '/admin';
-        } else if (item.id === 'privacy') {
-          window.location.href = '/privacy';
         } else {
           window.location.href = '/help';
         }

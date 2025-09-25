@@ -57,7 +57,7 @@ const Help = () => {
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold">Help & Documentation</h1>
                 <p className="text-sm sm:text-base text-muted-foreground">
-                  Complete guide to using your brand monitoring platform
+                  Complete guide to using Brand Protected
                 </p>
               </div>
             </div>
@@ -112,7 +112,7 @@ const Help = () => {
                   Getting Started
                 </CardTitle>
                 <CardDescription className="text-sm">
-                  Welcome to your brand monitoring platform. Follow these steps to get started.
+                  Welcome to Brand Protected. Follow these steps to get started.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 sm:space-y-6">
