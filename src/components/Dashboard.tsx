@@ -19,7 +19,8 @@ interface Mention {
   source_name: string;
   source_url: string;
   source_type: string;
-  published_at: string;
+  published_at: string; // Source date (when content was originally published)
+  created_at: string; // Found date (when our system discovered it)
   content_snippet: string;
   full_text: string | null;
   sentiment: number | null; // -1 = unknown, 0 = strongly negative, 100 = strongly positive
@@ -30,6 +31,9 @@ interface Mention {
   legal_escalated_at: string | null;
   pr_escalated_at: string | null;
 }
+
+type SortField = 'published_at' | 'created_at' | 'source_name' | 'sentiment';
+type SortDirection = 'asc' | 'desc';
 
 export function Dashboard() {
   const [mentions, setMentions] = useState<Mention[]>([]);
@@ -46,6 +50,8 @@ export function Dashboard() {
     flagged: 0
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [sortField, setSortField] = useState<SortField>('created_at');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const { toast } = useToast();
   const { enabledMentions } = useSourcePreferences();
   const { selectedMentionId, clearSelectedMention } = useNavigation();
@@ -244,11 +250,49 @@ export function Dashboard() {
       await excludeMention(mentionId);
       setMentions(prev => prev.filter(m => m.id !== mentionId));
       setStats(s => ({ ...s, total: Math.max(0, s.total - 1) }));
-      toast({ title: "Removed", description: "We’ll ignore this source for this brand going forward." });
+      toast({ title: "Removed", description: "We'll ignore this source for this brand going forward." });
     } catch (err) {
       console.error("Exclude failed", err);
-      toast({ title: "Action failed", description: "Couldn’t exclude this mention.", variant: "destructive" });
+      toast({ title: "Action failed", description: "Couldn't exclude this mention.", variant: "destructive" });
     }
+  };
+
+  const handleSort = (field: SortField, direction: SortDirection) => {
+    setSortField(field);
+    setSortDirection(direction);
+    setCurrentPage(1); // Reset to first page when sorting changes
+    
+    // Sort the mentions array
+    const sortedMentions = [...mentions].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+      
+      switch (field) {
+        case 'published_at':
+        case 'created_at':
+          aValue = new Date(a[field]).getTime();
+          bValue = new Date(b[field]).getTime();
+          break;
+        case 'source_name':
+          aValue = a.source_name.toLowerCase();
+          bValue = b.source_name.toLowerCase();
+          break;
+        case 'sentiment':
+          aValue = a.sentiment ?? -999; // Treat null as -999 for sorting
+          bValue = b.sentiment ?? -999;
+          break;
+        default:
+          return 0;
+      }
+      
+      if (direction === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+    
+    setMentions(sortedMentions);
   };
   if (isLoading) {
     return (
@@ -351,6 +395,9 @@ export function Dashboard() {
               totalItems={totalMentions}
               onPageChange={setCurrentPage}
               onPageSizeChange={setPageSize}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
             />
           </CardContent>
         </Card>

@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ExternalLink, Flag, Clock, MessageCircle, UserX, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { ExternalLink, Flag, Clock, MessageCircle, UserX, ChevronLeft, ChevronRight, Info, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cleanAndTruncate } from "@/lib/contentUtils";
 
@@ -13,7 +13,8 @@ interface Mention {
   source_name: string;
   source_url: string;
   source_type: string;
-  published_at: string;
+  published_at: string; // Source date (when content was originally published)
+  created_at: string; // Found date (when our system discovered it)
   content_snippet: string;
   full_text: string | null;
   cleaned_text: string | null; // Clean, readable version of the content
@@ -26,6 +27,9 @@ interface Mention {
   pr_escalated_at: string | null;
 }
 
+type SortField = 'published_at' | 'created_at' | 'source_name' | 'sentiment';
+type SortDirection = 'asc' | 'desc';
+
 interface MentionsTableProps {
   mentions: Mention[];
   onMentionClick: (mention: Mention) => void;
@@ -36,6 +40,9 @@ interface MentionsTableProps {
   totalItems: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
+  sortField?: SortField;
+  sortDirection?: SortDirection;
+  onSort?: (field: SortField, direction: SortDirection) => void;
 }
 
 function PaginationControls({ 
@@ -163,6 +170,53 @@ function PaginationControls({
   );
 }
 
+// Sortable header component
+function SortableHeader({ 
+  field, 
+  children, 
+  currentSortField, 
+  currentSortDirection, 
+  onSort 
+}: { 
+  field: SortField; 
+  children: React.ReactNode; 
+  currentSortField?: SortField; 
+  currentSortDirection?: SortDirection; 
+  onSort?: (field: SortField, direction: SortDirection) => void; 
+}) {
+  const isActive = currentSortField === field;
+  const isAsc = isActive && currentSortDirection === 'asc';
+  const isDesc = isActive && currentSortDirection === 'desc';
+
+  const handleClick = () => {
+    if (!onSort) return;
+    
+    if (isActive) {
+      // Toggle direction if same field
+      onSort(field, isAsc ? 'desc' : 'asc');
+    } else {
+      // Default to descending for new field
+      onSort(field, 'desc');
+    }
+  };
+
+  return (
+    <TableHead 
+      className={`cursor-pointer select-none hover:bg-muted/50 transition-colors ${isActive ? 'bg-muted/30' : ''}`}
+      onClick={handleClick}
+    >
+      <div className="flex items-center gap-1">
+        <span>{children}</span>
+        {isActive ? (
+          isAsc ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+        ) : (
+          <ArrowUpDown className="h-4 w-4 opacity-50" />
+        )}
+      </div>
+    </TableHead>
+  );
+}
+
 export function MentionsTable({ 
   mentions, 
   onMentionClick, 
@@ -172,7 +226,10 @@ export function MentionsTable({
   pageSize,
   totalItems,
   onPageChange,
-  onPageSizeChange
+  onPageSizeChange,
+  sortField,
+  sortDirection,
+  onSort
 }: MentionsTableProps) {
   const totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
@@ -305,10 +362,17 @@ export function MentionsTable({
                     </>
                   )}
                 </Badge>
-                
+              </div>
+              
+              {/* Date information */}
+              <div className="space-y-1 mb-3">
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
-                  {formatDate(mention.published_at)}
+                  <span className="font-medium">Source:</span> {formatDate(mention.published_at)}
+                </div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span className="font-medium">Found:</span> {formatDate(mention.created_at)}
                 </div>
               </div>
               
@@ -339,11 +403,34 @@ export function MentionsTable({
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]">#</TableHead>
-                <TableHead className="w-[140px]">Source</TableHead>
+                <SortableHeader field="source_name" currentSortField={sortField} currentSortDirection={sortDirection} onSort={onSort}>
+                  Source
+                </SortableHeader>
                 <TableHead>Content</TableHead>
-                <TableHead className="w-[130px]">Sentiment</TableHead>
+                <SortableHeader field="sentiment" currentSortField={sortField} currentSortDirection={sortDirection} onSort={onSort}>
+                  Sentiment
+                </SortableHeader>
                 <TableHead className="w-[100px]">Status</TableHead>
-                <TableHead className="w-[140px]">Date Found</TableHead>
+                <SortableHeader field="published_at" currentSortField={sortField} currentSortDirection={sortDirection} onSort={onSort}>
+                  <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <span>Source Date</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>When the content was originally published by the source</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </SortableHeader>
+                <SortableHeader field="created_at" currentSortField={sortField} currentSortDirection={sortDirection} onSort={onSort}>
+                  <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <span>Found</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>When our system discovered this mention</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </SortableHeader>
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -408,6 +495,9 @@ export function MentionsTable({
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDate(mention.published_at)}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {formatDate(mention.created_at)}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
