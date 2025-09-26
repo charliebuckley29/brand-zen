@@ -172,28 +172,33 @@ export default function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link to="/admin/email-delivery">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+          <div className="relative">
+            <Card className="cursor-not-allowed opacity-50 bg-gray-50">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Mail className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <Mail className="w-5 h-5 text-gray-500" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Email Delivery Monitoring</CardTitle>
-                    <CardDescription>
-                      Monitor email notification delivery and performance
+                    <CardTitle className="text-lg text-gray-500">Email Delivery Monitoring</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Coming Soon - Under Development
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Track email delivery rates, monitor failed deliveries, analyze template performance, and manage retry queues for email notifications.
+                <p className="text-sm text-gray-400">
+                  Email monitoring system is currently being developed. This feature will track email delivery rates, monitor failed deliveries, analyze template performance, and manage retry queues for email notifications.
                 </p>
+                <div className="mt-3">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Coming Soon
+                  </span>
+                </div>
               </CardContent>
             </Card>
-          </Link>
+          </div>
 
           <Link to="/admin/test-debug">
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
