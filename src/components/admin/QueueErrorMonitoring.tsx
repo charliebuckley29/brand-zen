@@ -117,11 +117,11 @@ export function QueueErrorMonitoring() {
       const baseUrl = 'https://mentions-backend.vercel.app';
       
       // Fetch health data
-      const healthResponse = await fetch(`${baseUrl}/api/admin/queue-health`);
+      const healthResponse = await fetch(`${baseUrl}/api/admin/queue-health-detailed`);
       const healthResult = await healthResponse.json();
       
       // Fetch error logs
-      const logsResponse = await fetch(`${baseUrl}/api/debug/logs?limit=100&level=error`);
+      const logsResponse = await fetch(`${baseUrl}/api/admin/queue-error-logs?limit=100&hours=24`);
       const logsResult = await logsResponse.json();
       
       // Fetch retry analytics (we'll create this endpoint)
@@ -133,28 +133,8 @@ export function QueueErrorMonitoring() {
       }
 
       if (logsResult.success) {
-        // Transform logs into error format
-        const transformedLogs = logsResult.logs
-          ?.filter((log: any) => 
-            log.event_type?.includes('error') || 
-            log.event_type?.includes('failed') ||
-            log.level === 'error'
-          )
-          .map((log: any) => ({
-            id: log.id,
-            timestamp: log.created_at,
-            apiSource: log.event_type?.split('.')[1] || 'unknown',
-            userId: log.user_id || 'system',
-            errorType: log.event_type || 'unknown',
-            errorMessage: log.message || 'Unknown error',
-            severity: log.level === 'error' ? 'high' : 'medium',
-            retryCount: 0,
-            stackTrace: log.error_details?.stack,
-            requestData: log.error_details?.request,
-            responseData: log.error_details?.response
-          })) || [];
-        
-        setErrorLogs(transformedLogs);
+        // Use the transformed logs from the new endpoint
+        setErrorLogs(logsResult.data?.errors || []);
       }
 
       if (analyticsResult.success) {
