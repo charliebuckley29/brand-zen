@@ -43,6 +43,7 @@ import AdminEmailDeliveryMonitoring from "./pages/AdminEmailDeliveryMonitoring";
 import QueueErrorMonitoringPage from "./pages/QueueErrorMonitoringPage";
 import AutomatedRecoveryPage from "./pages/AutomatedRecoveryPage";
 import SystemAlertsPage from "./pages/SystemAlertsPage";
+import EnhancedAnalyticsPage from "./pages/EnhancedAnalyticsPage";
 import NewUserSignUp from "./pages/NewUserSignUp";
 import NotFound from "./pages/NotFound";
 
@@ -138,6 +139,8 @@ const App = () => {
                   <Route path="/admin/automated-recovery/" element={<AutomatedRecoveryPage />} />
                   <Route path="/admin/system-alerts" element={<SystemAlertsPage />} />
                   <Route path="/admin/system-alerts/" element={<SystemAlertsPage />} />
+                  <Route path="/admin/enhanced-analytics" element={<EnhancedAnalyticsPage />} />
+                  <Route path="/admin/enhanced-analytics/" element={<EnhancedAnalyticsPage />} />
                   <Route path="/admin/test-debug" element={<AdminTestDebugTools />} />
                   <Route path="/admin/test-debug/" element={<AdminTestDebugTools />} />
                   

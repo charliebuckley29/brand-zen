@@ -1,7 +1,7 @@
 import { useUserRole } from "../hooks/use-user-role";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare, Activity, BarChart3, GitBranch, TestTube, Mail, AlertTriangle, Zap, Bell } from "lucide-react";
+import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare, Activity, BarChart3, GitBranch, TestTube, Mail, AlertTriangle, Zap, Bell, Brain } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function AdminDashboard() {
@@ -236,6 +236,29 @@ export default function AdminDashboard() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">
                   View and manage system alerts, notifications, and escalation policies for critical issues and recovery failures.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/admin/enhanced-analytics">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Brain className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Enhanced Analytics</CardTitle>
+                    <CardDescription>
+                      Predictive insights and performance benchmarking
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  AI-powered predictive insights, trend analysis, performance benchmarking, and system health scoring for proactive optimization.
                 </p>
               </CardContent>
             </Card>
