@@ -898,7 +898,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
               Sources
             </CardTitle>
             <CardDescription>
-              Choose which sources appear in your Mentions, Analytics and Reports. Data collection is unaffected.
+              Choose which sources to monitor and collect data from. Disabled sources will not fetch new mentions.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
