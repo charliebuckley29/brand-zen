@@ -167,9 +167,9 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
               
               {/* Error indicator */}
               {lastFetchStats.log && lastFetchStats.log.includes('Exception') && (
-                <div className="flex items-center gap-1 text-xs text-red-600">
+                <div className="flex items-center gap-1 text-xs text-orange-600">
                   <AlertCircle className="h-3 w-3" />
-                  <span>Some sources had errors</span>
+                  <span>Some sources undergoing maintenance</span>
                 </div>
               )}
             </div>

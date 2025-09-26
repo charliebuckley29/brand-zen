@@ -55,3 +55,4 @@ amplify/backend/awscloudformation/
 amplify/#current-cloud-backend/
 amplify/.config/project-config.json
 amplify/cli.json
+.vercel

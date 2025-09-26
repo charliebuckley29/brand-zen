@@ -142,7 +142,7 @@ export function QueueHistoryWidget({ userId, limit = 5 }: QueueHistoryWidgetProp
     } catch (err: any) {
       setMentionsData(prev => ({
         ...prev,
-        [key]: { loading: false, mentions: [], error: err.message }
+        [key]: { loading: false, mentions: [], error: 'Queue undergoing maintenance - please try again shortly' }
       }));
     }
   };

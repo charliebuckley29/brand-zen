@@ -12,9 +12,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { cleanHtmlContent } from "@/lib/contentUtils";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Flag, Settings as SettingsIcon, AlertTriangle, Eye } from "lucide-react";
+import { Users, Flag, Settings as SettingsIcon, AlertTriangle, Eye, Mail, MailCheck } from "lucide-react";
 import type { UserType } from "@/hooks/use-user-role";
 import { GlobalSettingSwitch } from "@/components/GlobalSettingSwitch";
+import { API_ENDPOINTS, createApiUrl } from "@/lib/api";
 
 interface User {
   id: string;
@@ -24,6 +25,8 @@ interface User {
   user_type: UserType;
   created_at: string;
   fetch_frequency_minutes: number;
+  email_confirmed?: boolean;
+  email_confirmed_at?: string | null;
 }
 
 interface UserKeywords {
@@ -66,6 +69,7 @@ export function ModeratorPanel() {
   });
   const [selectedUserKeywords, setSelectedUserKeywords] = useState<UserKeywords | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [resendingEmails, setResendingEmails] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   // Helper function to check if a user can be edited by moderators
@@ -126,6 +130,35 @@ export function ModeratorPanel() {
         emailsMap[emailData.user_id] = emailData.email;
       });
 
+      // Fetch email confirmation status for all users
+      const emailConfirmationPromises = (usersData || []).map(async (user) => {
+        if (!emailsMap[user.user_id]) return { userId: user.user_id, emailConfirmed: false };
+        
+        try {
+          const response = await fetch(createApiUrl(`${API_ENDPOINTS.RESEND_EMAIL_CONFIRMATION}?userId=${user.user_id}`));
+          if (response.ok) {
+            const data = await response.json();
+            return { 
+              userId: user.user_id, 
+              emailConfirmed: data.data?.emailConfirmed || false,
+              emailConfirmedAt: data.data?.confirmedAt || null
+            };
+          }
+        } catch (error) {
+          console.error(`Failed to check email confirmation for user ${user.user_id}:`, error);
+        }
+        return { userId: user.user_id, emailConfirmed: false };
+      });
+
+      const emailConfirmationResults = await Promise.all(emailConfirmationPromises);
+      const emailConfirmationMap: Record<string, { emailConfirmed: boolean; emailConfirmedAt: string | null }> = {};
+      emailConfirmationResults.forEach(result => {
+        emailConfirmationMap[result.userId] = {
+          emailConfirmed: result.emailConfirmed,
+          emailConfirmedAt: result.emailConfirmedAt
+        };
+      });
+
       const formattedUsers: User[] = (usersData || []).map(user => ({
         id: user.user_id,
         email: emailsMap[user.user_id] || 'Email not available',
@@ -133,7 +166,9 @@ export function ModeratorPanel() {
         phone_number: profilesMap[user.user_id]?.phone_number || null,
         user_type: user.user_type,
         created_at: user.created_at,
-        fetch_frequency_minutes: profilesMap[user.user_id]?.fetch_frequency_minutes || 15
+        fetch_frequency_minutes: profilesMap[user.user_id]?.fetch_frequency_minutes || 15,
+        email_confirmed: emailConfirmationMap[user.user_id]?.emailConfirmed || false,
+        email_confirmed_at: emailConfirmationMap[user.user_id]?.emailConfirmedAt || null
       }));
 
       // Fetch user keywords with brand info
@@ -325,6 +360,55 @@ export function ModeratorPanel() {
     }
   };
 
+  const resendEmailConfirmation = async (userId: string, email: string) => {
+    try {
+      setResendingEmails(prev => new Set(prev).add(userId));
+
+      const response = await fetch(createApiUrl(API_ENDPOINTS.RESEND_EMAIL_CONFIRMATION), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to resend email confirmation');
+      }
+
+      if (data.success) {
+        toast({
+          title: "Email Sent",
+          description: `Confirmation email sent to ${email}`
+        });
+        
+        // Refresh data to update email confirmation status
+        fetchData();
+      } else {
+        toast({
+          title: "Email Already Confirmed",
+          description: data.message || "This email is already confirmed",
+          variant: "default"
+        });
+      }
+    } catch (error: any) {
+      console.error("Error resending email confirmation:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to resend email confirmation",
+        variant: "destructive"
+      });
+    } finally {
+      setResendingEmails(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -395,6 +479,7 @@ export function ModeratorPanel() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>User Name</TableHead>
+                      <TableHead>Email Status</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead>Fetch Frequency</TableHead>
@@ -433,6 +518,34 @@ export function ModeratorPanel() {
                              </span>
                            )}
                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {user.email_confirmed ? (
+                                <div className="flex items-center gap-1 text-green-600">
+                                  <MailCheck className="h-4 w-4" />
+                                  <span className="text-sm">Confirmed</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-1 text-orange-600">
+                                    <Mail className="h-4 w-4" />
+                                    <span className="text-sm">Unconfirmed</span>
+                                  </div>
+                                  {user.email !== 'Email not available' && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => resendEmailConfirmation(user.id, user.email)}
+                                      disabled={resendingEmails.has(user.id)}
+                                      className="h-7 px-2 text-xs"
+                                    >
+                                      {resendingEmails.has(user.id) ? 'Sending...' : 'Resend'}
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <Badge variant={getUserBadgeVariant(user.user_type)}>
                               {user.user_type.replace('_', ' ')}
@@ -530,6 +643,32 @@ export function ModeratorPanel() {
                               <span className="text-xs text-muted-foreground">
                                 (Protected)
                               </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {user.email_confirmed ? (
+                              <div className="flex items-center gap-1 text-green-600">
+                                <MailCheck className="h-3 w-3" />
+                                <span className="text-xs">Email Confirmed</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 text-orange-600">
+                                  <Mail className="h-3 w-3" />
+                                  <span className="text-xs">Email Unconfirmed</span>
+                                </div>
+                                {user.email !== 'Email not available' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => resendEmailConfirmation(user.id, user.email)}
+                                    disabled={resendingEmails.has(user.id)}
+                                    className="h-6 px-2 text-xs"
+                                  >
+                                    {resendingEmails.has(user.id) ? 'Sending...' : 'Resend'}
+                                  </Button>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>
@@ -715,7 +854,33 @@ export function ModeratorPanel() {
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Email</Label>
-                      <p className="text-sm text-muted-foreground break-all">{selectedUser.email}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-muted-foreground break-all">{selectedUser.email}</p>
+                        {selectedUser.email_confirmed ? (
+                          <div className="flex items-center gap-1 text-green-600">
+                            <MailCheck className="h-4 w-4" />
+                            <span className="text-xs">Confirmed</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 text-orange-600">
+                              <Mail className="h-4 w-4" />
+                              <span className="text-xs">Unconfirmed</span>
+                            </div>
+                            {selectedUser.email !== 'Email not available' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => resendEmailConfirmation(selectedUser.id, selectedUser.email)}
+                                disabled={resendingEmails.has(selectedUser.id)}
+                                className="h-7 px-2 text-xs"
+                              >
+                                {resendingEmails.has(selectedUser.id) ? 'Sending...' : 'Resend'}
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Phone Number</Label>

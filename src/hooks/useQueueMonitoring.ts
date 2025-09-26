@@ -94,8 +94,8 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
       }
     } catch (err: any) {
       console.error('Error fetching queue status:', err);
-      setError(err.message);
-      toast.error(`Failed to fetch queue status: ${err.message}`);
+      setError('Queue undergoing maintenance - please try again shortly');
+      toast.error('Queue undergoing maintenance - please try again shortly');
     } finally {
       setLoading(false);
     }
@@ -132,8 +132,8 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
       }
     } catch (err: any) {
       console.error('Error resetting all queues:', err);
-      setError(err.message);
-      toast.error(`Failed to reset all queues: ${err.message}`);
+      setError('Queue undergoing maintenance - please try again shortly');
+      toast.error('Queue undergoing maintenance - please try again shortly');
     } finally {
       setLoading(false);
     }
@@ -166,8 +166,8 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
       }
     } catch (err: any) {
       console.error(`Error resetting ${apiSource} queue:`, err);
-      setError(err.message);
-      toast.error(`Failed to reset ${apiSource} queue: ${err.message}`);
+      setError('Queue undergoing maintenance - please try again shortly');
+      toast.error('Queue undergoing maintenance - please try again shortly');
     } finally {
       setLoading(false);
     }

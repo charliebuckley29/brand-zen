@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
   QUEUE_DASHBOARD: '/api/admin/queue-dashboard',
   SYSTEM_HEALTH: '/api/admin/system-health',
   USER_QUOTA_MANAGEMENT: '/api/admin/user-quota-management',
+  RESEND_EMAIL_CONFIRMATION: '/api/admin/resend-email-confirmation',
   SYSTEM_STATUS: '/api/system/status',
   
   // Debug endpoints

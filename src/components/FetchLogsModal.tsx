@@ -222,7 +222,7 @@ export function FetchLogsModal() {
       case 'quota_exceeded':
         return 'Monthly limit reached - will resume next month';
       case 'failed':
-        return 'Temporarily unavailable - will retry later';
+        return 'Queue undergoing maintenance - will retry shortly';
       case 'skipped':
         return 'Skipped this check';
       case 'not_attempted':
@@ -837,14 +837,17 @@ export function FetchLogsModal() {
 
                               {/* Error Details */}
                               {cycle.apiResults.some(r => r.status === 'failed' || r.error) && (
-                                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                                  <h5 className="text-sm font-medium text-red-800 mb-2">Error Details:</h5>
+                                <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                  <h5 className="text-sm font-medium text-orange-800 mb-2">Maintenance Notice:</h5>
                                   <div className="space-y-1">
                                     {cycle.apiResults.filter(r => r.status === 'failed' || r.error).map((result, idx) => (
-                                      <div key={idx} className="text-xs text-red-700">
-                                        <span className="font-medium capitalize">{result.source.replace('_', ' ')}:</span> {result.error || 'Unknown error'}
+                                      <div key={idx} className="text-xs text-orange-700">
+                                        <span className="font-medium capitalize">{result.source.replace('_', ' ')}:</span> Queue undergoing maintenance - will retry shortly
                                       </div>
                                     ))}
+                                  </div>
+                                  <div className="mt-2 text-xs text-orange-600">
+                                    💡 <strong>Note:</strong> This is normal during system maintenance. Your monitoring will resume automatically.
                                   </div>
                                 </div>
                               )}

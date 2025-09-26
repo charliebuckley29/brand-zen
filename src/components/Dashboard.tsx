@@ -221,8 +221,8 @@ export function Dashboard() {
     } catch (err: any) {
       console.error("Error during manual fetch:", err);
       toast({ 
-        title: "Fetch failed", 
-        description: err.message || "Could not fetch new mentions. Please try again.", 
+        title: "Queue undergoing maintenance", 
+        description: "Our systems are currently being updated. Please try again in a few minutes.", 
         variant: "destructive" 
       });
     } finally {

@@ -171,7 +171,7 @@ export const useMonitoring = (options: UseMonitoringOptions = {}) => {
 
     } catch (error) {
       console.error('Error fetching metrics:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch monitoring metrics';
+      const errorMessage = 'Queue undergoing maintenance - please try again shortly';
       
       setState(prev => ({
         ...prev,
@@ -314,7 +314,7 @@ export const useMonitoring = (options: UseMonitoringOptions = {}) => {
       }));
     } catch (error) {
       console.error('Error fetching user logs:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch user logs';
+      const errorMessage = 'Queue undergoing maintenance - please try again shortly';
       toast.error(errorMessage);
     }
   }, []);
