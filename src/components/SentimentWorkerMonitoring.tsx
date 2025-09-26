@@ -9,7 +9,14 @@ import {
   Zap, 
   BarChart3, 
   CheckCircle,
-  Loader2
+  Loader2,
+  ExternalLink,
+  Calendar,
+  User,
+  Tag,
+  AlertTriangle,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -29,16 +36,37 @@ interface SentimentData {
     id: string;
     user_id: string;
     source_type: string;
+    source_name: string;
+    source_url: string;
     created_at: string;
     content_snippet: string;
+    full_text: string | null;
+    cleaned_text: string | null;
+    published_at: string;
+    model_used: string | null;
+    summary: string | null;
+    topics: string[] | null;
+    flagged: boolean;
+    escalation_type: string | null;
   }>;
   recentAnalyzed: Array<{
     id: string;
     user_id: string;
     source_type: string;
+    source_name: string;
+    source_url: string;
     sentiment: number | null;
     created_at: string;
+    updated_at: string;
     model_used: string;
+    content_snippet: string;
+    full_text: string | null;
+    cleaned_text: string | null;
+    summary: string | null;
+    topics: string[] | null;
+    flagged: boolean;
+    escalation_type: string | null;
+    published_at: string;
   }>;
   timestamp: string;
 }
@@ -46,6 +74,64 @@ interface SentimentData {
 export function SentimentWorkerMonitoring() {
   const [sentimentData, setSentimentData] = useState<SentimentData | null>(null);
   const [sentimentLoading, setSentimentLoading] = useState(false);
+  const [expandedPending, setExpandedPending] = useState<Set<string>>(new Set());
+  const [expandedAnalyzed, setExpandedAnalyzed] = useState<Set<string>>(new Set());
+
+  const toggleExpandedPending = (id: string) => {
+    const newExpanded = new Set(expandedPending);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedPending(newExpanded);
+  };
+
+  const toggleExpandedAnalyzed = (id: string) => {
+    const newExpanded = new Set(expandedAnalyzed);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedAnalyzed(newExpanded);
+  };
+
+  const getSentimentColor = (sentiment: number | null) => {
+    if (sentiment === null) return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (sentiment === -1) return 'bg-muted text-muted-foreground';
+    if (sentiment === 50) return 'bg-warning/10 text-warning border-warning/20';
+    if (sentiment <= 49) return 'bg-destructive/10 text-destructive border-destructive/20';
+    if (sentiment >= 51) return 'bg-success/10 text-success border-success/20';
+    return 'bg-muted';
+  };
+
+  const getSentimentLabel = (sentiment: number | null) => {
+    if (sentiment === null) return 'Pending';
+    if (sentiment === -1) return 'Unknown';
+    if (sentiment === 50) return 'Neutral';
+    if (sentiment <= 49) return 'Negative';
+    if (sentiment >= 51) return 'Positive';
+    return 'Unknown';
+  };
+
+  const getSentimentEmoji = (sentiment: number | null) => {
+    if (sentiment === null) return '⏳';
+    if (sentiment === -1) return '❓';
+    if (sentiment === 50) return '🟡';
+    if (sentiment <= 49) return '🔴';
+    if (sentiment >= 51) return '🟢';
+    return '❓';
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString();
+  };
+
+  const truncateText = (text: string, maxLength: number = 150) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
 
   const fetchSentimentData = async () => {
     setSentimentLoading(true);
@@ -209,45 +295,130 @@ export function SentimentWorkerMonitoring() {
         </CardContent>
       </Card>
 
-      {/* Queue Details */}
+      {/* Pending Mentions Queue */}
       {sentimentData && (
         <Card>
           <CardHeader>
-            <CardTitle>Queue Details</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Pending Mentions Queue
+            </CardTitle>
             <CardDescription>
-              Current mentions waiting for sentiment analysis
+              {sentimentData.queueStatus.pendingAnalysis} mentions waiting for sentiment analysis
             </CardDescription>
           </CardHeader>
           <CardContent>
             {sentimentData.queueStatus.pendingAnalysis > 0 ? (
               <div className="space-y-3">
-                <div className="text-sm text-muted-foreground mb-4">
-                  {sentimentData.queueStatus.pendingAnalysis} mentions pending analysis
-                </div>
-                <div className="max-h-60 overflow-y-auto space-y-2">
-                  {sentimentData.pendingMentions.slice(0, 10).map((mention) => (
-                    <div key={mention.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-2 w-2 bg-yellow-500 rounded-full" />
-                        <div>
-                          <div className="text-sm font-medium">{mention.source_type}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(mention.created_at).toLocaleString()}
+                <div className="max-h-96 overflow-y-auto space-y-3">
+                  {sentimentData.pendingMentions.map((mention) => {
+                    const isExpanded = expandedPending.has(mention.id);
+                    return (
+                      <div key={mention.id} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="h-2 w-2 bg-yellow-500 rounded-full mt-2" />
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {mention.source_type}
+                                </Badge>
+                                {mention.flagged && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    <AlertTriangle className="h-3 w-3 mr-1" />
+                                    Flagged
+                                  </Badge>
+                                )}
+                                {mention.escalation_type && mention.escalation_type !== 'none' && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    {mention.escalation_type.toUpperCase()}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-sm font-medium text-foreground">
+                                {mention.source_name}
+                              </div>
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {formatDate(mention.created_at)}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <User className="h-3 w-3" />
+                                  {mention.user_id.substring(0, 8)}...
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {mention.source_url && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => window.open(mention.source_url, '_blank')}
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleExpandedPending(mention.id)}
+                            >
+                              {isExpanded ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
                           </div>
                         </div>
+                        
+                        <div className="text-sm text-foreground">
+                          {truncateText(mention.content_snippet || mention.full_text || 'No content available')}
+                        </div>
+
+                        {isExpanded && (
+                          <div className="space-y-3 pt-3 border-t">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <div className="font-medium text-muted-foreground mb-1">Full Content:</div>
+                                <div className="text-foreground bg-muted/50 p-3 rounded text-xs max-h-32 overflow-y-auto">
+                                  {mention.full_text || mention.content_snippet || 'No content available'}
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div>
+                                  <div className="font-medium text-muted-foreground mb-1">Published:</div>
+                                  <div className="text-foreground">{formatDate(mention.published_at)}</div>
+                                </div>
+                                <div>
+                                  <div className="font-medium text-muted-foreground mb-1">Model Used:</div>
+                                  <div className="text-foreground">{mention.model_used || 'Not specified'}</div>
+                                </div>
+                                {mention.summary && (
+                                  <div>
+                                    <div className="font-medium text-muted-foreground mb-1">Summary:</div>
+                                    <div className="text-foreground text-xs">{mention.summary}</div>
+                                  </div>
+                                )}
+                                {mention.topics && mention.topics.length > 0 && (
+                                  <div>
+                                    <div className="font-medium text-muted-foreground mb-1">Topics:</div>
+                                    <div className="flex flex-wrap gap-1">
+                                      {mention.topics.map((topic, index) => (
+                                        <Badge key={index} variant="secondary" className="text-xs">
+                                          <Tag className="h-3 w-3 mr-1" />
+                                          {topic}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="outline" className="text-xs">
-                          {mention.content_snippet ? 'Has Text' : 'No Text'}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                  {sentimentData.pendingMentions.length > 10 && (
-                    <div className="text-sm text-muted-foreground text-center py-2">
-                      ... and {sentimentData.pendingMentions.length - 10} more
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
               </div>
             ) : (
@@ -260,13 +431,16 @@ export function SentimentWorkerMonitoring() {
         </Card>
       )}
 
-      {/* Recent Activity */}
+      {/* Recently Analyzed Mentions */}
       {sentimentData && (
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity (Last 24 Hours)</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Recently Analyzed Mentions
+            </CardTitle>
             <CardDescription>
-              Sentiment analysis activity and distribution
+              {sentimentData.queueStatus.recentAnalyzed} mentions analyzed in the last 24 hours
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -289,27 +463,135 @@ export function SentimentWorkerMonitoring() {
               </div>
             </div>
 
-            {sentimentData.recentAnalyzed.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Recently Processed</h4>
-                <div className="max-h-40 overflow-y-auto space-y-1">
-                  {sentimentData.recentAnalyzed.slice(0, 5).map((mention) => (
-                    <div key={mention.id} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center space-x-2">
-                        <div className={`h-2 w-2 rounded-full ${
-                          mention.sentiment === null ? 'bg-yellow-500' :
-                          mention.sentiment === 1 ? 'bg-green-500' :
-                          mention.sentiment === 0 ? 'bg-red-500' :
-                          mention.sentiment === -1 ? 'bg-gray-500' : 'bg-blue-500'
-                        }`} />
-                        <span>{mention.source_type}</span>
+            {sentimentData.recentAnalyzed.length > 0 ? (
+              <div className="space-y-3">
+                <div className="max-h-96 overflow-y-auto space-y-3">
+                  {sentimentData.recentAnalyzed.map((mention) => {
+                    const isExpanded = expandedAnalyzed.has(mention.id);
+                    return (
+                      <div key={mention.id} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className={`h-2 w-2 rounded-full mt-2 ${
+                              mention.sentiment === null ? 'bg-yellow-500' :
+                              mention.sentiment === -1 ? 'bg-gray-500' :
+                              mention.sentiment >= 51 ? 'bg-green-500' :
+                              mention.sentiment <= 49 ? 'bg-red-500' : 'bg-blue-500'
+                            }`} />
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {mention.source_type}
+                                </Badge>
+                                <Badge variant="outline" className={`text-xs ${getSentimentColor(mention.sentiment)}`}>
+                                  {getSentimentEmoji(mention.sentiment)} {getSentimentLabel(mention.sentiment)}
+                                </Badge>
+                                {mention.flagged && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    <AlertTriangle className="h-3 w-3 mr-1" />
+                                    Flagged
+                                  </Badge>
+                                )}
+                                {mention.escalation_type && mention.escalation_type !== 'none' && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    {mention.escalation_type.toUpperCase()}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-sm font-medium text-foreground">
+                                {mention.source_name}
+                              </div>
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {formatDate(mention.updated_at)}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <User className="h-3 w-3" />
+                                  {mention.user_id.substring(0, 8)}...
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Activity className="h-3 w-3" />
+                                  {mention.model_used}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {mention.source_url && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => window.open(mention.source_url, '_blank')}
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleExpandedAnalyzed(mention.id)}
+                            >
+                              {isExpanded ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="text-sm text-foreground">
+                          {truncateText(mention.content_snippet || mention.full_text || 'No content available')}
+                        </div>
+
+                        {isExpanded && (
+                          <div className="space-y-3 pt-3 border-t">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <div className="font-medium text-muted-foreground mb-1">Full Content:</div>
+                                <div className="text-foreground bg-muted/50 p-3 rounded text-xs max-h-32 overflow-y-auto">
+                                  {mention.full_text || mention.content_snippet || 'No content available'}
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div>
+                                  <div className="font-medium text-muted-foreground mb-1">Published:</div>
+                                  <div className="text-foreground">{formatDate(mention.published_at)}</div>
+                                </div>
+                                <div>
+                                  <div className="font-medium text-muted-foreground mb-1">Analyzed:</div>
+                                  <div className="text-foreground">{formatDate(mention.updated_at)}</div>
+                                </div>
+                                {mention.summary && (
+                                  <div>
+                                    <div className="font-medium text-muted-foreground mb-1">Summary:</div>
+                                    <div className="text-foreground text-xs">{mention.summary}</div>
+                                  </div>
+                                )}
+                                {mention.topics && mention.topics.length > 0 && (
+                                  <div>
+                                    <div className="font-medium text-muted-foreground mb-1">Topics:</div>
+                                    <div className="flex flex-wrap gap-1">
+                                      {mention.topics.map((topic, index) => (
+                                        <Badge key={index} variant="secondary" className="text-xs">
+                                          <Tag className="h-3 w-3 mr-1" />
+                                          {topic}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {new Date(mention.created_at).toLocaleString()}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p>No mentions analyzed in the last 24 hours</p>
               </div>
             )}
           </CardContent>
