@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X as XIcon, Globe, Youtube, MessageSquare, Rss, AlertCircle, TrendingUp } from "lucide-react";
+import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X as XIcon, Globe, Youtube, Rss, AlertCircle, TrendingUp } from "lucide-react";
 import { SOURCES, type SourceType } from "@/config/sources";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { TimezoneSettings } from "@/components/TimezoneSettings";
@@ -491,78 +491,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
           </CardContent>
         </Card>
 
-        {/* Notifications */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Notifications
-            </CardTitle>
-            <CardDescription>
-              Configure how you want to receive alerts for negative sentiment mentions.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Email Notifications */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-base">Email Notifications</Label>
-                <div className="text-[0.8rem] text-muted-foreground">
-                  Receive email alerts for negative sentiment mentions
-                </div>
-              </div>
-              <Switch
-                checked={profileData?.notification_preferences?.email?.enabled || false}
-                onCheckedChange={(checked) => {
-                  const preferences = {
-                    ...profileData?.notification_preferences,
-                    email: {
-                      ...profileData?.notification_preferences?.email,
-                      enabled: checked,
-                      frequency: profileData?.notification_preferences?.email?.frequency || 'immediate'
-                    }
-                  };
-                  updateNotificationPreferences(preferences);
-                }}
-              />
-            </div>
-
-            {/* Email Frequency (only show if email notifications are enabled) */}
-            {profileData?.notification_preferences?.email?.enabled && (
-              <div className="ml-4 space-y-2">
-                <Label className="text-sm">Email Frequency</Label>
-                <div className="flex gap-2">
-                  {['immediate', 'daily', 'weekly'].map((frequency) => (
-                    <Button
-                      key={frequency}
-                      variant={profileData?.notification_preferences?.email?.frequency === frequency ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => {
-                        const preferences = {
-                          ...profileData?.notification_preferences,
-                          email: {
-                            ...profileData?.notification_preferences?.email,
-                            enabled: true,
-                            frequency: frequency as 'immediate' | 'daily' | 'weekly'
-                          }
-                        };
-                        updateNotificationPreferences(preferences);
-                      }}
-                    >
-                      {frequency.charAt(0).toUpperCase() + frequency.slice(1)}
-                    </Button>
-                  ))}
-                </div>
-                <div className="text-[0.8rem] text-muted-foreground">
-                  {profileData?.notification_preferences?.email?.frequency === 'immediate' && 'Get notified immediately when negative mentions are detected'}
-                  {profileData?.notification_preferences?.email?.frequency === 'daily' && 'Receive a daily digest of negative mentions'}
-                  {profileData?.notification_preferences?.email?.frequency === 'weekly' && 'Receive a weekly summary of negative mentions'}
-                </div>
-              </div>
-            )}
-
-          </CardContent>
-        </Card>
 
         {/* Timezone Settings */}
         <TimezoneSettings />
