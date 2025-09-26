@@ -41,6 +41,8 @@ import AdminApiLimitsPanel from "./pages/AdminApiLimitsPanel";
 import AdminTestDebugTools from "./pages/AdminTestDebugTools";
 import AdminEmailDeliveryMonitoring from "./pages/AdminEmailDeliveryMonitoring";
 import QueueErrorMonitoringPage from "./pages/QueueErrorMonitoringPage";
+import AutomatedRecoveryPage from "./pages/AutomatedRecoveryPage";
+import SystemAlertsPage from "./pages/SystemAlertsPage";
 import NewUserSignUp from "./pages/NewUserSignUp";
 import NotFound from "./pages/NotFound";
 
@@ -132,6 +134,10 @@ const App = () => {
                   <Route path="/admin/email-delivery/" element={<AdminEmailDeliveryMonitoring />} />
                   <Route path="/admin/queue-errors" element={<QueueErrorMonitoringPage />} />
                   <Route path="/admin/queue-errors/" element={<QueueErrorMonitoringPage />} />
+                  <Route path="/admin/automated-recovery" element={<AutomatedRecoveryPage />} />
+                  <Route path="/admin/automated-recovery/" element={<AutomatedRecoveryPage />} />
+                  <Route path="/admin/system-alerts" element={<SystemAlertsPage />} />
+                  <Route path="/admin/system-alerts/" element={<SystemAlertsPage />} />
                   <Route path="/admin/test-debug" element={<AdminTestDebugTools />} />
                   <Route path="/admin/test-debug/" element={<AdminTestDebugTools />} />
                   
