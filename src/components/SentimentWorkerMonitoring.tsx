@@ -128,6 +128,25 @@ export function SentimentWorkerMonitoring() {
     return new Date(dateString).toLocaleString();
   };
 
+  const getTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) {
+      return `${diffInSeconds}s ago`;
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes}m ago`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours}h ago`;
+    } else {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days}d ago`;
+    }
+  };
+
   const truncateText = (text: string, maxLength: number = 150) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
@@ -217,7 +236,16 @@ export function SentimentWorkerMonitoring() {
       fetchSentimentData();
     }, 30000); // 30 seconds
 
-    return () => clearInterval(interval);
+    // Update timestamps every 10 seconds for real-time "time ago" display
+    const timestampInterval = setInterval(() => {
+      // Force re-render to update "time ago" displays
+      setSentimentData(prev => prev ? { ...prev } : null);
+    }, 10000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(timestampInterval);
+    };
   }, []);
 
   return (
@@ -441,6 +469,11 @@ export function SentimentWorkerMonitoring() {
             </CardTitle>
             <CardDescription>
               {sentimentData.queueStatus.recentAnalyzed} mentions analyzed in the last 24 hours
+              {sentimentData.recentAnalyzed.length > 0 && (
+                <span className="ml-2 text-green-600 font-medium">
+                  • Latest: {getTimeAgo(sentimentData.recentAnalyzed[0].updated_at)}
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -503,6 +536,10 @@ export function SentimentWorkerMonitoring() {
                               </div>
                               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                 <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  <span className="font-medium text-green-600">{getTimeAgo(mention.updated_at)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
                                   <Calendar className="h-3 w-3" />
                                   {formatDate(mention.updated_at)}
                                 </div>
@@ -559,6 +596,7 @@ export function SentimentWorkerMonitoring() {
                                 <div>
                                   <div className="font-medium text-muted-foreground mb-1">Analyzed:</div>
                                   <div className="text-foreground">{formatDate(mention.updated_at)}</div>
+                                  <div className="text-xs text-green-600 font-medium">{getTimeAgo(mention.updated_at)}</div>
                                 </div>
                                 {mention.summary && (
                                   <div>
