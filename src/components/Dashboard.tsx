@@ -58,7 +58,7 @@ export function Dashboard() {
 
   useEffect(() => {
     fetchMentions();
-  }, [enabledMentions, currentPage, pageSize]);
+  }, [enabledMentions, currentPage, pageSize, sortField, sortDirection]);
 
   // Handle navigation to specific mention from notifications
   useEffect(() => {
@@ -135,12 +135,20 @@ export function Dashboard() {
 
       const types = enabledMentions;
       
+      // Determine sort field and direction for database query
+      const dbSortField = sortField === 'source_name' ? 'source_name' : 
+                         sortField === 'sentiment' ? 'sentiment' :
+                         sortField === 'published_at' ? 'published_at' :
+                         sortField === 'created_at' ? 'created_at' : 'created_at';
+      
+      const ascending = sortDirection === 'asc';
+      
       // Fetch paginated mentions for current user's keywords only
       let mentionsQuery = supabase
         .from("mentions")
         .select("*", { count: 'exact' })
         .eq('user_id', user.id)
-        .order("published_at", { ascending: false })
+        .order(dbSortField, { ascending })
         .range((currentPage - 1) * pageSize, (currentPage * pageSize) - 1);
 
       // Fetch stats for current user's mentions only
@@ -261,38 +269,7 @@ export function Dashboard() {
     setSortField(field);
     setSortDirection(direction);
     setCurrentPage(1); // Reset to first page when sorting changes
-    
-    // Sort the mentions array
-    const sortedMentions = [...mentions].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
-      
-      switch (field) {
-        case 'published_at':
-        case 'created_at':
-          aValue = new Date(a[field]).getTime();
-          bValue = new Date(b[field]).getTime();
-          break;
-        case 'source_name':
-          aValue = a.source_name.toLowerCase();
-          bValue = b.source_name.toLowerCase();
-          break;
-        case 'sentiment':
-          aValue = a.sentiment ?? -999; // Treat null as -999 for sorting
-          bValue = b.sentiment ?? -999;
-          break;
-        default:
-          return 0;
-      }
-      
-      if (direction === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-      }
-    });
-    
-    setMentions(sortedMentions);
+    // Note: fetchMentions will be called automatically due to useEffect dependency
   };
   if (isLoading) {
     return (
