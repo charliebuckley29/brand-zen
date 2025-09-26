@@ -98,6 +98,32 @@ export function SentimentWorkerMonitoring() {
     }
   };
 
+  const resetFailedSentiment = async () => {
+    try {
+      const response = await fetch('https://mentions-backend.vercel.app/api/admin/reset-failed-sentiment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.success) {
+          toast.success(`Reset ${result.resetCount} failed sentiment mentions back to pending`);
+          await fetchSentimentData();
+        } else {
+          toast.error('Failed to reset failed sentiment mentions');
+        }
+      } else {
+        console.warn('Reset failed sentiment endpoint not available');
+        toast.error('Reset failed sentiment endpoint not available');
+      }
+    } catch (error) {
+      console.error('Error resetting failed sentiment:', error);
+      toast.error('Failed to reset failed sentiment mentions');
+    }
+  };
+
   useEffect(() => {
     fetchSentimentData();
     
@@ -144,6 +170,14 @@ export function SentimentWorkerMonitoring() {
               >
                 <Zap className="h-4 w-4 mr-2" />
                 Trigger Worker
+              </Button>
+              <Button 
+                onClick={resetFailedSentiment}
+                variant="destructive"
+                size="sm"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Reset Failed
               </Button>
             </div>
             <div className="text-sm text-muted-foreground">
