@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 
 // Import the new smaller components
 import { SystemOverview } from '../components/admin/SystemOverview';
-import { QueueMonitoring } from '../components/admin/QueueMonitoring';
 import { ApiMonitoring } from '../components/admin/ApiMonitoring';
 import { UserMonitoring } from '../components/admin/UserMonitoring';
 import { AlertMonitoring } from '../components/admin/AlertMonitoring';
@@ -86,9 +85,8 @@ export default function AdminUnifiedMonitoring() {
 
         {/* Main Content */}
         <Tabs defaultValue="system" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="system">System</TabsTrigger>
-            <TabsTrigger value="queue">Queue</TabsTrigger>
             <TabsTrigger value="api">APIs</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="alerts">Alerts</TabsTrigger>
@@ -97,10 +95,6 @@ export default function AdminUnifiedMonitoring() {
 
           <TabsContent value="system" className="space-y-6">
             <SystemOverview onRefresh={handleRefresh} loading={loading} />
-        </TabsContent>
-
-          <TabsContent value="queue" className="space-y-6">
-            <QueueMonitoring />
         </TabsContent>
 
           <TabsContent value="api" className="space-y-6">
