@@ -40,6 +40,7 @@ import AdminUnifiedMonitoring from "./pages/AdminUnifiedMonitoring";
 import AdminApiLimitsPanel from "./pages/AdminApiLimitsPanel";
 import AdminTestDebugTools from "./pages/AdminTestDebugTools";
 import AdminEmailDeliveryMonitoring from "./pages/AdminEmailDeliveryMonitoring";
+import QueueErrorMonitoringPage from "./pages/QueueErrorMonitoringPage";
 import NewUserSignUp from "./pages/NewUserSignUp";
 import NotFound from "./pages/NotFound";
 
@@ -129,6 +130,8 @@ const App = () => {
                   <Route path="/admin/api-limits" element={<AdminApiLimitsPanel />} />
                   <Route path="/admin/email-delivery" element={<AdminEmailDeliveryMonitoring />} />
                   <Route path="/admin/email-delivery/" element={<AdminEmailDeliveryMonitoring />} />
+                  <Route path="/admin/queue-errors" element={<QueueErrorMonitoringPage />} />
+                  <Route path="/admin/queue-errors/" element={<QueueErrorMonitoringPage />} />
                   <Route path="/admin/test-debug" element={<AdminTestDebugTools />} />
                   <Route path="/admin/test-debug/" element={<AdminTestDebugTools />} />
                   
