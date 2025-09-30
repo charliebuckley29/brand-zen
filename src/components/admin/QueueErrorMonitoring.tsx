@@ -734,6 +734,11 @@ export function QueueErrorMonitoring() {
                       {retryAnalytics.overallSuccessRate.toFixed(1)}%
                     </div>
                     <div className="text-sm text-muted-foreground">Overall Success Rate</div>
+                    {retryAnalytics.summary && (
+                      <div className="text-xs text-muted-foreground mt-2">
+                        {retryAnalytics.summary.totalAttempts} total attempts, {retryAnalytics.summary.completedEntries} completed
+                      </div>
+                    )}
                   </div>
 
                   {/* Success Rate by API */}
@@ -759,22 +764,45 @@ export function QueueErrorMonitoring() {
                     </div>
                   </div>
 
-                  {/* Common Failure Reasons */}
-                  <div>
-                    <h4 className="font-medium mb-3">Common Failure Reasons</h4>
-                    <div className="space-y-2">
-                      {retryAnalytics.commonFailureReasons.slice(0, 5).map((reason, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                          <span className="text-sm">{reason.reason}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">
-                              {reason.count} ({reason.percentage.toFixed(1)}%)
+                  {/* Retry Distribution */}
+                  {retryAnalytics.retryDistribution && retryAnalytics.retryDistribution.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-3">Retry Distribution</h4>
+                      <div className="space-y-2">
+                        {retryAnalytics.retryDistribution.slice(0, 5).map((dist, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                            <span className="text-sm">
+                              {dist.retryCount === 0 ? 'No retries' : `${dist.retryCount} retry${dist.retryCount > 1 ? 'ies' : ''}`}
                             </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">
+                                {dist.frequency} entries
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Common Failure Reasons */}
+                  {retryAnalytics.commonFailureReasons && retryAnalytics.commonFailureReasons.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-3">Common Failure Reasons</h4>
+                      <div className="space-y-2">
+                        {retryAnalytics.commonFailureReasons.slice(0, 5).map((reason, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                            <span className="text-sm">{reason.reason}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">
+                                {reason.count} ({reason.percentage.toFixed(1)}%)
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="p-8 text-center text-muted-foreground">

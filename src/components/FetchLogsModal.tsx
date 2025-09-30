@@ -218,7 +218,7 @@ export function FetchLogsModal() {
   const getStatusMessage = (status: string, count: number) => {
     switch (status) {
       case 'success':
-        return count > 0 ? `Found ${count} new mention${count !== 1 ? 's' : ''}` : 'No new mentions found';
+        return count > 0 ? `Found ${count} new mention${count !== 1 ? 's' : ''}` : 'No new mentions found (normal)';
       case 'quota_exceeded':
         return 'Monthly limit reached - will resume next month';
       case 'failed':
@@ -615,6 +615,23 @@ export function FetchLogsModal() {
                           ))}
                         </div>
                       </div>
+
+                      {/* System Status Information */}
+                      <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                            <CheckCircle className="h-5 w-5" />
+                            System Status
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-sm text-blue-700 dark:text-blue-300 space-y-2">
+                            <p>✅ <strong>Your monitoring is working correctly!</strong> All systems are operational.</p>
+                            <p>📊 <strong>Zero mentions found:</strong> This is normal when no new content matches your search terms.</p>
+                            <p>🔄 <strong>Automated checks:</strong> Your system continues monitoring in the background.</p>
+                          </div>
+                        </CardContent>
+                      </Card>
 
                       {/* Quota Information */}
                       {quotaExceededCount > 0 && (
