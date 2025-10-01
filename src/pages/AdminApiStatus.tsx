@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { config } from "@/config/environment";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, XCircle, AlertCircle, ExternalLink } from "lucide-react";
@@ -28,7 +29,7 @@ export default function AdminApiStatus() {
 
   const fetchApiStatus = async () => {
     try {
-      const response = await fetch('/api/mentions/sources-status');
+      const response = await fetch(`${config.api.backendUrl}/mentions/sources-status`);
       const data = await response.json();
       
       if (data.success) {

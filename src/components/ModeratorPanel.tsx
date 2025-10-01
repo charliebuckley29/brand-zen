@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { config } from "@/config/environment";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -97,7 +98,7 @@ export function ModeratorPanel() {
       setLoading(true);
       
       // Fetch all users with their roles using backend API
-      const response = await fetch('/api/admin/user-roles?include_profiles=true');
+      const response = await fetch(`${config.api.backendUrl}/admin/user-roles?include_profiles=true`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -218,7 +219,7 @@ export function ModeratorPanel() {
 
   const updateUserRole = async (userId: string, newRole: UserType) => {
     try {
-      const response = await fetch(`/api/admin/user-roles/${userId}`, {
+      const response = await fetch(`${config.api.backendUrl}/admin/user-roles/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
