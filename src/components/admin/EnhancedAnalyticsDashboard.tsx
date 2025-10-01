@@ -78,7 +78,7 @@ export function EnhancedAnalyticsDashboard() {
     setLoading(true);
     setError(null);
 
-    const baseUrl = 'https://brandprotected.com/api';
+    const baseUrl = 'https://mentions-backend.vercel.app/api';
 
     try {
       // Fetch all analytics data in parallel

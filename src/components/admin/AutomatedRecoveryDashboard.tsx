@@ -80,7 +80,7 @@ export function AutomatedRecoveryDashboard() {
     setLoading(true);
     setError(null);
 
-    const baseUrl = 'https://brandprotected.com/api';
+    const baseUrl = 'https://mentions-backend.vercel.app/api';
 
     try {
       // Fetch recovery status
@@ -135,7 +135,7 @@ export function AutomatedRecoveryDashboard() {
 
   const handleTriggerRecovery = async () => {
     try {
-      const response = await fetch('https://brandprotected.com/api/api/admin/recovery/trigger', {
+      const response = await fetch('https://mentions-backend.vercel.app/api/api/admin/recovery/trigger', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
