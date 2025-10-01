@@ -61,36 +61,24 @@ export default function AdminModeratorsPanel() {
     try {
       setLoading(true);
       
-      // Fetch moderator and admin users with their roles
-      const { data: usersData, error: usersError } = await supabase
-        .from("user_roles")
-        .select("user_id, user_type, created_at")
-        .in("user_type", ["moderator", "admin"]);
-
-      if (usersError) throw usersError;
-
-      // Fetch all profiles for these users
-      const userIds = usersData?.map(u => u.user_id) || [];
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, phone_number, fetch_frequency_minutes")
-        .in("user_id", userIds);
-
-      if (profilesError) throw profilesError;
+      // Fetch moderator and admin users with their roles using backend API
+      const response = await fetch('/api/admin/user-roles?user_type=moderator&include_profiles=true');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch user roles');
+      }
+      
+      const usersData = result.data;
 
       // Fetch user emails (for admins only)
       const { data: emailsData, error: emailsError } = await supabase
         .rpc("get_user_emails_for_moderator");
-
-      // Create a map of profiles by user_id
-      const profilesMap: Record<string, { full_name: string; phone_number: string | null; fetch_frequency_minutes: number }> = {};
-      profilesData?.forEach(profile => {
-        profilesMap[profile.user_id] = {
-          full_name: profile.full_name,
-          phone_number: profile.phone_number,
-          fetch_frequency_minutes: profile.fetch_frequency_minutes || 15
-        };
-      });
 
       // Create a map of emails by user_id
       const emailsMap: Record<string, string> = {};
@@ -101,11 +89,11 @@ export default function AdminModeratorsPanel() {
       const formattedModerators: ModeratorUser[] = (usersData || []).map(user => ({
         id: user.user_id,
         email: emailsMap[user.user_id] || 'Email not available',
-        full_name: profilesMap[user.user_id]?.full_name || 'Unknown User',
-        phone_number: profilesMap[user.user_id]?.phone_number || null,
+        full_name: user.profile?.full_name || 'Unknown User',
+        phone_number: user.profile?.phone_number || null,
         user_type: user.user_type,
         created_at: user.created_at,
-        fetch_frequency_minutes: profilesMap[user.user_id]?.fetch_frequency_minutes || 15
+        fetch_frequency_minutes: user.profile?.fetch_frequency_minutes || 15
       }));
 
       setModerators(formattedModerators);
@@ -123,12 +111,23 @@ export default function AdminModeratorsPanel() {
 
   const updateUserRole = async (userId: string, newRole: UserType) => {
     try {
-      const { error } = await supabase
-        .from("user_roles")
-        .update({ user_type: newRole })
-        .eq("user_id", userId);
+      const response = await fetch(`/api/admin/user-roles/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_type: newRole }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update user role');
+      }
 
       toast({
         title: "Success",

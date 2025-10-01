@@ -3,7 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type UserType = 'admin' | 'moderator' | 'legal_user' | 'pr_user' | 'basic_user';
 
-export function useUserRole() {
+interface UserRoleData {
+  user_type: UserType;
+  created_at: string;
+}
+
+export function useUserRoleBackend() {
   const [userType, setUserType] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

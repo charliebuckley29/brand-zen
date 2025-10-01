@@ -96,32 +96,35 @@ export function ModeratorPanel() {
     try {
       setLoading(true);
       
-      // Fetch all users with their roles
-      const { data: usersData, error: usersError } = await supabase
-        .from("user_roles")
-        .select("user_id, user_type, created_at");
-
-      if (usersError) throw usersError;
-
-      // Fetch all profiles
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, phone_number, fetch_frequency_minutes");
-
-      if (profilesError) throw profilesError;
+      // Fetch all users with their roles using backend API
+      const response = await fetch('/api/admin/user-roles?include_profiles=true');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch user roles');
+      }
+      
+      const usersData = result.data;
 
       // Fetch user emails (for moderators only)
       const { data: emailsData, error: emailsError } = await supabase
         .rpc("get_user_emails_for_moderator");
 
-      // Create a map of profiles by user_id
+      // Profiles are now included in the API response
       const profilesMap: Record<string, { full_name: string; phone_number: string | null; fetch_frequency_minutes: number }> = {};
-      profilesData?.forEach(profile => {
-        profilesMap[profile.user_id] = {
-          full_name: profile.full_name,
-          phone_number: profile.phone_number,
-          fetch_frequency_minutes: profile.fetch_frequency_minutes || 15
-        };
+      usersData?.forEach(user => {
+        if (user.profile) {
+          profilesMap[user.user_id] = {
+            full_name: user.profile.full_name,
+            phone_number: user.profile.phone_number,
+            fetch_frequency_minutes: user.profile.fetch_frequency_minutes || 15
+          };
+        }
       });
 
       // Create a map of emails by user_id
@@ -215,12 +218,23 @@ export function ModeratorPanel() {
 
   const updateUserRole = async (userId: string, newRole: UserType) => {
     try {
-      const { error } = await supabase
-        .from("user_roles")
-        .update({ user_type: newRole })
-        .eq("user_id", userId);
+      const response = await fetch(`/api/admin/user-roles/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_type: newRole }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update user role');
+      }
 
       toast({
         title: "Success",

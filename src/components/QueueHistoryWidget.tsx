@@ -101,7 +101,7 @@ export function QueueHistoryWidget({ userId, limit = 5 }: QueueHistoryWidgetProp
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`https://mentions-backend.vercel.app/api/user/queue-history?userId=${userId}&limit=${limit}`);
+      const response = await fetch(`https://brandprotected.com/api/api/user/queue-history?userId=${userId}&limit=${limit}`);
       if (!response.ok) {
         throw new Error('Failed to fetch queue history');
       }
@@ -127,7 +127,7 @@ export function QueueHistoryWidget({ userId, limit = 5 }: QueueHistoryWidgetProp
     }));
 
     try {
-      const response = await fetch(`https://mentions-backend.vercel.app/api/user/fetch-mentions?userId=${userId}&fetchCycleId=${fetchCycleId}&sourceType=${sourceType}`);
+      const response = await fetch(`https://brandprotected.com/api/api/user/fetch-mentions?userId=${userId}&fetchCycleId=${fetchCycleId}&sourceType=${sourceType}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch mentions');

@@ -3,7 +3,7 @@ export const config = {
   // API Configuration
   api: {
     baseUrl: import.meta.env.VITE_SUPABASE_URL || '',
-    backendUrl: import.meta.env.VITE_BACKEND_URL || 'https://mentions-backend.vercel.app',
+    backendUrl: import.meta.env.VITE_BACKEND_URL || 'https://brandprotected.com/api',
     timeout: 30000, // 30 seconds
     retryAttempts: 3,
     retryDelay: 1000, // 1 second

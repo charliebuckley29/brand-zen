@@ -57,7 +57,7 @@ export function CursorMonitoringPanel() {
   const fetchCursorStatus = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://mentions-backend.vercel.app/api/admin/cursor-status');
+      const response = await fetch('https://brandprotected.com/api/api/admin/cursor-status');
       const result = await response.json();
       setData(result);
     } catch (error) {
@@ -74,7 +74,7 @@ export function CursorMonitoringPanel() {
   const runHealthCheck = async () => {
     setHealthCheckLoading(true);
     try {
-      const response = await fetch('https://mentions-backend.vercel.app/api/admin/cursor-health-check?cleanup=true');
+      const response = await fetch('https://brandprotected.com/api/api/admin/cursor-health-check?cleanup=true');
       const result = await response.json();
       
       if (result.success) {
@@ -100,7 +100,7 @@ export function CursorMonitoringPanel() {
   const testCursorContinuity = async () => {
     setTesting(true);
     try {
-      const response = await fetch('https://mentions-backend.vercel.app/api/admin/test-cursor-continuity', {
+      const response = await fetch('https://brandprotected.com/api/api/admin/test-cursor-continuity', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

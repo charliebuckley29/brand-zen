@@ -131,7 +131,7 @@ export function QueueErrorMonitoring() {
       setLoading(true);
       setError(null);
 
-      const baseUrl = 'https://mentions-backend.vercel.app';
+      const baseUrl = 'https://brandprotected.com/api';
       
       // Fetch health data
       const healthResponse = await fetch(`${baseUrl}/api/admin/queue-health-detailed`);
