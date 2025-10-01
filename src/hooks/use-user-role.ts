@@ -15,18 +15,31 @@ export function useUserRole() {
         setLoading(true);
         setError(null);
         
+        console.log("🔍 useUserRole: Starting to fetch user role...");
+        
         const { data: { user } } = await supabase.auth.getUser();
+        console.log("🔍 useUserRole: Supabase user:", user);
         
         if (!user) {
+          console.log("🔍 useUserRole: No user found, setting userType to null");
           setUserType(null);
           return;
         }
 
+        console.log("🔍 useUserRole: User ID:", user.id);
+        console.log("🔍 useUserRole: Backend URL:", config.api.backendUrl);
+        
+        const apiUrl = `${config.api.backendUrl}/admin/user-roles/${user.id}`;
+        console.log("🔍 useUserRole: Making API call to:", apiUrl);
+        
         // Use backend API instead of direct database access
-        const response = await fetch(`${config.api.backendUrl}/admin/user-roles/${user.id}`);
+        const response = await fetch(apiUrl);
+        
+        console.log("🔍 useUserRole: API response status:", response.status);
         
         if (!response.ok) {
           if (response.status === 404) {
+            console.log("🔍 useUserRole: User has no role (404), defaulting to basic_user");
             // User has no role, default to basic_user
             setUserType('basic_user');
             return;
@@ -35,15 +48,17 @@ export function useUserRole() {
         }
         
         const result = await response.json();
+        console.log("🔍 useUserRole: API response data:", result);
         
         if (result.success) {
+          console.log("🔍 useUserRole: Setting userType to:", result.data.user_type);
           setUserType(result.data.user_type);
         } else {
           throw new Error(result.error || 'Failed to fetch user role');
         }
         
       } catch (error: any) {
-        console.error("Error fetching user role:", error);
+        console.error("🔍 useUserRole: Error fetching user role:", error);
         setError(error.message);
         setUserType('basic_user'); // Default to basic user on error
       } finally {
