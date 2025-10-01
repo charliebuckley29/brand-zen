@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, parseISO } from 'date-fns';
+import { config } from '@/config/environment';
 
 interface RecoveryStatus {
   isRunning: boolean;
@@ -80,19 +81,19 @@ export function AutomatedRecoveryDashboard() {
     setLoading(true);
     setError(null);
 
-    const baseUrl = 'https://mentions-backend.vercel.app/api';
+    const baseUrl = config.api.backendUrl;
 
     try {
       // Fetch recovery status
-      const statusResponse = await fetch(`${baseUrl}/api/admin/recovery/status`);
+      const statusResponse = await fetch(`${baseUrl}/admin/recovery/status`);
       const statusResult = await statusResponse.json();
 
       // Fetch recovery actions
-      const actionsResponse = await fetch(`${baseUrl}/api/admin/recovery/actions?limit=100&hours=24`);
+      const actionsResponse = await fetch(`${baseUrl}/admin/recovery/actions?limit=100&hours=24`);
       const actionsResult = await actionsResponse.json();
 
       // Fetch recovery rules
-      const rulesResponse = await fetch(`${baseUrl}/api/admin/recovery/rules`);
+      const rulesResponse = await fetch(`${baseUrl}/admin/recovery/rules`);
       const rulesResult = await rulesResponse.json();
 
       if (statusResult.success) {
@@ -135,7 +136,7 @@ export function AutomatedRecoveryDashboard() {
 
   const handleTriggerRecovery = async () => {
     try {
-      const response = await fetch('https://mentions-backend.vercel.app/api/admin/recovery/trigger', {
+      const response = await fetch(`${config.api.backendUrl}/admin/recovery/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, parseISO } from 'date-fns';
+import { config } from '@/config/environment';
 
 interface SystemHealthScore {
   overall: number;
@@ -78,7 +79,7 @@ export function EnhancedAnalyticsDashboard() {
     setLoading(true);
     setError(null);
 
-    const baseUrl = 'https://mentions-backend.vercel.app/api';
+    const baseUrl = '${config.api.backendUrl}';
 
     try {
       // Fetch all analytics data in parallel

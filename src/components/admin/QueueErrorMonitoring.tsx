@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQueueMonitoring } from '../../hooks/useQueueMonitoring';
+import { config } from '@/config/environment';
 
 // Types
 interface QueueHealthData {
@@ -131,7 +132,7 @@ export function QueueErrorMonitoring() {
       setLoading(true);
       setError(null);
 
-      const baseUrl = 'https://mentions-backend.vercel.app/api';
+      const baseUrl = '${config.api.backendUrl}';
       
       // Fetch health data
       const healthResponse = await fetch(`${baseUrl}/api/admin/queue-health-detailed`);

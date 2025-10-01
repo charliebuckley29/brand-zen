@@ -5,12 +5,7 @@ import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare, Activity
 import { Link } from "react-router-dom";
 
 export default function AdminDashboard() {
-  const { isAdmin, loading: roleLoading, userType, error } = useUserRole();
-
-  console.log("🔍 AdminDashboard: isAdmin:", isAdmin);
-  console.log("🔍 AdminDashboard: roleLoading:", roleLoading);
-  console.log("🔍 AdminDashboard: userType:", userType);
-  console.log("🔍 AdminDashboard: error:", error);
+  const { isAdmin, loading: roleLoading } = useUserRole();
 
   if (roleLoading) {
     return (
@@ -28,15 +23,6 @@ export default function AdminDashboard() {
             <CardTitle className="text-center">Access Denied</CardTitle>
             <CardDescription className="text-center">
               You need admin privileges to access this page.
-              <br />
-              <br />
-              Debug Info:
-              <br />
-              User Type: {userType || 'null'}
-              <br />
-              Is Admin: {isAdmin ? 'true' : 'false'}
-              <br />
-              Error: {error || 'none'}
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">

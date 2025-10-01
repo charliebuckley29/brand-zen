@@ -16,6 +16,7 @@ import {
   Filter
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { config } from '@/config/environment';
 
 interface UserMonitoringProps {
   onRefresh: () => void;
@@ -31,8 +32,8 @@ export function UserMonitoring({ onRefresh, loading }: UserMonitoringProps) {
     try {
       // Fetch real user statistics from multiple endpoints
       const [usersResponse, mentionsResponse] = await Promise.all([
-        fetch('https://mentions-backend.vercel.app/api/admin/users'),
-        fetch(`https://mentions-backend.vercel.app/api/admin/monthly-mentions?month=${new Date().toISOString().slice(0, 7)}`)
+        fetch(`${config.api.backendUrl}/admin/users`),
+        fetch(`${config.api.backendUrl}/admin/monthly-mentions?month=${new Date().toISOString().slice(0, 7)}`)
       ]);
 
       let usersData = null;
