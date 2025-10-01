@@ -28,8 +28,8 @@ import {
   Settings
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useQueueMonitoring } from '../../hooks/useQueueMonitoring';
 import { config } from '@/config/environment';
+import { useQueueMonitoring } from '../../hooks/useQueueMonitoring';
 
 // Types
 interface QueueHealthData {
@@ -132,18 +132,18 @@ export function QueueErrorMonitoring() {
       setLoading(true);
       setError(null);
 
-      const baseUrl = '${config.api.backendUrl}';
+      const baseUrl = config.api.backendUrl;
       
       // Fetch health data
-      const healthResponse = await fetch(`${baseUrl}/api/admin/queue-health-detailed`);
+      const healthResponse = await fetch(`${baseUrl}/admin/queue-health-detailed`);
       const healthResult = await healthResponse.json();
       
       // Fetch error logs
-      const logsResponse = await fetch(`${baseUrl}/api/admin/queue-error-logs?limit=100&hours=24`);
+      const logsResponse = await fetch(`${baseUrl}/admin/queue-error-logs?limit=100&hours=24`);
       const logsResult = await logsResponse.json();
       
       // Fetch retry analytics (we'll create this endpoint)
-      const analyticsResponse = await fetch(`${baseUrl}/api/admin/queue-error-analytics`);
+      const analyticsResponse = await fetch(`${baseUrl}/admin/queue-error-analytics`);
       const analyticsResult = await analyticsResponse.json();
 
       if (healthResult.success) {
