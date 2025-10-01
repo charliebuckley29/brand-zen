@@ -31,7 +31,7 @@ export function AlertMonitoring({ onRefresh, loading }: AlertMonitoringProps) {
   const fetchAlertData = async () => {
     try {
       // For now, use automation logs as alerts since we don't have a dedicated alerts endpoint
-      const logsResponse = await fetch(`https://mentions-backend.vercel.app/api/api/debug/logs?limit=50`);
+      const logsResponse = await fetch(`https://mentions-backend.vercel.app/api/debug/logs?limit=50`);
       if (logsResponse.ok) {
         const logsData = await logsResponse.json();
         // Convert logs to alert format

@@ -109,7 +109,7 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`https://mentions-backend.vercel.app/api/api/debug/reset-failed-queue`, {
+      const response = await fetch(`https://mentions-backend.vercel.app/api/debug/reset-failed-queue`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`https://mentions-backend.vercel.app/api/api/debug/reset-failed-queue?api_source=${apiSource}`, {
+      const response = await fetch(`https://mentions-backend.vercel.app/api/debug/reset-failed-queue?api_source=${apiSource}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

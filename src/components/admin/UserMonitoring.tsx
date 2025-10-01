@@ -31,8 +31,8 @@ export function UserMonitoring({ onRefresh, loading }: UserMonitoringProps) {
     try {
       // Fetch real user statistics from multiple endpoints
       const [usersResponse, mentionsResponse] = await Promise.all([
-        fetch('https://mentions-backend.vercel.app/api/api/admin/users'),
-        fetch(`https://mentions-backend.vercel.app/api/api/admin/monthly-mentions?month=${new Date().toISOString().slice(0, 7)}`)
+        fetch('https://mentions-backend.vercel.app/api/admin/users'),
+        fetch(`https://mentions-backend.vercel.app/api/admin/monthly-mentions?month=${new Date().toISOString().slice(0, 7)}`)
       ]);
 
       let usersData = null;
