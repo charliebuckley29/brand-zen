@@ -25,15 +25,35 @@ interface SentimentData {
   success: boolean;
   queueStatus: {
     pendingAnalysis: number;
+    emptyMentions: number;
+    totalPending: number;
     recentAnalyzed: number;
     totalAnalyzed: number;
     sentimentDistribution: {
       positive?: number;
       negative?: number;
+      neutral?: number;
       unknown?: number;
     };
   };
   pendingMentions: Array<{
+    id: string;
+    user_id: string;
+    source_type: string;
+    source_name: string;
+    source_url: string;
+    created_at: string;
+    content_snippet: string;
+    full_text: string | null;
+    cleaned_text: string | null;
+    published_at: string;
+    model_used: string | null;
+    summary: string | null;
+    topics: string[] | null;
+    flagged: boolean;
+    escalation_type: string | null;
+  }>;
+  emptyMentions: Array<{
     id: string;
     user_id: string;
     source_type: string;
@@ -175,13 +195,15 @@ export function SentimentWorkerMonitoring() {
 
   const triggerSentimentWorker = async () => {
     try {
-      const response = await fetch(createApiUrl('/mentions/sentiment-worker-continuous'), {
+      const response = await fetch(createApiUrl('/mentions/sentiment-worker-unified'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           batchSize: 10,
+          maxConcurrent: 3,
           maxProcessingTime: 60000, // 1 minute
-          maxBatches: 5
+          skipEmpty: true,
+          parallelProcessing: true
         })
       });
       
@@ -189,14 +211,16 @@ export function SentimentWorkerMonitoring() {
         const result = await response.json();
         
         if (result.success) {
-          toast.success(`Sentiment worker completed: ${result.stats.totalProcessed} mentions processed`);
+          const stats = result.stats;
+          const message = `Sentiment processing complete: ${stats.totalProcessed} processed, ${stats.totalSkipped} skipped, ${stats.totalErrors} errors`;
+          toast.success(message);
           await fetchSentimentData();
         } else {
           toast.error('Sentiment worker failed');
         }
       } else {
-        console.warn('Sentiment worker endpoint not available');
-        toast.error('Sentiment worker endpoint not available');
+        console.warn('Unified sentiment worker endpoint not available');
+        toast.error('Unified sentiment worker endpoint not available');
       }
     } catch (error) {
       console.error('Error triggering sentiment worker:', error);
@@ -301,7 +325,7 @@ export function SentimentWorkerMonitoring() {
           </div>
 
           {sentimentData && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="flex items-center space-x-2">
                 <div className={`h-3 w-3 rounded-full ${sentimentData.queueStatus.pendingAnalysis > 0 ? 'bg-yellow-500' : 'bg-green-500'}`} />
                 <span className="text-sm font-medium">Queue Status</span>
@@ -311,8 +335,13 @@ export function SentimentWorkerMonitoring() {
               </div>
               <div className="flex items-center space-x-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Pending Mentions</span>
+                <span className="text-sm font-medium">Pending Analysis</span>
                 <Badge variant="outline">{sentimentData.queueStatus.pendingAnalysis}</Badge>
+              </div>
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Empty Mentions</span>
+                <Badge variant="outline">{sentimentData.queueStatus.emptyMentions}</Badge>
               </div>
               <div className="flex items-center space-x-2">
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
@@ -333,7 +362,12 @@ export function SentimentWorkerMonitoring() {
               Pending Mentions Queue
             </CardTitle>
             <CardDescription>
-              {sentimentData.queueStatus.pendingAnalysis} mentions waiting for sentiment analysis
+              {sentimentData.queueStatus.pendingAnalysis} mentions with content waiting for sentiment analysis
+              {sentimentData.queueStatus.emptyMentions > 0 && (
+                <span className="ml-2 text-orange-600 font-medium">
+                  • {sentimentData.queueStatus.emptyMentions} empty mentions skipped
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -460,6 +494,69 @@ export function SentimentWorkerMonitoring() {
         </Card>
       )}
 
+      {/* Empty Mentions (Skipped) */}
+      {sentimentData && sentimentData.queueStatus.emptyMentions > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              Empty Mentions (Skipped)
+            </CardTitle>
+            <CardDescription>
+              {sentimentData.queueStatus.emptyMentions} mentions skipped due to missing content
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {sentimentData.emptyMentions.map((mention) => (
+                  <div key={mention.id} className="border rounded-lg p-3 bg-orange-50 border-orange-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-2 w-2 bg-orange-500 rounded-full" />
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {mention.source_type}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs text-orange-600">
+                              No Content
+                            </Badge>
+                          </div>
+                          <div className="text-sm font-medium text-foreground">
+                            {mention.source_name}
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {formatDate(mention.created_at)}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <User className="h-3 w-3" />
+                              {mention.user_id.substring(0, 8)}...
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {mention.source_url && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => window.open(mention.source_url, '_blank')}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Recently Analyzed Mentions */}
       {sentimentData && (
         <Card>
@@ -478,7 +575,7 @@ export function SentimentWorkerMonitoring() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-yellow-600">{sentimentData.queueStatus.pendingAnalysis}</div>
                 <div className="text-sm text-muted-foreground">Pending</div>
@@ -490,6 +587,10 @@ export function SentimentWorkerMonitoring() {
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">{sentimentData.queueStatus.sentimentDistribution.negative || 0}</div>
                 <div className="text-sm text-muted-foreground">Negative</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{sentimentData.queueStatus.sentimentDistribution.neutral || 0}</div>
+                <div className="text-sm text-muted-foreground">Neutral</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-600">{sentimentData.queueStatus.sentimentDistribution.unknown || 0}</div>
