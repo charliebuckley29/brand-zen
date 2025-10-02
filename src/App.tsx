@@ -8,6 +8,8 @@
  * - Configure React Query for data fetching and caching
  * - Set up routing with React Router
  * - Provide theme and timezone context
+ * 
+ * Last updated: Testing git commit functionality
  * - Wrap the app with error boundaries for error handling
  * - Initialize performance monitoring in development
  * - Set up global UI components (toasters, tooltips)
