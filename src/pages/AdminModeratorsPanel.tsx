@@ -103,6 +103,37 @@ export default function AdminModeratorsPanel() {
 
   const updateUserRole = async (userId: string, newRole: UserType) => {
     try {
+      // Get current user's role and the target user's current role
+      const { userRole: currentUserRole } = useUserRole();
+      const targetUser = moderators.find(m => m.id === userId);
+      
+      if (!targetUser) {
+        throw new Error("User not found");
+      }
+
+      // Role hierarchy validation
+      if (currentUserRole === 'admin') {
+        // Admins can only manage moderators and basic users, not other admins
+        if (targetUser.user_type === 'admin') {
+          toast({
+            title: "Permission Denied",
+            description: "Admins cannot modify other admin roles",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Admins cannot promote users to admin level
+        if (newRole === 'admin') {
+          toast({
+            title: "Permission Denied", 
+            description: "Only super admins can promote users to admin level",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+
       const response = await fetch(createApiUrl(`/admin/user-roles/${userId}`), {
         method: 'PUT',
         headers: {
@@ -127,11 +158,11 @@ export default function AdminModeratorsPanel() {
       });
       
       fetchModerators(); // Refresh data
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating user role:", error);
       toast({
         title: "Error",
-        description: "Failed to update user role",
+        description: error.message || "Failed to update user role",
         variant: "destructive"
       });
     }
@@ -340,6 +371,7 @@ export default function AdminModeratorsPanel() {
                       <Select 
                         value={user.user_type} 
                         onValueChange={(value: UserType) => updateUserRole(user.id, value)}
+                        disabled={isAdmin && user.user_type === 'admin'}
                       >
                         <SelectTrigger className="w-32">
                           <SelectValue />
@@ -349,7 +381,7 @@ export default function AdminModeratorsPanel() {
                           <SelectItem value="pr_user">PR User</SelectItem>
                           <SelectItem value="legal_user">Legal User</SelectItem>
                           <SelectItem value="moderator">Moderator</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
+                          {!isAdmin && <SelectItem value="admin">Admin</SelectItem>}
                         </SelectContent>
                       </Select>
                     </TableCell>
