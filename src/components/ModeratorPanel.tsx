@@ -71,6 +71,7 @@ export function ModeratorPanel() {
   const [selectedUserKeywords, setSelectedUserKeywords] = useState<UserKeywords | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [resendingEmails, setResendingEmails] = useState<Set<string>>(new Set());
+  const [sendingPasswordReset, setSendingPasswordReset] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   // Helper function to check if a user can be edited by moderators
@@ -357,6 +358,52 @@ export function ModeratorPanel() {
     }
   };
 
+  const sendPasswordReset = async (userId: string, email: string) => {
+    try {
+      setSendingPasswordReset(prev => new Set(prev).add(userId));
+
+      const response = await fetch(createApiUrl(API_ENDPOINTS.SEND_PASSWORD_RESET), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send password reset email');
+      }
+
+      if (data.success) {
+        toast({
+          title: "Password Reset Sent",
+          description: `Password reset email sent to ${email}. The user can now set a new password without entering their old one.`
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to send password reset email",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      console.error("Error sending password reset:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send password reset email",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingPasswordReset(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -480,15 +527,26 @@ export function ModeratorPanel() {
                                     <span className="text-sm">Unconfirmed</span>
                                   </div>
                                   {user.email !== 'Email not available' && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => resendEmailConfirmation(user.id, user.email)}
-                                      disabled={resendingEmails.has(user.id)}
-                                      className="h-7 px-2 text-xs"
-                                    >
-                                      {resendingEmails.has(user.id) ? 'Sending...' : 'Resend'}
-                                    </Button>
+                                    <div className="flex gap-1">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => resendEmailConfirmation(user.id, user.email)}
+                                        disabled={resendingEmails.has(user.id)}
+                                        className="h-7 px-2 text-xs"
+                                      >
+                                        {resendingEmails.has(user.id) ? 'Sending...' : 'Resend'}
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => sendPasswordReset(user.id, user.email)}
+                                        disabled={sendingPasswordReset.has(user.id)}
+                                        className="h-7 px-2 text-xs"
+                                      >
+                                        {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
+                                      </Button>
+                                    </div>
                                   )}
                                 </div>
                               )}
@@ -606,15 +664,26 @@ export function ModeratorPanel() {
                                   <span className="text-xs">Email Unconfirmed</span>
                                 </div>
                                 {user.email !== 'Email not available' && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => resendEmailConfirmation(user.id, user.email)}
-                                    disabled={resendingEmails.has(user.id)}
-                                    className="h-6 px-2 text-xs"
-                                  >
-                                    {resendingEmails.has(user.id) ? 'Sending...' : 'Resend'}
-                                  </Button>
+                                  <div className="flex gap-1">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => resendEmailConfirmation(user.id, user.email)}
+                                      disabled={resendingEmails.has(user.id)}
+                                      className="h-6 px-2 text-xs"
+                                    >
+                                      {resendingEmails.has(user.id) ? 'Sending...' : 'Resend'}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => sendPasswordReset(user.id, user.email)}
+                                      disabled={sendingPasswordReset.has(user.id)}
+                                      className="h-6 px-2 text-xs"
+                                    >
+                                      {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
+                                    </Button>
+                                  </div>
                                 )}
                               </div>
                             )}
@@ -816,15 +885,26 @@ export function ModeratorPanel() {
                               <span className="text-xs">Unconfirmed</span>
                             </div>
                             {selectedUser.email !== 'Email not available' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => resendEmailConfirmation(selectedUser.id, selectedUser.email)}
-                                disabled={resendingEmails.has(selectedUser.id)}
-                                className="h-7 px-2 text-xs"
-                              >
-                                {resendingEmails.has(selectedUser.id) ? 'Sending...' : 'Resend'}
-                              </Button>
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => resendEmailConfirmation(selectedUser.id, selectedUser.email)}
+                                  disabled={resendingEmails.has(selectedUser.id)}
+                                  className="h-7 px-2 text-xs"
+                                >
+                                  {resendingEmails.has(selectedUser.id) ? 'Sending...' : 'Resend'}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => sendPasswordReset(selectedUser.id, selectedUser.email)}
+                                  disabled={sendingPasswordReset.has(selectedUser.id)}
+                                  className="h-7 px-2 text-xs"
+                                >
+                                  {sendingPasswordReset.has(selectedUser.id) ? 'Sending...' : 'Reset Password'}
+                                </Button>
+                              </div>
                             )}
                           </div>
                         )}

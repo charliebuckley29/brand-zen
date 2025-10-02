@@ -34,6 +34,7 @@ export const API_ENDPOINTS = {
   SYSTEM_HEALTH: '/api/admin/system-health',
   USER_QUOTA_MANAGEMENT: '/api/admin/user-quota-management',
   RESEND_EMAIL_CONFIRMATION: '/api/admin/resend-email-confirmation',
+  SEND_PASSWORD_RESET: '/api/admin/send-password-reset',
   SYSTEM_STATUS: '/api/system/status',
   
   // Debug endpoints
