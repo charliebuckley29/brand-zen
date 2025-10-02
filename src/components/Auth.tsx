@@ -27,7 +27,7 @@ export function Auth() {
 
       toast({
         title: "Signed in successfully!",
-        description: "Welcome to your brand monitoring dashboard.",
+        description: "Welcome to Brand Protected.",
       });
     } catch (error: any) {
       toast({
@@ -45,7 +45,7 @@ export function Auth() {
       <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Brand Monitoring</CardTitle>
+            <CardTitle className="text-2xl">Brand Protected</CardTitle>
             <CardDescription>
               Sign in to access your brand monitoring dashboard
             </CardDescription>
