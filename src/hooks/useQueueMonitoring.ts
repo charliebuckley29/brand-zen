@@ -70,7 +70,7 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
       setLoading(true);
       setError(null);
 
-      const baseUrl = 'https://mentions-backend.vercel.app/api';
+      const baseUrl = 'https://mentions-backend.vercel.app';
       const url = new URL('/api/admin/queue-status', baseUrl);
       
       if (apiSource) {

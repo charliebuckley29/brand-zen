@@ -177,7 +177,7 @@ export default function AdminTestDebugTools() {
     setLoading(true);
 
     try {
-      const baseUrl = 'https://mentions-backend.vercel.app/api';
+      const baseUrl = 'https://mentions-backend.vercel.app';
       let url = `${baseUrl}${tool.endpoint}`;
       
       let options: RequestInit = {
