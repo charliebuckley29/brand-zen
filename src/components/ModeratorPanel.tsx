@@ -515,54 +515,41 @@ export function ModeratorPanel() {
                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              {user.email_confirmed ? (
-                                <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2">
+                                {user.email_confirmed ? (
                                   <div className="flex items-center gap-1 text-green-600">
                                     <MailCheck className="h-4 w-4" />
                                     <span className="text-sm">Confirmed</span>
                                   </div>
-                                  {user.email !== 'Email not available' && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => sendPasswordReset(user.id, user.email)}
-                                      disabled={sendingPasswordReset.has(user.id)}
-                                      className="h-7 px-2 text-xs"
-                                    >
-                                      {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
-                                    </Button>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-2">
+                                ) : (
                                   <div className="flex items-center gap-1 text-orange-600">
                                     <Mail className="h-4 w-4" />
                                     <span className="text-sm">Unconfirmed</span>
                                   </div>
-                                  {user.email !== 'Email not available' && (
-                                    <div className="flex gap-1">
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => resendEmailConfirmation(user.id, user.email)}
-                                        disabled={resendingEmails.has(user.id)}
-                                        className="h-7 px-2 text-xs"
-                                      >
-                                        {resendingEmails.has(user.id) ? 'Sending...' : 'Resend'}
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => sendPasswordReset(user.id, user.email)}
-                                        disabled={sendingPasswordReset.has(user.id)}
-                                        className="h-7 px-2 text-xs"
-                                      >
-                                        {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
-                                      </Button>
-                                    </div>
+                                )}
+                                <div className="flex gap-1">
+                                  {!user.email_confirmed && user.email !== 'Email not available' && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => resendEmailConfirmation(user.id, user.email)}
+                                      disabled={resendingEmails.has(user.id)}
+                                      className="h-7 px-2 text-xs"
+                                    >
+                                      {resendingEmails.has(user.id) ? 'Sending...' : 'Resend'}
+                                    </Button>
                                   )}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => sendPasswordReset(user.id, user.email)}
+                                    disabled={sendingPasswordReset.has(user.id)}
+                                    className="h-7 px-2 text-xs"
+                                  >
+                                    {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
+                                  </Button>
                                 </div>
-                              )}
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -665,54 +652,41 @@ export function ModeratorPanel() {
                             )}
                           </div>
                           <div className="flex items-center gap-2">
-                            {user.email_confirmed ? (
-                              <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2">
+                              {user.email_confirmed ? (
                                 <div className="flex items-center gap-1 text-green-600">
                                   <MailCheck className="h-3 w-3" />
                                   <span className="text-xs">Email Confirmed</span>
                                 </div>
-                                {user.email !== 'Email not available' && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => sendPasswordReset(user.id, user.email)}
-                                    disabled={sendingPasswordReset.has(user.id)}
-                                    className="h-6 px-2 text-xs"
-                                  >
-                                    {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
-                                  </Button>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
+                              ) : (
                                 <div className="flex items-center gap-1 text-orange-600">
                                   <Mail className="h-3 w-3" />
                                   <span className="text-xs">Email Unconfirmed</span>
                                 </div>
-                                {user.email !== 'Email not available' && (
-                                  <div className="flex gap-1">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => resendEmailConfirmation(user.id, user.email)}
-                                      disabled={resendingEmails.has(user.id)}
-                                      className="h-6 px-2 text-xs"
-                                    >
-                                      {resendingEmails.has(user.id) ? 'Sending...' : 'Resend'}
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => sendPasswordReset(user.id, user.email)}
-                                      disabled={sendingPasswordReset.has(user.id)}
-                                      className="h-6 px-2 text-xs"
-                                    >
-                                      {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
-                                    </Button>
-                                  </div>
+                              )}
+                              <div className="flex gap-1">
+                                {!user.email_confirmed && user.email !== 'Email not available' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => resendEmailConfirmation(user.id, user.email)}
+                                    disabled={resendingEmails.has(user.id)}
+                                    className="h-6 px-2 text-xs"
+                                  >
+                                    {resendingEmails.has(user.id) ? 'Sending...' : 'Resend'}
+                                  </Button>
                                 )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => sendPasswordReset(user.id, user.email)}
+                                  disabled={sendingPasswordReset.has(user.id)}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
+                                </Button>
                               </div>
-                            )}
+                            </div>
                           </div>
                         </div>
                         <div className="text-right text-sm text-muted-foreground">
@@ -899,54 +873,41 @@ export function ModeratorPanel() {
                       <Label className="text-sm font-medium">Email</Label>
                       <div className="flex items-center gap-2">
                         <p className="text-sm text-muted-foreground break-all">{selectedUser.email}</p>
-                        {selectedUser.email_confirmed ? (
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
+                          {selectedUser.email_confirmed ? (
                             <div className="flex items-center gap-1 text-green-600">
                               <MailCheck className="h-4 w-4" />
                               <span className="text-xs">Confirmed</span>
                             </div>
-                            {selectedUser.email !== 'Email not available' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => sendPasswordReset(selectedUser.id, selectedUser.email)}
-                                disabled={sendingPasswordReset.has(selectedUser.id)}
-                                className="h-7 px-2 text-xs"
-                              >
-                                {sendingPasswordReset.has(selectedUser.id) ? 'Sending...' : 'Reset Password'}
-                              </Button>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
+                          ) : (
                             <div className="flex items-center gap-1 text-orange-600">
                               <Mail className="h-4 w-4" />
                               <span className="text-xs">Unconfirmed</span>
                             </div>
-                            {selectedUser.email !== 'Email not available' && (
-                              <div className="flex gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => resendEmailConfirmation(selectedUser.id, selectedUser.email)}
-                                  disabled={resendingEmails.has(selectedUser.id)}
-                                  className="h-7 px-2 text-xs"
-                                >
-                                  {resendingEmails.has(selectedUser.id) ? 'Sending...' : 'Resend'}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => sendPasswordReset(selectedUser.id, selectedUser.email)}
-                                  disabled={sendingPasswordReset.has(selectedUser.id)}
-                                  className="h-7 px-2 text-xs"
-                                >
-                                  {sendingPasswordReset.has(selectedUser.id) ? 'Sending...' : 'Reset Password'}
-                                </Button>
-                              </div>
+                          )}
+                          <div className="flex gap-1">
+                            {!selectedUser.email_confirmed && selectedUser.email !== 'Email not available' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => resendEmailConfirmation(selectedUser.id, selectedUser.email)}
+                                disabled={resendingEmails.has(selectedUser.id)}
+                                className="h-7 px-2 text-xs"
+                              >
+                                {resendingEmails.has(selectedUser.id) ? 'Sending...' : 'Resend'}
+                              </Button>
                             )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => sendPasswordReset(selectedUser.id, selectedUser.email)}
+                              disabled={sendingPasswordReset.has(selectedUser.id)}
+                              className="h-7 px-2 text-xs"
+                            >
+                              {sendingPasswordReset.has(selectedUser.id) ? 'Sending...' : 'Reset Password'}
+                            </Button>
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
                     <div>
