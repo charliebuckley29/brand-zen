@@ -62,8 +62,8 @@ export default function AdminModeratorsPanel() {
     try {
       setLoading(true);
       
-      // Fetch moderator and admin users with their roles using backend API
-      const response = await fetch(createApiUrl('/admin/user-roles?user_type=moderator&include_profiles=true'));
+      // Fetch all users with their roles and profiles using new backend API
+      const response = await fetch(createApiUrl('/admin/users-with-roles?include_inactive=false'));
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -72,30 +72,21 @@ export default function AdminModeratorsPanel() {
       const result = await response.json();
       
       if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch user roles');
+        throw new Error(result.error || 'Failed to fetch users');
       }
       
-      const usersData = result.data;
-
-      // Fetch user emails (for admins only)
-      const { data: emailsData, error: emailsError } = await supabase
-        .rpc("get_user_emails_for_moderator");
-
-      // Create a map of emails by user_id
-      const emailsMap: Record<string, string> = {};
-      emailsData?.forEach(emailData => {
-        emailsMap[emailData.user_id] = emailData.email;
-      });
-
-      const formattedModerators: ModeratorUser[] = (usersData || []).map(user => ({
-        id: user.user_id,
-        email: emailsMap[user.user_id] || 'Email not available',
-        full_name: user.profile?.full_name || 'Unknown User',
-        phone_number: user.profile?.phone_number || null,
-        user_type: user.user_type,
-        created_at: user.created_at,
-        fetch_frequency_minutes: user.profile?.fetch_frequency_minutes || 15
-      }));
+      // Filter to only show moderators and admins
+      const formattedModerators: ModeratorUser[] = result.data
+        .filter((user: any) => user.user_type === 'moderator' || user.user_type === 'admin')
+        .map((user: any) => ({
+          id: user.id,
+          email: user.email || 'No email',
+          full_name: user.profile?.full_name || 'No name',
+          phone_number: user.profile?.phone_number || null,
+          user_type: user.user_type,
+          created_at: user.created_at,
+          fetch_frequency_minutes: user.profile?.fetch_frequency_minutes || 15
+        }));
 
       setModerators(formattedModerators);
     } catch (error) {
@@ -150,28 +141,24 @@ export default function AdminModeratorsPanel() {
     try {
       setIsUpdating(true);
 
-      // Update profile information (upsert to handle cases where profile doesn't exist)
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert({
-          user_id: userId,
-          full_name: profileData.full_name,
-          phone_number: profileData.phone_number || null
-        }, {
-          onConflict: 'user_id'
-        });
+      // Update profile information via backend endpoint
+      const response = await fetch(createApiUrl('/admin/update-user-profile'), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+          fullName: profileData.full_name,
+          phoneNumber: profileData.phone_number || null,
+          email: profileData.email !== selectedModerator?.email ? profileData.email : null
+        })
+      });
 
-      if (profileError) throw profileError;
+      const result = await response.json();
 
-      // Update email if it has changed
-      if (profileData.email !== selectedModerator?.email && profileData.email.trim()) {
-        const { error: emailError } = await supabase
-          .rpc('update_user_email_by_moderator', {
-            target_user_id: userId,
-            new_email: profileData.email.trim()
-          });
-
-        if (emailError) throw emailError;
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update profile');
       }
 
       toast({
@@ -181,11 +168,11 @@ export default function AdminModeratorsPanel() {
 
       setEditMode(false);
       fetchModerators(); // Refresh data
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating moderator profile:", error);
       toast({
         title: "Error",
-        description: "Failed to update moderator profile",
+        description: error.message || "Failed to update moderator profile",
         variant: "destructive"
       });
     } finally {
@@ -195,12 +182,23 @@ export default function AdminModeratorsPanel() {
 
   const updateUserFetchFrequency = async (userId: string, frequency: number) => {
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ fetch_frequency_minutes: frequency })
-        .eq("user_id", userId);
+      // Update fetch frequency via backend endpoint
+      const response = await fetch(createApiUrl('/admin/update-user-profile'), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+          fetchFrequencyMinutes: frequency
+        })
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update fetch frequency');
+      }
 
       toast({
         title: "Frequency Updated",
@@ -208,11 +206,11 @@ export default function AdminModeratorsPanel() {
       });
 
       fetchModerators(); // Refresh data
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating fetch frequency:", error);
       toast({
         title: "Error",
-        description: "Failed to update fetch frequency",
+        description: error.message || "Failed to update fetch frequency",
         variant: "destructive"
       });
     }
