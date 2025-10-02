@@ -684,7 +684,8 @@ const Help = () => {
                   <h3 className="font-semibold mb-2 text-sm sm:text-base">What are API quotas and how do they affect monitoring?</h3>
                   <p className="text-xs sm:text-sm text-muted-foreground">
                     Our system uses various APIs (YouTube, Reddit, X) that have usage limits. Each user has individual quotas, 
-                    and when limits are reached, monitoring for that source pauses until quotas reset. Google Alerts has no limits.
+                    and when limits are reached, monitoring for that source pauses until quotas reset. You can view your quota usage 
+                    for YouTube, X, and Reddit in your Settings page.
                   </p>
                 </div>
 

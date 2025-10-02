@@ -92,6 +92,10 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   
   // Quota management
   const { quotaData, loading: quotaLoading, error: quotaError, refreshQuotaData, getSourcesNearLimit, getSourcesExceeded } = useQuotaUsage();
+  
+  // Filter quota data to only show YouTube, X, and Reddit
+  const allowedSources = ['youtube', 'x', 'reddit'];
+  const filteredQuotaData = quotaData.filter(quota => allowedSources.includes(quota.source_type));
 
   // Check if user can change brand name
   const canChangeBrandName = globalSettingsLoading 
@@ -998,31 +1002,31 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   </Button>
                 </AlertDescription>
               </Alert>
-            ) : quotaData.length > 0 ? (
+            ) : filteredQuotaData.length > 0 ? (
               <div className="space-y-4">
                 {/* Overall Status */}
-                {getSourcesExceeded().length > 0 && (
+                {getSourcesExceeded().filter(s => allowedSources.includes(s.source_type)).length > 0 && (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Quota Exceeded</AlertTitle>
                     <AlertDescription>
-                      You've reached your monthly limit for: {getSourcesExceeded().map(s => s.source_type).join(', ')}
+                      You've reached your monthly limit for: {getSourcesExceeded().filter(s => allowedSources.includes(s.source_type)).map(s => s.source_type).join(', ')}
                     </AlertDescription>
                   </Alert>
                 )}
                 
-                {getSourcesNearLimit().length > 0 && (
+                {getSourcesNearLimit().filter(s => allowedSources.includes(s.source_type)).length > 0 && (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Approaching Limits</AlertTitle>
                     <AlertDescription>
-                      You're near your monthly limit for: {getSourcesNearLimit().map(s => s.source_type).join(', ')}
+                      You're near your monthly limit for: {getSourcesNearLimit().filter(s => allowedSources.includes(s.source_type)).map(s => s.source_type).join(', ')}
                     </AlertDescription>
                   </Alert>
                 )}
 
                 {/* Quota Display */}
-                <QuotaDisplay quotaData={quotaData} showDetails={true} />
+                <QuotaDisplay quotaData={filteredQuotaData} showDetails={true} />
                 
                 {/* Refresh Button */}
                 <div className="flex justify-end">

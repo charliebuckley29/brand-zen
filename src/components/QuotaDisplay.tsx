@@ -25,15 +25,13 @@ interface QuotaDisplayProps {
 const sourceDisplayNames: Record<string, string> = {
   youtube: 'YouTube',
   reddit: 'Reddit',
-  x: 'X (Twitter)',
-  google_alert: 'Google Alerts'
+  x: 'X (Twitter)'
 };
 
 const sourceIcons: Record<string, string> = {
   youtube: '📺',
   reddit: '🔴',
-  x: '🐦',
-  google_alert: '🔔'
+  x: '🐦'
 };
 
 export function QuotaDisplay({ quotaData, showDetails = false, className = '' }: QuotaDisplayProps) {
