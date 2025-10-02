@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { createApiUrl } from "@/lib/api";
 import { Upload, Camera, FileText, Bug, Loader2, Info, Copy, Check } from "lucide-react";
 
 interface BugReportModalProps {
@@ -294,43 +295,13 @@ TIP: If you don't see any errors, try reproducing the bug while the console is o
     }
   };
 
-  const uploadScreenshots = async (screenshots: File[]): Promise<string[]> => {
-    const uploadedUrls: string[] = [];
-    
-    for (const file of screenshots) {
-      try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('User not authenticated');
-        
-        // Create a path that includes user ID for RLS policy
-        const fileName = `${user.id}/${Date.now()}-${file.name}`;
-        
-        const { data, error } = await supabase.storage
-          .from('bug-report-screenshots')
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-        
-        if (error) {
-          console.error('Screenshot upload error:', error);
-          throw new Error(`Failed to upload ${file.name}: ${error.message}`);
-        }
-        
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('bug-report-screenshots')
-          .getPublicUrl(fileName);
-        
-        uploadedUrls.push(publicUrl);
-      } catch (error) {
-        console.error('Upload error for file:', file.name, error);
-        throw error;
-      }
-    }
-    
-    return uploadedUrls;
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -351,33 +322,42 @@ TIP: If you don't see any errors, try reproducing the bug while the console is o
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Upload screenshots if any
-      let screenshotUrls: string[] = [];
+      // Convert screenshots to base64 if any
+      let screenshots: string[] = [];
       if (formData.screenshots.length > 0) {
-        screenshotUrls = await uploadScreenshots(formData.screenshots);
+        screenshots = await Promise.all(
+          formData.screenshots.map(file => convertFileToBase64(file))
+        );
       }
 
       // Collect browser information
       const browserInfo = collectBrowserInfo();
 
-      // Submit bug report
-      const { error } = await supabase
-        .from('bug_reports' as any)
-        .insert({
-          user_id: user.id,
+      // Submit bug report via backend endpoint
+      const response = await fetch(createApiUrl('/bug-reports/submit'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
           title: formData.title.trim(),
           description: formData.description.trim(),
-          steps_to_reproduce: formData.stepsToReproduce.trim() || null,
-          expected_behavior: formData.expectedBehavior.trim() || null,
-          actual_behavior: formData.actualBehavior.trim() || null,
+          stepsToReproduce: formData.stepsToReproduce.trim() || null,
+          expectedBehavior: formData.expectedBehavior.trim() || null,
+          actualBehavior: formData.actualBehavior.trim() || null,
           priority: formData.priority,
-          browser_info: browserInfo,
-          console_logs: formData.consoleLogs.trim() || null,
-          screenshots: screenshotUrls.length > 0 ? screenshotUrls : null,
-          status: 'open'
-        });
+          browserInfo: browserInfo,
+          consoleLogs: formData.consoleLogs.trim() || null,
+          screenshots: screenshots
+        })
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to submit bug report');
+      }
 
       toast({
         title: "Bug report submitted",
