@@ -132,18 +132,16 @@ export function QueueErrorMonitoring() {
       setLoading(true);
       setError(null);
 
-      const baseUrl = createApiUrl('');
-      
       // Fetch health data
-      const healthResponse = await fetch(`${baseUrl}/admin/queue-health-detailed`);
+      const healthResponse = await fetch(createApiUrl('/admin/queue-health-detailed'));
       const healthResult = await healthResponse.json();
       
       // Fetch error logs
-      const logsResponse = await fetch(`${baseUrl}/admin/queue-error-logs?limit=100&hours=24`);
+      const logsResponse = await fetch(createApiUrl('/admin/queue-error-logs?limit=100&hours=24'));
       const logsResult = await logsResponse.json();
       
       // Fetch retry analytics (we'll create this endpoint)
-      const analyticsResponse = await fetch(`${baseUrl}/admin/queue-error-analytics`);
+      const analyticsResponse = await fetch(createApiUrl('/admin/queue-error-analytics'));
       const analyticsResult = await analyticsResponse.json();
 
       if (healthResult.success) {

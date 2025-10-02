@@ -79,15 +79,14 @@ export function EnhancedAnalyticsDashboard() {
     setLoading(true);
     setError(null);
 
-    const baseUrl = createApiUrl('');
 
     try {
       // Fetch all analytics data in parallel
       const [healthResponse, insightsResponse, trendsResponse, benchmarksResponse] = await Promise.all([
-        fetch(`${baseUrl}/admin/analytics/health-score`),
-        fetch(`${baseUrl}/admin/analytics/predictive-insights`),
-        fetch(`${baseUrl}/admin/analytics/trends?metric=${selectedMetric}&period=${selectedPeriod}`),
-        fetch(`${baseUrl}/admin/analytics/benchmarks`)
+        fetch(createApiUrl('/admin/analytics/health-score')),
+        fetch(createApiUrl('/admin/analytics/predictive-insights')),
+        fetch(createApiUrl(`/admin/analytics/trends?metric=${selectedMetric}&period=${selectedPeriod}`)),
+        fetch(createApiUrl('/admin/analytics/benchmarks'))
       ]);
 
       const [healthResult, insightsResult, trendsResult, benchmarksResult] = await Promise.all([

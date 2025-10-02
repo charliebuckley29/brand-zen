@@ -59,10 +59,9 @@ export function AlertDashboard() {
     setLoading(true);
     setError(null);
 
-    const baseUrl = createApiUrl('');
 
     try {
-      const response = await fetch(`${baseUrl}/admin/alerts/active?limit=100&hours=24`);
+      const response = await fetch(createApiUrl('/admin/alerts/active?limit=100&hours=24'));
       const result = await response.json();
 
       if (result.success) {

@@ -178,8 +178,7 @@ export default function AdminTestDebugTools() {
     setLoading(true);
 
     try {
-      const baseUrl = createApiUrl('');
-      let url = `${baseUrl}${tool.endpoint}`;
+      let url = createApiUrl(tool.endpoint);
       
       let options: RequestInit = {
         method: tool.method,

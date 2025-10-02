@@ -81,19 +81,18 @@ export function AutomatedRecoveryDashboard() {
     setLoading(true);
     setError(null);
 
-    const baseUrl = createApiUrl('');
 
     try {
       // Fetch recovery status
-      const statusResponse = await fetch(`${baseUrl}/admin/recovery/status`);
+      const statusResponse = await fetch(createApiUrl('/admin/recovery/status'));
       const statusResult = await statusResponse.json();
 
       // Fetch recovery actions
-      const actionsResponse = await fetch(`${baseUrl}/admin/recovery/actions?limit=100&hours=24`);
+      const actionsResponse = await fetch(createApiUrl('/admin/recovery/actions?limit=100&hours=24'));
       const actionsResult = await actionsResponse.json();
 
       // Fetch recovery rules
-      const rulesResponse = await fetch(`${baseUrl}/admin/recovery/rules`);
+      const rulesResponse = await fetch(createApiUrl('/admin/recovery/rules'));
       const rulesResult = await rulesResponse.json();
 
       if (statusResult.success) {
