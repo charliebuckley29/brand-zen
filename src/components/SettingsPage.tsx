@@ -330,10 +330,10 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!currentPassword || !newPassword || !confirmPassword) {
+    if (!newPassword || !confirmPassword) {
       toast({
         title: "Missing information",
-        description: "Please fill in all password fields.",
+        description: "Please fill in the new password fields.",
         variant: "destructive",
       });
       return;
@@ -370,7 +370,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
         description: "Your password has been changed.",
       });
 
-      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       setPasswordDialogOpen(false);
@@ -1136,22 +1135,11 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   <DialogHeader>
                     <DialogTitle>Change Password</DialogTitle>
                     <DialogDescription>
-                      Enter your current password and choose a new one. Your new password must be at least 6 characters long.
+                      Choose a new password. Your new password must be at least 6 characters long.
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handlePasswordUpdate} className="space-y-4">
                     <div className="space-y-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="currentPassword">Current Password</Label>
-                        <Input
-                          id="currentPassword"
-                          type="password"
-                          placeholder="Enter current password"
-                          value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
-                          required
-                        />
-                      </div>
                       <div className="space-y-2">
                         <Label htmlFor="newPassword">New Password</Label>
                         <Input
@@ -1185,7 +1173,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                       </Button>
                       <Button 
                         type="submit" 
-                        disabled={isUpdatingPassword || !currentPassword || !newPassword || !confirmPassword}
+                        disabled={isUpdatingPassword || !newPassword || !confirmPassword}
                       >
                         {isUpdatingPassword ? "Updating..." : "Update Password"}
                       </Button>
