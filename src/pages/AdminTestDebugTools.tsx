@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { config } from '@/config/environment';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -177,7 +178,7 @@ export default function AdminTestDebugTools() {
     setLoading(true);
 
     try {
-      const baseUrl = 'https://mentions-backend.vercel.app';
+      const baseUrl = config.api.backendUrl;
       let url = `${baseUrl}${tool.endpoint}`;
       
       let options: RequestInit = {

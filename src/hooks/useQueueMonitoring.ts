@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import { config } from '@/config/environment';
 
 export interface QueueEntry {
   id: string;
@@ -70,7 +71,7 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
       setLoading(true);
       setError(null);
 
-      const baseUrl = 'https://mentions-backend.vercel.app';
+      const baseUrl = config.api.backendUrl;
       const url = new URL('/api/admin/queue-status', baseUrl);
       
       if (apiSource) {
@@ -109,7 +110,7 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`https://mentions-backend.vercel.app/api/debug/reset-failed-queue`, {
+      const response = await fetch(`${config.api.backendUrl}/api/debug/reset-failed-queue`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,7 +144,7 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`https://mentions-backend.vercel.app/api/debug/reset-failed-queue?api_source=${apiSource}`, {
+      const response = await fetch(`${config.api.backendUrl}/api/debug/reset-failed-queue?api_source=${apiSource}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

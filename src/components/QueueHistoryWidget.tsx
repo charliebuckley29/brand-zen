@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { config } from '@/config/environment';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -101,7 +102,7 @@ export function QueueHistoryWidget({ userId, limit = 5 }: QueueHistoryWidgetProp
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`https://mentions-backend.vercel.app/api/user/queue-history?userId=${userId}&limit=${limit}`);
+      const response = await fetch(`${config.api.backendUrl}/api/user/queue-history?userId=${userId}&limit=${limit}`);
       if (!response.ok) {
         throw new Error('Failed to fetch queue history');
       }
@@ -127,7 +128,7 @@ export function QueueHistoryWidget({ userId, limit = 5 }: QueueHistoryWidgetProp
     }));
 
     try {
-      const response = await fetch(`https://mentions-backend.vercel.app/api/user/fetch-mentions?userId=${userId}&fetchCycleId=${fetchCycleId}&sourceType=${sourceType}`);
+      const response = await fetch(`${config.api.backendUrl}/api/user/fetch-mentions?userId=${userId}&fetchCycleId=${fetchCycleId}&sourceType=${sourceType}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch mentions');

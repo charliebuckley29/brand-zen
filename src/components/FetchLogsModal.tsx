@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { config } from "@/config/environment";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -76,7 +77,7 @@ export function FetchLogsModal() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const backendUrl = 'https://mentions-backend.vercel.app';
+      const backendUrl = config.api.backendUrl;
       const response = await fetch(`${backendUrl}/api/debug/detailed-fetch-logs`);
       
       if (!response.ok) {
