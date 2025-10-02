@@ -516,9 +516,22 @@ export function ModeratorPanel() {
                           <TableCell>
                             <div className="flex items-center gap-2">
                               {user.email_confirmed ? (
-                                <div className="flex items-center gap-1 text-green-600">
-                                  <MailCheck className="h-4 w-4" />
-                                  <span className="text-sm">Confirmed</span>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-1 text-green-600">
+                                    <MailCheck className="h-4 w-4" />
+                                    <span className="text-sm">Confirmed</span>
+                                  </div>
+                                  {user.email !== 'Email not available' && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => sendPasswordReset(user.id, user.email)}
+                                      disabled={sendingPasswordReset.has(user.id)}
+                                      className="h-7 px-2 text-xs"
+                                    >
+                                      {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
+                                    </Button>
+                                  )}
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-2">
@@ -653,9 +666,22 @@ export function ModeratorPanel() {
                           </div>
                           <div className="flex items-center gap-2">
                             {user.email_confirmed ? (
-                              <div className="flex items-center gap-1 text-green-600">
-                                <MailCheck className="h-3 w-3" />
-                                <span className="text-xs">Email Confirmed</span>
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 text-green-600">
+                                  <MailCheck className="h-3 w-3" />
+                                  <span className="text-xs">Email Confirmed</span>
+                                </div>
+                                {user.email !== 'Email not available' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => sendPasswordReset(user.id, user.email)}
+                                    disabled={sendingPasswordReset.has(user.id)}
+                                    className="h-6 px-2 text-xs"
+                                  >
+                                    {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
+                                  </Button>
+                                )}
                               </div>
                             ) : (
                               <div className="flex items-center gap-2">
@@ -874,9 +900,22 @@ export function ModeratorPanel() {
                       <div className="flex items-center gap-2">
                         <p className="text-sm text-muted-foreground break-all">{selectedUser.email}</p>
                         {selectedUser.email_confirmed ? (
-                          <div className="flex items-center gap-1 text-green-600">
-                            <MailCheck className="h-4 w-4" />
-                            <span className="text-xs">Confirmed</span>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 text-green-600">
+                              <MailCheck className="h-4 w-4" />
+                              <span className="text-xs">Confirmed</span>
+                            </div>
+                            {selectedUser.email !== 'Email not available' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => sendPasswordReset(selectedUser.id, selectedUser.email)}
+                                disabled={sendingPasswordReset.has(selectedUser.id)}
+                                className="h-7 px-2 text-xs"
+                              >
+                                {sendingPasswordReset.has(selectedUser.id) ? 'Sending...' : 'Reset Password'}
+                              </Button>
+                            )}
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
