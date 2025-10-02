@@ -13,8 +13,12 @@ export function getBackendUrl(): string {
 export function createApiUrl(endpoint: string): string {
   const baseUrl = getBackendUrl();
   // Ensure endpoint starts with /api
-  const normalizedEndpoint = endpoint.startsWith('/api/') ? endpoint : `/api${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-  return `${baseUrl}${normalizedEndpoint}`;
+  if (endpoint.startsWith('/api/')) {
+    return `${baseUrl}${endpoint}`;
+  } else {
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    return `${baseUrl}/api${normalizedEndpoint}`;
+  }
 }
 
 /**
