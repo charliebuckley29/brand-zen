@@ -76,7 +76,7 @@ export function FetchLogsModal() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const backendUrl = 'https://mentions-backend.vercel.app/api';
+      const backendUrl = 'https://mentions-backend.vercel.app';
       const response = await fetch(`${backendUrl}/api/debug/detailed-fetch-logs`);
       
       if (!response.ok) {
