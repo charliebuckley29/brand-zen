@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { config } from '@/config/environment';
+import { createApiUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -101,7 +101,7 @@ export function EmailDeliveryMonitoring() {
         params.append('template_id', templateFilter);
       }
 
-      const response = await fetch(`${config.api.backendUrl}/admin/email-delivery-stats?${params}`);
+      const response = await fetch(createApiUrl(`/admin/email-delivery-stats?${params}`));
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

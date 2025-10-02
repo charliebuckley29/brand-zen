@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { config } from '@/config/environment';
+import { createApiUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -58,7 +58,7 @@ export function CursorMonitoringPanel() {
   const fetchCursorStatus = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${config.api.backendUrl}/api/admin/cursor-status`);
+      const response = await fetch(createApiUrl('/admin/cursor-status'));
       const result = await response.json();
       setData(result);
     } catch (error) {
@@ -75,7 +75,7 @@ export function CursorMonitoringPanel() {
   const runHealthCheck = async () => {
     setHealthCheckLoading(true);
     try {
-      const response = await fetch(`${config.api.backendUrl}/api/admin/cursor-health-check?cleanup=true`);
+      const response = await fetch(createApiUrl('/admin/cursor-health-check?cleanup=true'));
       const result = await response.json();
       
       if (result.success) {
@@ -101,7 +101,7 @@ export function CursorMonitoringPanel() {
   const testCursorContinuity = async () => {
     setTesting(true);
     try {
-      const response = await fetch(`${config.api.backendUrl}/api/admin/test-cursor-continuity`, {
+      const response = await fetch(createApiUrl('/admin/test-cursor-continuity'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

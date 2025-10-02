@@ -16,7 +16,7 @@ import {
   Filter
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { config } from '@/config/environment';
+import { createApiUrl } from '@/lib/api';
 
 interface UserMonitoringProps {
   onRefresh: () => void;
@@ -32,8 +32,8 @@ export function UserMonitoring({ onRefresh, loading }: UserMonitoringProps) {
     try {
       // Fetch real user statistics from multiple endpoints
       const [usersResponse, mentionsResponse] = await Promise.all([
-        fetch(`${config.api.backendUrl}/admin/users`),
-        fetch(`${config.api.backendUrl}/admin/monthly-mentions?month=${new Date().toISOString().slice(0, 7)}`)
+        fetch(createApiUrl('/admin/users')),
+        fetch(createApiUrl(`/admin/monthly-mentions?month=${new Date().toISOString().slice(0, 7)}`))
       ]);
 
       let usersData = null;

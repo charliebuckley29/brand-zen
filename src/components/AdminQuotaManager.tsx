@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { config } from '@/config/environment';
+import { createApiUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -123,7 +123,7 @@ export function AdminQuotaManager() {
   const fetchQuotaData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${config.api.backendUrl}/api/admin/quota-limits`);
+      const response = await fetch(createApiUrl('/admin/quota-limits'));
       const result = await response.json();
 
       if (result.success) {
@@ -141,7 +141,7 @@ export function AdminQuotaManager() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(`${config.api.backendUrl}/api/admin/users`);
+      const response = await fetch(createApiUrl('/admin/users'));
       const result = await response.json();
 
       if (result.success) {
@@ -154,7 +154,7 @@ export function AdminQuotaManager() {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await fetch(`${config.api.backendUrl}/api/admin/quota-analytics?days=30`);
+      const response = await fetch(createApiUrl('/admin/quota-analytics?days=30'));
       const result = await response.json();
 
       if (result.success) {
@@ -173,7 +173,7 @@ export function AdminQuotaManager() {
 
     try {
       setSaving('create');
-      const response = await fetch(`${config.api.backendUrl}/api/admin/quota-limits`, {
+      const response = await fetch(createApiUrl('/admin/quota-limits'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -206,7 +206,7 @@ export function AdminQuotaManager() {
 
     try {
       setSaving(editingLimit.id);
-      const response = await fetch(`${config.api.backendUrl}/api/admin/quota-limits`, {
+      const response = await fetch(createApiUrl('/admin/quota-limits'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -239,7 +239,7 @@ export function AdminQuotaManager() {
 
     try {
       setSaving(id);
-      const response = await fetch(`${config.api.backendUrl}/api/admin/quota-limits?id=${id}`, {
+      const response = await fetch(createApiUrl(`/admin/quota-limits?id=${id}`), {
         method: 'DELETE'
       });
 

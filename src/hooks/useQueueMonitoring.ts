@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { config } from '@/config/environment';
+import { createApiUrl } from '@/lib/api';
 
 export interface QueueEntry {
   id: string;
@@ -71,7 +71,7 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
       setLoading(true);
       setError(null);
 
-      const baseUrl = config.api.backendUrl;
+      const baseUrl = createApiUrl('');
       const url = new URL('/api/admin/queue-status', baseUrl);
       
       if (apiSource) {
@@ -110,7 +110,7 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${config.api.backendUrl}/api/debug/reset-failed-queue`, {
+      const response = await fetch(createApiUrl('/debug/reset-failed-queue'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${config.api.backendUrl}/api/debug/reset-failed-queue?api_source=${apiSource}`, {
+      const response = await fetch(createApiUrl(`/debug/reset-failed-queue?api_source=${apiSource}`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

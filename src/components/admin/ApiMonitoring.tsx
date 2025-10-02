@@ -15,7 +15,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { config } from '@/config/environment';
+import { createApiUrl } from '@/lib/api';
 
 interface ApiMonitoringProps {
   onRefresh: () => void;
@@ -29,7 +29,7 @@ export function ApiMonitoring({ onRefresh, loading }: ApiMonitoringProps) {
   const fetchApiData = async () => {
     try {
       // Fetch API limits (real API key status)
-      const limitsResponse = await fetch(`${config.api.backendUrl}/admin/api-limits`);
+      const limitsResponse = await fetch(createApiUrl('/admin/api-limits'));
       if (limitsResponse.ok) {
         const limitsData = await limitsResponse.json();
         console.log('API limits data:', limitsData); // Debug log
@@ -40,7 +40,7 @@ export function ApiMonitoring({ onRefresh, loading }: ApiMonitoringProps) {
       }
 
       // Fetch real user quota usage instead of deprecated api-usage
-      const quotaResponse = await fetch(`${config.api.backendUrl}/admin/user-quota-usage`);
+      const quotaResponse = await fetch(createApiUrl('/admin/user-quota-usage'));
       if (quotaResponse.ok) {
         const quotaData = await quotaResponse.json();
         console.log('User quota usage data:', quotaData); // Debug log

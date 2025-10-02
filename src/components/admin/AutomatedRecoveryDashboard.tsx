@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { config } from '@/config/environment';
+import { createApiUrl } from '@/lib/api';
 
 interface RecoveryStatus {
   isRunning: boolean;
@@ -81,7 +81,7 @@ export function AutomatedRecoveryDashboard() {
     setLoading(true);
     setError(null);
 
-    const baseUrl = config.api.backendUrl;
+    const baseUrl = createApiUrl('');
 
     try {
       // Fetch recovery status
@@ -136,7 +136,7 @@ export function AutomatedRecoveryDashboard() {
 
   const handleTriggerRecovery = async () => {
     try {
-      const response = await fetch(`${config.api.backendUrl}/admin/recovery/trigger`, {
+      const response = await fetch(createApiUrl('/admin/recovery/trigger'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

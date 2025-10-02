@@ -28,7 +28,7 @@ import {
   Settings
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { config } from '@/config/environment';
+import { createApiUrl } from '@/lib/api';
 import { useQueueMonitoring } from '../../hooks/useQueueMonitoring';
 
 // Types
@@ -132,7 +132,7 @@ export function QueueErrorMonitoring() {
       setLoading(true);
       setError(null);
 
-      const baseUrl = config.api.backendUrl;
+      const baseUrl = createApiUrl('');
       
       // Fetch health data
       const healthResponse = await fetch(`${baseUrl}/admin/queue-health-detailed`);

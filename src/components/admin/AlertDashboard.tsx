@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { config } from '@/config/environment';
+import { createApiUrl } from '@/lib/api';
 
 interface SystemAlert {
   id: string;
@@ -59,7 +59,7 @@ export function AlertDashboard() {
     setLoading(true);
     setError(null);
 
-    const baseUrl = config.api.backendUrl;
+    const baseUrl = createApiUrl('');
 
     try {
       const response = await fetch(`${baseUrl}/admin/alerts/active?limit=100&hours=24`);
@@ -93,7 +93,7 @@ export function AlertDashboard() {
 
   const handleAcknowledgeAlert = async (alertId: string) => {
     try {
-      const response = await fetch(`${config.api.backendUrl}/admin/alerts/${alertId}/acknowledge`, {
+      const response = await fetch(createApiUrl(`/admin/alerts/${alertId}/acknowledge`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ acknowledgedBy: 'admin' }) // TODO: Get actual user ID
@@ -121,7 +121,7 @@ export function AlertDashboard() {
 
   const handleResolveAlert = async (alertId: string) => {
     try {
-      const response = await fetch(`${config.api.backendUrl}/admin/alerts/${alertId}/resolve`, {
+      const response = await fetch(createApiUrl(`/admin/alerts/${alertId}/resolve`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resolvedBy: 'admin' }) // TODO: Get actual user ID

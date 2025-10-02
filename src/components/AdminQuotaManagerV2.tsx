@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { config } from '@/config/environment';
+import { createApiUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -98,7 +98,7 @@ export function AdminQuotaManagerV2() {
 
   const fetchDefaultQuotas = async () => {
     try {
-      const response = await fetch(`${config.api.backendUrl}/api/admin/default-quotas`);
+      const response = await fetch(createApiUrl('/admin/default-quotas'));
       const result = await response.json();
 
       if (result.success) {
@@ -114,7 +114,7 @@ export function AdminQuotaManagerV2() {
 
   const fetchEffectiveQuotas = async () => {
     try {
-      const response = await fetch(`${config.api.backendUrl}/api/admin/effective-quotas?quota_type=exception`);
+      const response = await fetch(createApiUrl('/admin/effective-quotas?quota_type=exception'));
       const result = await response.json();
 
       if (result.success) {
@@ -130,7 +130,7 @@ export function AdminQuotaManagerV2() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(`${config.api.backendUrl}/api/admin/users`);
+      const response = await fetch(createApiUrl('/admin/users'));
       const result = await response.json();
 
       if (result.success) {
@@ -147,7 +147,7 @@ export function AdminQuotaManagerV2() {
   const updateDefaultQuota = async (sourceType: string, monthlyLimit: number) => {
     try {
       setSaving(sourceType);
-      const response = await fetch(`${config.api.backendUrl}/api/admin/default-quotas`, {
+      const response = await fetch(createApiUrl('/admin/default-quotas'), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -177,7 +177,7 @@ export function AdminQuotaManagerV2() {
   const createUserException = async () => {
     try {
       setSaving('create');
-      const response = await fetch(`${config.api.backendUrl}/api/admin/quota-limits`, {
+      const response = await fetch(createApiUrl('/admin/quota-limits'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -211,7 +211,7 @@ export function AdminQuotaManagerV2() {
   const deleteUserException = async (userId: string, sourceType: string) => {
     try {
       setSaving(`${userId}-${sourceType}`);
-      const response = await fetch(`${config.api.backendUrl}/api/admin/quota-limits?user_id=${userId}&source_type=${sourceType}`, {
+      const response = await fetch(createApiUrl(`/admin/quota-limits?user_id=${userId}&source_type=${sourceType}`), {
         method: 'DELETE',
       });
 

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { config } from '@/config/environment';
+import { createApiUrl } from '@/lib/api';
 
 interface SystemHealthScore {
   overall: number;
@@ -79,7 +79,7 @@ export function EnhancedAnalyticsDashboard() {
     setLoading(true);
     setError(null);
 
-    const baseUrl = config.api.backendUrl;
+    const baseUrl = createApiUrl('');
 
     try {
       // Fetch all analytics data in parallel

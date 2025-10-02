@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { config } from '@/config/environment';
+import { createApiUrl } from '@/lib/api';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { 
@@ -156,7 +156,7 @@ export function SentimentWorkerMonitoring() {
   const fetchSentimentData = async () => {
     setSentimentLoading(true);
     try {
-      const response = await fetch(`${config.api.backendUrl}/api/debug/check-sentiment-queue`);
+      const response = await fetch(createApiUrl('/debug/check-sentiment-queue'));
       if (response.ok) {
         const result = await response.json();
         setSentimentData(result);
@@ -175,7 +175,7 @@ export function SentimentWorkerMonitoring() {
 
   const triggerSentimentWorker = async () => {
     try {
-      const response = await fetch(`${config.api.backendUrl}/api/mentions/sentiment-worker-continuous`, {
+      const response = await fetch(createApiUrl('/mentions/sentiment-worker-continuous'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -206,7 +206,7 @@ export function SentimentWorkerMonitoring() {
 
   const resetFailedSentiment = async () => {
     try {
-      const response = await fetch(`${config.api.backendUrl}/api/admin/reset-failed-sentiment`, {
+      const response = await fetch(createApiUrl('/admin/reset-failed-sentiment'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });

@@ -22,7 +22,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { config } from '@/config/environment';
+import { createApiUrl } from '@/lib/api';
 
 interface SystemOverviewProps {
   onRefresh: () => void;
@@ -36,7 +36,7 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
   const fetchSystemData = async () => {
     try {
       // Fetch system health
-      const healthResponse = await fetch(`${config.api.backendUrl}/admin/system-health`);
+      const healthResponse = await fetch(createApiUrl('/admin/system-health'));
       if (healthResponse.ok) {
         const healthData = await healthResponse.json();
         console.log('System health data:', healthData); // Debug log
@@ -47,7 +47,7 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
       }
 
       // Fetch cache stats
-      const cacheResponse = await fetch(`${config.api.backendUrl}/admin/cache-stats`);
+      const cacheResponse = await fetch(createApiUrl('/admin/cache-stats'));
       if (cacheResponse.ok) {
         const cacheData = await cacheResponse.json();
         console.log('Cache stats data:', cacheData); // Debug log
