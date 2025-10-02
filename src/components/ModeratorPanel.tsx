@@ -97,8 +97,8 @@ export function ModeratorPanel() {
     try {
       setLoading(true);
       
-      // Fetch all users with their roles using backend API
-      const response = await fetch(createApiUrl('/admin/user-roles?include_profiles=true'));
+      // Fetch all users with their roles and profiles using new backend API
+      const response = await fetch(createApiUrl('/admin/users-with-roles?include_inactive=false'));
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -107,100 +107,33 @@ export function ModeratorPanel() {
       const result = await response.json();
       
       if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch user roles');
+        throw new Error(result.error || 'Failed to fetch users');
       }
       
-      const usersData = result.data;
-
-      // Fetch user emails (for moderators only)
-      const { data: emailsData, error: emailsError } = await supabase
-        .rpc("get_user_emails_for_moderator");
-
-      // Profiles are now included in the API response
-      const profilesMap: Record<string, { full_name: string; phone_number: string | null; fetch_frequency_minutes: number }> = {};
-      usersData?.forEach(user => {
-        if (user.profile) {
-          profilesMap[user.user_id] = {
-            full_name: user.profile.full_name,
-            phone_number: user.profile.phone_number,
-            fetch_frequency_minutes: user.profile.fetch_frequency_minutes || 15
-          };
-        }
-      });
-
-      // Create a map of emails by user_id
-      const emailsMap: Record<string, string> = {};
-      emailsData?.forEach(emailData => {
-        emailsMap[emailData.user_id] = emailData.email;
-      });
-
-      // Fetch email confirmation status for all users
-      const emailConfirmationPromises = (usersData || []).map(async (user) => {
-        if (!emailsMap[user.user_id]) return { userId: user.user_id, emailConfirmed: false };
-        
-        try {
-          const response = await fetch(createApiUrl(`${API_ENDPOINTS.RESEND_EMAIL_CONFIRMATION}?userId=${user.user_id}`));
-          if (response.ok) {
-            const data = await response.json();
-            return { 
-              userId: user.user_id, 
-              emailConfirmed: data.data?.emailConfirmed || false,
-              emailConfirmedAt: data.data?.confirmedAt || null
-            };
-          }
-        } catch (error) {
-          console.error(`Failed to check email confirmation for user ${user.user_id}:`, error);
-        }
-        return { userId: user.user_id, emailConfirmed: false };
-      });
-
-      const emailConfirmationResults = await Promise.all(emailConfirmationPromises);
-      const emailConfirmationMap: Record<string, { emailConfirmed: boolean; emailConfirmedAt: string | null }> = {};
-      emailConfirmationResults.forEach(result => {
-        emailConfirmationMap[result.userId] = {
-          emailConfirmed: result.emailConfirmed,
-          emailConfirmedAt: result.emailConfirmedAt
-        };
-      });
-
-      const formattedUsers: User[] = (usersData || []).map(user => ({
-        id: user.user_id,
-        email: emailsMap[user.user_id] || 'Email not available',
-        full_name: profilesMap[user.user_id]?.full_name || 'Unknown User',
-        phone_number: profilesMap[user.user_id]?.phone_number || null,
+      // Transform the data to match our interface
+      const formattedUsers: User[] = result.data.map((user: any) => ({
+        id: user.id,
+        email: user.email || 'No email',
+        full_name: user.profile?.full_name || 'No name',
+        phone_number: user.profile?.phone_number || null,
         user_type: user.user_type,
         created_at: user.created_at,
-        fetch_frequency_minutes: profilesMap[user.user_id]?.fetch_frequency_minutes || 15,
-        email_confirmed: emailConfirmationMap[user.user_id]?.emailConfirmed || false,
-        email_confirmed_at: emailConfirmationMap[user.user_id]?.emailConfirmedAt || null
+        fetch_frequency_minutes: user.profile?.fetch_frequency_minutes || 15,
+        email_confirmed: user.email_confirmed,
+        email_confirmed_at: user.email_confirmed_at
       }));
 
-      // Fetch user keywords with brand info
-      const { data: keywordsData, error: keywordsError } = await supabase
-        .from("keywords")
-        .select("id, user_id, brand_name, variants, google_alert_rss_url, google_alerts_enabled");
+      // Fetch user keywords using new backend endpoint
+      const keywordsResponse = await fetch(createApiUrl('/admin/user-keywords?include_all=true'));
+      const keywordsResult = await keywordsResponse.json();
+      
+      const formattedKeywords: UserKeywords[] = keywordsResult.success ? keywordsResult.data : [];
 
-      if (keywordsError) throw keywordsError;
+      // Fetch flagged mentions using new backend endpoint
+      const mentionsResponse = await fetch(createApiUrl('/admin/flagged-mentions?flagged=true&limit=50'));
+      const mentionsResult = await mentionsResponse.json();
 
-      const formattedKeywords: UserKeywords[] = (keywordsData || []).map(keyword => ({
-        ...keyword,
-        user_full_name: profilesMap[keyword.user_id]?.full_name || 'Unknown User'
-      }));
-
-      // Fetch flagged mentions
-      const { data: mentionsData, error: mentionsError } = await supabase
-        .from("mentions")
-        .select("id, user_id, source_url, source_name, content_snippet, sentiment, flagged, created_at")
-        .eq("flagged", true)
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (mentionsError) throw mentionsError;
-
-      const formattedMentions: FlaggedMention[] = (mentionsData || []).map(mention => ({
-        ...mention,
-        user_full_name: profilesMap[mention.user_id]?.full_name || 'Unknown User'
-      }));
+      const formattedMentions: FlaggedMention[] = mentionsResult.success ? mentionsResult.data : [];
 
       setUsers(formattedUsers);
       setUserKeywords(formattedKeywords);
