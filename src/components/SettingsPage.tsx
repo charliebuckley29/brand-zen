@@ -506,9 +506,10 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="brand">Brand</TabsTrigger>
+          <TabsTrigger value="quotas">Quotas</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
 
@@ -686,256 +687,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
           </CardContent>
         </Card>
 
-        {/* Brand Management */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Brand Management
-            </CardTitle>
-            <CardDescription>
-              Manage your brand name and monitoring variants
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {!canChangeBrandName && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Brand name editing is currently disabled. Please contact support to change your brand name.
-                </AlertDescription>
-              </Alert>
-            )}
-            {brandData ? (
-              <>
-                {/* Brand Name */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-medium">Brand Name</h4>
-                    <p className="text-sm text-muted-foreground">{brandData.brand_name}</p>
-                  </div>
-                  <Dialog open={brandDialogOpen} onOpenChange={setBrandDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        disabled={!canChangeBrandName}
-                        className={!canChangeBrandName ? "opacity-50 cursor-not-allowed" : ""}
-                      >
-                        Edit Brand
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Edit Brand Name</DialogTitle>
-                        <DialogDescription>
-                          Update your brand name for monitoring and reports.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <form onSubmit={handleBrandNameUpdate} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="brandName">Brand Name</Label>
-                          <Input
-                            id="brandName"
-                            type="text"
-                            placeholder="Enter brand name"
-                            value={newBrandName}
-                            onChange={(e) => setNewBrandName(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => setBrandDialogOpen(false)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button 
-                            type="submit" 
-                            disabled={isUpdatingBrand || !newBrandName.trim()}
-                          >
-                            {isUpdatingBrand ? "Updating..." : "Update Brand"}
-                          </Button>
-                        </div>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-
-                <Separator />
-
-                {/* Brand Variants */}
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h4 className="text-sm font-medium">Brand Variants</h4>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {brandData.variants && brandData.variants.length > 0 ? (
-                        brandData.variants.map((variant, index) => (
-                          <Badge key={index} variant="secondary">
-                            {variant}
-                          </Badge>
-                        ))
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No variants added</p>
-                      )}
-                    </div>
-                  </div>
-                  <Dialog open={variantsDialogOpen} onOpenChange={setVariantsDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        disabled={!canChangeBrandName}
-                        className={!canChangeBrandName ? "opacity-50 cursor-not-allowed" : ""}
-                      >
-                        Edit Variants
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Edit Brand Variants</DialogTitle>
-                        <DialogDescription>
-                          Add alternative names or keywords for your brand monitoring.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <form onSubmit={handleVariantsUpdate} className="space-y-4">
-                        <div className="space-y-3">
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Add variant"
-                              value={currentVariant}
-                              onChange={(e) => setCurrentVariant(e.target.value)}
-                              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addVariant())}
-                            />
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={addVariant}
-                              disabled={!currentVariant.trim()}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {newVariants.map((variant, index) => (
-                              <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                                {variant}
-                                 <button
-                                   type="button"
-                                   onClick={() => removeVariant(index)}
-                                   className="ml-1 hover:text-destructive"
-                                 >
-                                   <XIcon className="h-3 w-3" />
-                                 </button>
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => setVariantsDialogOpen(false)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button 
-                            type="submit" 
-                            disabled={isUpdatingBrand}
-                          >
-                            {isUpdatingBrand ? "Updating..." : "Update Variants"}
-                          </Button>
-                        </div>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </>
-            ) : (
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-medium">No brand configured</h4>
-                  <p className="text-sm text-muted-foreground">Set up your brand name and variants to start monitoring.</p>
-                </div>
-                <Dialog open={setupDialogOpen} onOpenChange={setSetupDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="default" size="sm">Set up brand</Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Set up your brand</DialogTitle>
-                      <DialogDescription>Add your brand name and optional variants.</DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateBrand} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="setupBrandName">Brand Name</Label>
-                        <Input
-                          id="setupBrandName"
-                          type="text"
-                          placeholder="Enter brand name"
-                          value={setupBrandName}
-                          onChange={(e) => setSetupBrandName(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-3">
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Add variant"
-                            value={setupCurrentVariant}
-                            onChange={(e) => setSetupCurrentVariant(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSetupVariant())}
-                          />
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={addSetupVariant}
-                            disabled={!setupCurrentVariant.trim()}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        {setupVariants.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {setupVariants.map((variant, index) => (
-                              <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                                {variant}
-                                 <button
-                                   type="button"
-                                   onClick={() => removeSetupVariant(index)}
-                                   className="ml-1 hover:text-destructive"
-                                 >
-                                   <XIcon className="h-3 w-3" />
-                                 </button>
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => setSetupDialogOpen(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          type="submit" 
-                          disabled={isCreatingBrand || !setupBrandName.trim()}
-                        >
-                          {isCreatingBrand ? "Setting up..." : "Create Brand"}
-                        </Button>
-                      </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Sources Preferences */}
         <Card>
@@ -1014,83 +765,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
           </CardContent>
         </Card>
 
-        {/* Quota Management */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              View Fetching Rate Limitations
-            </CardTitle>
-            <CardDescription>
-              Monitor your monthly usage limits for each data source
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {quotaLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-sm text-gray-500">Loading quota data...</div>
-              </div>
-            ) : quotaError ? (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error Loading Quota Data</AlertTitle>
-                <AlertDescription>
-                  {quotaError}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="ml-2"
-                    onClick={refreshQuotaData}
-                  >
-                    Retry
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            ) : filteredQuotaData.length > 0 ? (
-              <div className="space-y-4">
-                {/* Overall Status */}
-                {getSourcesExceeded().filter(s => allowedSources.includes(s.source_type)).length > 0 && (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Quota Exceeded</AlertTitle>
-                    <AlertDescription>
-                      You've reached your monthly limit for: {getSourcesExceeded().filter(s => allowedSources.includes(s.source_type)).map(s => s.source_type).join(', ')}
-                    </AlertDescription>
-                  </Alert>
-                )}
-                
-                {getSourcesNearLimit().filter(s => allowedSources.includes(s.source_type)).length > 0 && (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Approaching Limits</AlertTitle>
-                    <AlertDescription>
-                      You're near your monthly limit for: {getSourcesNearLimit().filter(s => allowedSources.includes(s.source_type)).map(s => s.source_type).join(', ')}
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Quota Display */}
-                <QuotaDisplay quotaData={filteredQuotaData} showDetails={true} />
-                
-                {/* Refresh Button */}
-                <div className="flex justify-end">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={refreshQuotaData}
-                    disabled={quotaLoading}
-                  >
-                    Refresh Data
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="text-sm text-gray-500">No quota data available</div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Account Settings */}
         <Card>
@@ -1375,6 +1049,339 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                     <Button onClick={() => setSetupDialogOpen(true)}>
                       Set Up Brand Monitoring
                     </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Brand Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Brand Management
+                </CardTitle>
+                <CardDescription>
+                  Manage your brand name and monitoring variants
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {!canChangeBrandName && (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Brand name editing is currently disabled. Please contact support to change your brand name.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {brandData ? (
+                  <>
+                    {/* Brand Name */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-medium">Brand Name</h4>
+                        <p className="text-sm text-muted-foreground">{brandData.brand_name}</p>
+                      </div>
+                      <Dialog open={brandDialogOpen} onOpenChange={setBrandDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            disabled={!canChangeBrandName}
+                            className={!canChangeBrandName ? "opacity-50 cursor-not-allowed" : ""}
+                          >
+                            Edit Brand
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Edit Brand Name</DialogTitle>
+                            <DialogDescription>
+                              Update your brand name for monitoring and reports.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <form onSubmit={handleBrandNameUpdate} className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="brandName">Brand Name</Label>
+                              <Input
+                                id="brandName"
+                                type="text"
+                                placeholder="Enter brand name"
+                                value={newBrandName}
+                                onChange={(e) => setNewBrandName(e.target.value)}
+                                required
+                              />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={() => setBrandDialogOpen(false)}
+                              >
+                                Cancel
+                              </Button>
+                              <Button 
+                                type="submit" 
+                                disabled={isUpdatingBrand || !newBrandName.trim()}
+                              >
+                                {isUpdatingBrand ? "Updating..." : "Update Brand"}
+                              </Button>
+                            </div>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+
+                    <Separator />
+
+                    {/* Brand Variants */}
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium">Brand Variants</h4>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {brandData.variants && brandData.variants.length > 0 ? (
+                            brandData.variants.map((variant, index) => (
+                              <Badge key={index} variant="secondary">
+                                {variant}
+                              </Badge>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground">No variants added</p>
+                          )}
+                        </div>
+                      </div>
+                      <Dialog open={variantsDialogOpen} onOpenChange={setVariantsDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            disabled={!canChangeBrandName}
+                            className={!canChangeBrandName ? "opacity-50 cursor-not-allowed" : ""}
+                          >
+                            Edit Variants
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Edit Brand Variants</DialogTitle>
+                            <DialogDescription>
+                              Add alternative names or keywords for your brand monitoring.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <form onSubmit={handleVariantsUpdate} className="space-y-4">
+                            <div className="space-y-3">
+                              <div className="flex gap-2">
+                                <Input
+                                  placeholder="Add variant"
+                                  value={currentVariant}
+                                  onChange={(e) => setCurrentVariant(e.target.value)}
+                                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addVariant())}
+                                />
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={addVariant}
+                                  disabled={!currentVariant.trim()}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {newVariants.map((variant, index) => (
+                                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                                    {variant}
+                                     <button
+                                       type="button"
+                                       onClick={() => removeVariant(index)}
+                                       className="ml-1 hover:text-destructive"
+                                     >
+                                       <XIcon className="h-3 w-3" />
+                                     </button>
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={() => setVariantsDialogOpen(false)}
+                              >
+                                Cancel
+                              </Button>
+                              <Button 
+                                type="submit" 
+                                disabled={isUpdatingBrand}
+                              >
+                                {isUpdatingBrand ? "Updating..." : "Update Variants"}
+                              </Button>
+                            </div>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-medium">No brand configured</h4>
+                      <p className="text-sm text-muted-foreground">Set up your brand name and variants to start monitoring.</p>
+                    </div>
+                    <Dialog open={setupDialogOpen} onOpenChange={setSetupDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="default" size="sm">Set up brand</Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Set up your brand</DialogTitle>
+                          <DialogDescription>Add your brand name and optional variants.</DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleCreateBrand} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="setupBrandName">Brand Name</Label>
+                            <Input
+                              id="setupBrandName"
+                              type="text"
+                              placeholder="Enter brand name"
+                              value={setupBrandName}
+                              onChange={(e) => setSetupBrandName(e.target.value)}
+                              required
+                            />
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Add variant"
+                                value={setupCurrentVariant}
+                                onChange={(e) => setSetupCurrentVariant(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSetupVariant())}
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={addSetupVariant}
+                                disabled={!setupCurrentVariant.trim()}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            {setupVariants.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {setupVariants.map((variant, index) => (
+                                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                                    {variant}
+                                     <button
+                                       type="button"
+                                       onClick={() => removeSetupVariant(index)}
+                                       className="ml-1 hover:text-destructive"
+                                     >
+                                       <XIcon className="h-3 w-3" />
+                                     </button>
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={() => setSetupDialogOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              type="submit" 
+                              disabled={isCreatingBrand || !setupBrandName.trim()}
+                            >
+                              {isCreatingBrand ? "Setting up..." : "Create Brand"}
+                            </Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="quotas" className="space-y-6">
+          <div className="grid gap-6">
+            {/* Quota Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  View Fetching Rate Limitations
+                </CardTitle>
+                <CardDescription>
+                  Monitor your monthly usage limits for each data source
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {quotaLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-sm text-gray-500">Loading quota data...</div>
+                  </div>
+                ) : quotaError ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error Loading Quota Data</AlertTitle>
+                    <AlertDescription>
+                      {quotaError}
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="ml-2"
+                        onClick={refreshQuotaData}
+                      >
+                        Retry
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                ) : filteredQuotaData.length > 0 ? (
+                  <div className="space-y-4">
+                    {/* Overall Status */}
+                    {getSourcesExceeded().filter(s => allowedSources.includes(s.source_type)).length > 0 && (
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Quota Exceeded</AlertTitle>
+                        <AlertDescription>
+                          You've reached your monthly limit for: {getSourcesExceeded().filter(s => allowedSources.includes(s.source_type)).map(s => s.source_type).join(', ')}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    {getSourcesNearLimit().filter(s => allowedSources.includes(s.source_type)).length > 0 && (
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Approaching Limits</AlertTitle>
+                        <AlertDescription>
+                          You're near your monthly limit for: {getSourcesNearLimit().filter(s => allowedSources.includes(s.source_type)).map(s => s.source_type).join(', ')}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {/* Quota Display */}
+                    <QuotaDisplay quotaData={filteredQuotaData} showDetails={true} />
+                    
+                    {/* Refresh Button */}
+                    <div className="flex justify-end">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={refreshQuotaData}
+                        disabled={quotaLoading}
+                      >
+                        Refresh Data
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-sm text-gray-500">No quota data available</div>
                   </div>
                 )}
               </CardContent>
