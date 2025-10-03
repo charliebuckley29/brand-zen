@@ -290,17 +290,35 @@ export function ModeratorPanel() {
             user_id: userId,
             brand_name: profileData.brand_name.trim(),
             variants: variantsArray,
-            google_alert_rss_url: profileData.google_alert_rss_url.trim() || null
+            google_alert_rss_url: profileData.google_alert_rss_url.trim() || null,
+            google_alerts_enabled: profileData.google_alert_rss_url.trim() ? true : false
           }, {
             onConflict: 'user_id'
           });
 
         if (keywordError) throw keywordError;
+
+        // If RSS URL is being set, also approve the user automatically
+        if (profileData.google_alert_rss_url.trim()) {
+          const { error: approvalError } = await supabase
+            .from("profiles")
+            .update({
+              user_status: 'approved',
+              approved_at: new Date().toISOString(),
+              approved_by: (await supabase.auth.getUser()).data.user?.id
+            })
+            .eq("user_id", userId)
+            .eq("user_status", "pending_approval");
+
+          if (approvalError) {
+            console.warn("Failed to auto-approve user:", approvalError);
+          }
+        }
       }
 
       toast({
         title: "Profile Updated",
-        description: "User profile updated successfully"
+        description: profileData.google_alert_rss_url.trim() ? "Profile updated and user approved!" : "User profile updated successfully"
       });
 
       setEditMode(false);
