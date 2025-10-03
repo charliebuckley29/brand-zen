@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, AlertCircle, Loader2, Plus, X, Globe } from "lucide-react";
 import { SocialMediaLinks } from "@/components/SocialMediaLinks";
 import type { SocialMediaLinks as SocialMediaLinksType } from "@/types";
+import { createApiUrl } from "@/lib/api";
 
 export function NewUserSignUp() {
   const [email, setEmail] = useState("");
@@ -72,8 +73,8 @@ export function NewUserSignUp() {
         variants
       });
 
-      // Call backend signup API
-      const response = await fetch('/api/auth/signup', {
+      // Call backend signup API using the proper backend URL
+      const response = await fetch(createApiUrl('/auth/signup'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
