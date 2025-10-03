@@ -268,81 +268,49 @@ export function ModeratorPanel() {
     try {
       setIsUpdating(true);
 
-      // Update profile information (upsert to handle cases where profile doesn't exist)
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert({
-          user_id: userId,
-          full_name: profileData.full_name,
-          phone_number: profileData.phone_number || null,
-          brand_website: profileData.brand_website || null,
-          brand_description: profileData.brand_description || null,
-          social_media_links: Object.keys(profileData.social_media_links).length > 0 ? profileData.social_media_links : {}
-        }, {
-          onConflict: 'user_id'
-        });
+      // Use authenticated backend API for complete profile update
+      const response = await fetch(createApiUrl('/admin/update-user-profile-complete'), {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          fullName: profileData.full_name,
+          phoneNumber: profileData.phone_number,
+          email: profileData.email,
+          brandName: profileData.brand_name,
+          variants: profileData.variants,
+          googleAlertRssUrl: profileData.google_alert_rss_url,
+          brandWebsite: profileData.brand_website,
+          brandDescription: profileData.brand_description,
+          socialMediaLinks: profileData.social_media_links
+        }),
+      });
 
-      if (profileError) throw profileError;
+      const result = await response.json();
 
-      // Update email if it has changed
-      if (profileData.email !== selectedUser?.email && profileData.email.trim()) {
-        const { error: emailError } = await supabase
-          .rpc('update_user_email_by_moderator', {
-            target_user_id: userId,
-            new_email: profileData.email.trim()
-          });
-
-        if (emailError) throw emailError;
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update user profile');
       }
 
-      // Update or create keywords if brand information is provided
-      if (profileData.brand_name.trim()) {
-        const variantsArray = profileData.variants.split(',').map(v => v.trim()).filter(v => v);
-        
-        const { error: keywordError } = await supabase
-          .from("keywords")
-          .upsert({
-            user_id: userId,
-            brand_name: profileData.brand_name.trim(),
-            variants: variantsArray,
-            google_alert_rss_url: profileData.google_alert_rss_url.trim() || null,
-            google_alerts_enabled: profileData.google_alert_rss_url.trim() ? true : false
-          }, {
-            onConflict: 'user_id'
-          });
-
-        if (keywordError) throw keywordError;
-
-        // If RSS URL is being set, also approve the user automatically
-        if (profileData.google_alert_rss_url.trim()) {
-          const { error: approvalError } = await supabase
-            .from("profiles")
-            .update({
-              user_status: 'approved',
-              approved_at: new Date().toISOString(),
-              approved_by: (await supabase.auth.getUser()).data.user?.id
-            })
-            .eq("user_id", userId)
-            .eq("user_status", "pending_approval");
-
-          if (approvalError) {
-            console.warn("Failed to auto-approve user:", approvalError);
-          }
-        }
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update user profile');
       }
 
       toast({
         title: "Profile Updated",
-        description: profileData.google_alert_rss_url.trim() ? "Profile updated and user approved!" : "User profile updated successfully"
+        description: result.message || "User profile updated successfully"
       });
 
       setEditMode(false);
       fetchData(); // Refresh data
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating user profile:", error);
       toast({
         title: "Error",
-        description: "Failed to update user profile",
+        description: error.message || "Failed to update user profile",
         variant: "destructive"
       });
     } finally {
@@ -382,6 +350,7 @@ export function ModeratorPanel() {
       const response = await fetch(createApiUrl(API_ENDPOINTS.RESEND_EMAIL_CONFIRMATION), {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ userId, email }),
@@ -431,6 +400,7 @@ export function ModeratorPanel() {
       const response = await fetch(createApiUrl(API_ENDPOINTS.SEND_PASSWORD_RESET), {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ userId, email }),
