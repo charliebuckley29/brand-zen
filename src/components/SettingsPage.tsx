@@ -509,7 +509,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="brand">Brand</TabsTrigger>
-          <TabsTrigger value="quotas">Quotas</TabsTrigger>
+          <TabsTrigger value="sources">Sources</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
 
@@ -684,84 +684,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                 </div>
               </>
             )}
-          </CardContent>
-        </Card>
-
-
-        {/* Sources Preferences */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <SettingsIcon className="h-5 w-5" />
-              Sources
-            </CardTitle>
-            <CardDescription>
-              Choose which sources to monitor and collect data from. Disabled sources will not fetch new mentions.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {Object.entries(SOURCES).map(([sourceId, sourceConfig]) => {
-              const IconComponent = getSourceIcon(sourceId as SourceType);
-              const isEnabled = (prefs[sourceId as SourceType]?.show_in_mentions !== false) && 
-                               (prefs[sourceId as SourceType]?.show_in_analytics !== false) && 
-                               (prefs[sourceId as SourceType]?.show_in_reports !== false);
-              
-              return (
-                <div key={sourceId} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <IconComponent className="h-4 w-4" />
-                    <div>
-                      <h4 className="text-sm font-medium">{sourceConfig.name}</h4>
-                      <p className="text-xs text-muted-foreground">{sourceConfig.description}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {isEnabled ? 'Enabled' : 'Disabled'}
-                    </span>
-                    <Switch
-                      checked={isEnabled}
-                      onCheckedChange={async (v) => {
-                        try { 
-                          await setAllForSource(sourceId as SourceType, v); 
-                        } catch (e: any) { 
-                          toast({ 
-                            title: "Update failed", 
-                            description: e.message, 
-                            variant: "destructive" 
-                          }); 
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-
-
-            {/* Google Alerts */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Rss className="h-4 w-4" />
-                <div>
-                  <h4 className="text-sm font-medium">Google Alerts RSS</h4>
-                  <p className="text-xs text-muted-foreground">Fetch mentions from Google Alerts RSS feeds</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{googleAlertsEnabled ? 'On' : 'Off'}</span>
-                <Switch
-                  checked={googleAlertsEnabled}
-                  onCheckedChange={(v) => {
-                    setGoogleAlertsEnabled(v);
-                    try {
-                      localStorage.setItem('google_alerts_enabled', v ? 'true' : 'false');
-                      toast({ title: v ? 'Google Alerts enabled' : 'Google Alerts disabled' });
-                    } catch {}
-                  }}
-                />
-              </div>
-            </div>
           </CardContent>
         </Card>
 
@@ -1251,8 +1173,84 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
           </div>
         </TabsContent>
 
-        <TabsContent value="quotas" className="space-y-6">
+        <TabsContent value="sources" className="space-y-6">
           <div className="grid gap-6">
+            {/* Sources Preferences */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <SettingsIcon className="h-5 w-5" />
+                  Sources
+                </CardTitle>
+                <CardDescription>
+                  Choose which sources to monitor and collect data from. Disabled sources will not fetch new mentions.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {Object.entries(SOURCES).map(([sourceId, sourceConfig]) => {
+                  const IconComponent = getSourceIcon(sourceId as SourceType);
+                  const isEnabled = (prefs[sourceId as SourceType]?.show_in_mentions !== false) && 
+                                   (prefs[sourceId as SourceType]?.show_in_analytics !== false) && 
+                                   (prefs[sourceId as SourceType]?.show_in_reports !== false);
+                  
+                  return (
+                    <div key={sourceId} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <IconComponent className="h-4 w-4" />
+                        <div>
+                          <h4 className="text-sm font-medium">{sourceConfig.name}</h4>
+                          <p className="text-xs text-muted-foreground">{sourceConfig.description}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {isEnabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={async (v) => {
+                            try { 
+                              await setAllForSource(sourceId as SourceType, v); 
+                            } catch (e: any) { 
+                              toast({ 
+                                title: "Update failed", 
+                                description: e.message, 
+                                variant: "destructive" 
+                              }); 
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Google Alerts */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Rss className="h-4 w-4" />
+                    <div>
+                      <h4 className="text-sm font-medium">Google Alerts RSS</h4>
+                      <p className="text-xs text-muted-foreground">Fetch mentions from Google Alerts RSS feeds</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{googleAlertsEnabled ? 'On' : 'Off'}</span>
+                    <Switch
+                      checked={googleAlertsEnabled}
+                      onCheckedChange={(v) => {
+                        setGoogleAlertsEnabled(v);
+                        try {
+                          localStorage.setItem('google_alerts_enabled', v ? 'true' : 'false');
+                          toast({ title: v ? 'Google Alerts enabled' : 'Google Alerts disabled' });
+                        } catch {}
+                      }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Quota Management */}
             <Card>
               <CardHeader>
