@@ -79,7 +79,9 @@ export function NewUserSignUp() {
     setIsLoading(true);
     
     try {
-      console.log("🔧 [SIGNUP] Starting user signup via frontend", {
+      // COMPREHENSIVE LOGGING - PRE-SIGNUP DATA
+      console.log("🔧 [SIGNUP] ===== SIGNUP START =====");
+      console.log("🔧 [SIGNUP] Form Data Being Sent:", {
         email,
         fullName: fullName.trim(),
         brandName: brandName.trim(),
@@ -87,47 +89,106 @@ export function NewUserSignUp() {
         brandWebsite: brandWebsite.trim(),
         brandDescription: brandDescription.trim(),
         socialMediaLinks,
-        variants
+        variants,
+        variantsLength: variants?.length || 0,
+        socialMediaKeys: Object.keys(socialMediaLinks || {}),
+        socialMediaCount: Object.keys(socialMediaLinks || {}).length
       });
 
+      // COMPREHENSIVE LOGGING - RAW USER METADATA
+      const userMetaData = {
+        full_name: fullName.trim(),
+        phone_number: phoneNumber?.trim() || null,
+        brand_name: brandName.trim(),
+        brand_website: brandWebsite?.trim() || null,
+        brand_description: brandDescription?.trim() || null,
+        social_media_links: Object.keys(socialMediaLinks || {}).length > 0 ? socialMediaLinks : null,
+        variants: variants || []
+      };
+
+      console.log("🔧 [SIGNUP] User Metadata Being Sent to Supabase:", userMetaData);
+      console.log("🔧 [SIGNUP] User Metadata JSON String:", JSON.stringify(userMetaData, null, 2));
+
       // Create user directly with Supabase using user-provided password
+      console.log("🔧 [SIGNUP] Calling supabase.auth.signUp...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password: password, // User-provided password
         options: {
-          data: {
-            full_name: fullName.trim(),
-            phone_number: phoneNumber?.trim() || null,
-            brand_name: brandName.trim(),
-            brand_website: brandWebsite?.trim() || null,
-            brand_description: brandDescription?.trim() || null,
-            social_media_links: Object.keys(socialMediaLinks || {}).length > 0 ? socialMediaLinks : null,
-            variants: variants || []
-          }
+          data: userMetaData
         }
       });
 
       if (authError) {
         console.error("❌ [SIGNUP] Supabase signup failed", {
           error: authError.message,
-          errorCode: authError.status
+          errorCode: authError.status,
+          fullError: authError
         });
         throw new Error(authError.message || 'Failed to create account');
       }
 
       if (!authData.user) {
+        console.error("❌ [SIGNUP] No user returned from signup", { authData });
         throw new Error('No user returned from signup');
       }
 
-      console.log("✅ [SIGNUP] Supabase signup successful", {
+      // COMPREHENSIVE LOGGING - POST-SIGNUP SUCCESS
+      console.log("✅ [SIGNUP] Supabase signup successful!");
+      console.log("✅ [SIGNUP] User Created:", {
         userId: authData.user.id,
         email: authData.user.email,
-        emailConfirmed: authData.user.email_confirmed_at
+        emailConfirmed: authData.user.email_confirmed_at,
+        createdAt: authData.user.created_at
       });
 
-      console.log("🔧 [SIGNUP] Profile and keywords will be created automatically via database triggers", {
-        userId: authData.user.id
-      });
+      // COMPREHENSIVE LOGGING - CHECK WHAT'S IN USER METADATA AFTER CREATION
+      console.log("🔍 [SIGNUP] Checking user metadata after creation...");
+      console.log("🔍 [SIGNUP] User raw_user_meta_data:", authData.user.user_metadata);
+      console.log("🔍 [SIGNUP] User raw_user_meta_data JSON:", JSON.stringify(authData.user.user_metadata, null, 2));
+
+      // COMPREHENSIVE LOGGING - WAIT AND CHECK DATABASE
+      console.log("🔧 [SIGNUP] Waiting 2 seconds for database triggers to complete...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Check if profile was created
+      console.log("🔍 [SIGNUP] Checking if profile was created...");
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', authData.user.id)
+        .single();
+
+      if (profileError) {
+        console.error("❌ [SIGNUP] Profile check failed:", profileError);
+      } else {
+        console.log("✅ [SIGNUP] Profile found:", profileData);
+        console.log("🔍 [SIGNUP] Profile brand data:", {
+          brandWebsite: profileData.brand_website,
+          brandDescription: profileData.brand_description,
+          socialMediaLinks: profileData.social_media_links
+        });
+      }
+
+      // Check if keywords were created
+      console.log("🔍 [SIGNUP] Checking if keywords were created...");
+      const { data: keywordsData, error: keywordsError } = await supabase
+        .from('keywords')
+        .select('*')
+        .eq('user_id', authData.user.id)
+        .single();
+
+      if (keywordsError) {
+        console.error("❌ [SIGNUP] Keywords check failed:", keywordsError);
+      } else {
+        console.log("✅ [SIGNUP] Keywords found:", keywordsData);
+        console.log("🔍 [SIGNUP] Keywords brand data:", {
+          brandName: keywordsData.brand_name,
+          variants: keywordsData.variants
+        });
+      }
+
+      console.log("🔧 [SIGNUP] Profile and keywords creation completed (or failed)");
 
       setIsSuccess(true);
       toast({
