@@ -119,7 +119,7 @@ export function NewUserSignUp() {
         setIsSuccess(true);
         toast({
           title: "Account created successfully!",
-          description: "Your account is pending approval. You'll be notified when it's ready.",
+          description: "Please check your email to confirm your account. Your account is pending approval.",
         });
       }
     } catch (error: any) {
@@ -143,7 +143,7 @@ export function NewUserSignUp() {
             </div>
             <CardTitle className="text-2xl text-green-600">Account Created!</CardTitle>
             <CardDescription>
-              Your account has been successfully created and is pending approval.
+              Your account has been successfully created! Please check your email to confirm your account.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -152,6 +152,7 @@ export function NewUserSignUp() {
               <AlertDescription>
                 <strong>What happens next?</strong>
                 <ul className="mt-2 space-y-1 text-sm">
+                  <li>• Check your email and click the confirmation link</li>
                   <li>• A moderator will review your account</li>
                   <li>• They will set up your Google RSS URL</li>
                   <li>• You'll receive an email notification when your account is ready</li>
@@ -161,7 +162,7 @@ export function NewUserSignUp() {
             </Alert>
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
-                You cannot sign in until your account is approved.
+                You cannot sign in until you confirm your email and your account is approved.
               </p>
             </div>
           </CardContent>
