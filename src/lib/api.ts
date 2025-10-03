@@ -1,4 +1,5 @@
 import { config } from "@/config/environment";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Get the backend API base URL
@@ -19,6 +20,23 @@ export function createApiUrl(endpoint: string): string {
     const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     return `${baseUrl}/api${normalizedEndpoint}`;
   }
+}
+
+/**
+ * Get authentication headers for API requests
+ */
+export async function getAuthHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+  
+  return headers;
 }
 
 /**
@@ -48,16 +66,19 @@ export const API_ENDPOINTS = {
 } as const;
 
 /**
- * Fetch with error handling
+ * Fetch with error handling and authentication
  */
 export async function apiFetch(endpoint: string, options?: RequestInit): Promise<Response> {
   const url = createApiUrl(endpoint);
   
   try {
+    // Get authentication headers
+    const authHeaders = await getAuthHeaders();
+    
     const response = await fetch(url, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        ...authHeaders,
         ...options?.headers,
       },
     });

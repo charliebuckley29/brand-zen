@@ -105,8 +105,13 @@ export function ModeratorPanel() {
     try {
       setLoading(true);
       
-      // Fetch all users with their roles and profiles using new backend API
-      const response = await fetch(createApiUrl('/admin/users-with-roles?include_inactive=false'));
+      // Fetch all users with their roles and profiles using authenticated backend API
+      const response = await fetch(createApiUrl('/admin/users-with-roles?include_inactive=false'), {
+        headers: {
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -134,14 +139,24 @@ export function ModeratorPanel() {
         social_media_links: user.profile?.social_media_links || {}
       }));
 
-      // Fetch user keywords using new backend endpoint
-      const keywordsResponse = await fetch(createApiUrl('/admin/user-keywords?include_all=true'));
+      // Fetch user keywords using authenticated backend endpoint
+      const keywordsResponse = await fetch(createApiUrl('/admin/user-keywords?include_all=true'), {
+        headers: {
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       const keywordsResult = await keywordsResponse.json();
       
       const formattedKeywords: UserKeywords[] = keywordsResult.success ? keywordsResult.data : [];
 
-      // Fetch flagged mentions using new backend endpoint
-      const mentionsResponse = await fetch(createApiUrl('/admin/flagged-mentions?flagged=true&limit=50'));
+      // Fetch flagged mentions using authenticated backend endpoint
+      const mentionsResponse = await fetch(createApiUrl('/admin/flagged-mentions?flagged=true&limit=50'), {
+        headers: {
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       const mentionsResult = await mentionsResponse.json();
 
       const formattedMentions: FlaggedMention[] = mentionsResult.success ? mentionsResult.data : [];
