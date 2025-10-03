@@ -74,6 +74,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [brandDescription, setBrandDescription] = useState("");
   const [socialMediaLinks, setSocialMediaLinks] = useState<Record<string, string>>({});
   const [isUpdatingBrandInfo, setIsUpdatingBrandInfo] = useState(false);
+  const [isEditingBrandInfo, setIsEditingBrandInfo] = useState(false);
   
   // Brand management state
   const [brandData, setBrandData] = useState<{ id: string; brand_name: string; variants: string[] } | null>(null);
@@ -269,6 +270,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
         title: "Brand information updated",
         description: "Your brand information has been successfully updated.",
       });
+      setIsEditingBrandInfo(false); // Exit edit mode after successful update
     } catch (error: any) {
       toast({
         title: "Error updating brand information",
@@ -278,6 +280,14 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
     } finally {
       setIsUpdatingBrandInfo(false);
     }
+  };
+
+  const handleCancelBrandInfoEdit = () => {
+    // Reset to original values from profileData
+    setBrandWebsite(profileData?.brand_website || "");
+    setBrandDescription(profileData?.brand_description || "");
+    setSocialMediaLinks(profileData?.social_media_links || {});
+    setIsEditingBrandInfo(false);
   };
 
   // Setup dialog helpers
@@ -1112,61 +1122,145 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   Brand Information
                 </CardTitle>
                 <CardDescription>
-                  Update your brand details including website, description, and social media links
+                  View and manage your brand details including website, description, and social media links
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="brand-website">Brand Website</Label>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="brand-website"
-                      type="url"
-                      placeholder="https://yourcompany.com"
-                      value={brandWebsite}
-                      onChange={(e) => setBrandWebsite(e.target.value)}
-                      className="pl-10"
-                    />
+                {!isEditingBrandInfo ? (
+                  // Display Mode
+                  <div className="space-y-6">
+                    {/* Brand Website */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Globe className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <h4 className="text-sm font-medium">Brand Website</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {brandWebsite ? (
+                              <a 
+                                href={brandWebsite} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                {brandWebsite}
+                              </a>
+                            ) : (
+                              "Not set"
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditingBrandInfo(true)}
+                      >
+                        Edit
+                      </Button>
+                    </div>
+
+                    {/* Brand Description */}
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium mb-2">Brand Description</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {brandDescription || "No description provided"}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditingBrandInfo(true)}
+                        className="ml-4"
+                      >
+                        Edit
+                      </Button>
+                    </div>
+
+                    {/* Social Media Links */}
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium mb-2">Social Media Links</h4>
+                        <SocialMediaLinks
+                          value={socialMediaLinks}
+                          onChange={() => {}} // Read-only in display mode
+                          showLabels={false}
+                          disabled={true}
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditingBrandInfo(true)}
+                        className="ml-4"
+                      >
+                        Edit
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Your company's main website URL
-                  </p>
-                </div>
+                ) : (
+                  // Edit Mode
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="brand-website">Brand Website</Label>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="brand-website"
+                          type="url"
+                          placeholder="https://yourcompany.com"
+                          value={brandWebsite}
+                          onChange={(e) => setBrandWebsite(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Your company's main website URL
+                      </p>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="brand-description">Brand Description</Label>
-                  <Textarea
-                    id="brand-description"
-                    placeholder="Describe your brand, including products/services offered and your target audience..."
-                    value={brandDescription}
-                    onChange={(e) => setBrandDescription(e.target.value)}
-                    rows={4}
-                    maxLength={2000}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Include your products/services and target audience</span>
-                    <span>{brandDescription.length}/2000</span>
+                    <div className="space-y-2">
+                      <Label htmlFor="brand-description">Brand Description</Label>
+                      <Textarea
+                        id="brand-description"
+                        placeholder="Describe your brand, including products/services offered and your target audience..."
+                        value={brandDescription}
+                        onChange={(e) => setBrandDescription(e.target.value)}
+                        rows={4}
+                        maxLength={2000}
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Include your products/services and target audience</span>
+                        <span>{brandDescription.length}/2000</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Social Media Links</Label>
+                      <SocialMediaLinks
+                        value={socialMediaLinks}
+                        onChange={setSocialMediaLinks}
+                        showLabels={true}
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline"
+                        onClick={handleCancelBrandInfoEdit}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleBrandInfoUpdate}
+                        disabled={isUpdatingBrandInfo}
+                      >
+                        {isUpdatingBrandInfo ? "Updating..." : "Update Brand Information"}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Social Media Links</Label>
-                  <SocialMediaLinks
-                    value={socialMediaLinks}
-                    onChange={setSocialMediaLinks}
-                    showLabels={true}
-                  />
-                </div>
-
-                <div className="flex justify-end">
-                  <Button 
-                    onClick={handleBrandInfoUpdate}
-                    disabled={isUpdatingBrandInfo}
-                  >
-                    {isUpdatingBrandInfo ? "Updating..." : "Update Brand Information"}
-                  </Button>
-                </div>
+                )}
               </CardContent>
             </Card>
 
