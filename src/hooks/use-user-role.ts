@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { createApiUrl } from "@/lib/api";
 
-export type UserType = 'admin' | 'moderator' | 'legal_user' | 'pr_user' | 'basic_user';
+export type UserType = 'admin' | 'moderator' | 'basic_user';
 
 export function useUserRole() {
   const [userType, setUserType] = useState<UserType | null>(null);
@@ -58,10 +58,8 @@ export function useUserRole() {
     if (!userType) return false;
     
     const hierarchy: Record<UserType, number> = {
-      'admin': 5,
-      'moderator': 4,
-      'legal_user': 3,
-      'pr_user': 2,
+      'admin': 3,
+      'moderator': 2,
       'basic_user': 1
     };
 
@@ -69,8 +67,6 @@ export function useUserRole() {
   };
 
   const isModerator = hasAccess('moderator');
-  const isLegalUser = hasAccess('legal_user');
-  const isPRUser = hasAccess('pr_user');
   const isAdmin = hasAccess('admin');
 
   return {
@@ -79,8 +75,6 @@ export function useUserRole() {
     error,
     hasAccess,
     isModerator,
-    isLegalUser,
-    isPRUser,
     isAdmin
   };
 }

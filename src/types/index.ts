@@ -47,7 +47,7 @@ export interface User {
   fetch_frequency_minutes: number;
 }
 
-export type UserType = 'admin' | 'moderator' | 'legal_user' | 'pr_user' | 'basic_user';
+export type UserType = 'admin' | 'moderator' | 'basic_user';
 
 export interface SocialMediaLinks {
   linkedin?: string;
@@ -69,9 +69,6 @@ export interface ProfileData {
   phone_number: string | null;
   // New unified team emails field
   team_emails: string[];
-  // Legacy fields (will be removed after migration)
-  pr_team_email: string | null;
-  legal_team_email: string | null;
   timezone?: string;
   brand_website?: string | null;
   brand_description?: string | null;

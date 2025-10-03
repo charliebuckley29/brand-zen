@@ -5,9 +5,6 @@ interface ProfileData {
   full_name: string | null;
   phone_number: string | null;
   team_emails: string[];
-  // Legacy fields (will be removed after migration)
-  pr_team_email: string | null;
-  legal_team_email: string | null;
   // Brand information fields
   brand_website: string | null;
   brand_description: string | null;
@@ -39,7 +36,7 @@ export function useProfileCompletion() {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("full_name, phone_number, team_emails, pr_team_email, legal_team_email, brand_website, brand_description, social_media_links, notification_preferences")
+        .select("full_name, phone_number, team_emails, brand_website, brand_description, social_media_links, notification_preferences")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -75,7 +72,7 @@ export function useProfileCompletion() {
     }
   };
 
-  const updateProfile = async (fullName: string, phoneNumber?: string, prTeamEmail?: string, legalTeamEmail?: string) => {
+  const updateProfile = async (fullName: string, phoneNumber?: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -88,9 +85,7 @@ export function useProfileCompletion() {
         .upsert({
           user_id: user.id,
           full_name: fullName.trim(),
-          phone_number: phoneNumber?.trim() || null,
-          pr_team_email: prTeamEmail?.trim() || null,
-          legal_team_email: legalTeamEmail?.trim() || null
+          phone_number: phoneNumber?.trim() || null
         }, {
           onConflict: 'user_id'
         });
@@ -103,9 +98,7 @@ export function useProfileCompletion() {
       setProfileData(prev => ({
         ...prev,
         full_name: fullName.trim(),
-        phone_number: phoneNumber?.trim() || null,
-        pr_team_email: prTeamEmail?.trim() || null,
-        legal_team_email: legalTeamEmail?.trim() || null
+        phone_number: phoneNumber?.trim() || null
       }));
       setIsProfileComplete(true);
       
