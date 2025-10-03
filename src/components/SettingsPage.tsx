@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { LogOut, User, Settings as SettingsIcon, Mail, Lock, Building2, Plus, X as XIcon, Globe, Youtube, Rss, AlertCircle, TrendingUp, MessageSquare } from "lucide-react";
+import { SocialMediaLinks } from "@/components/SocialMediaLinks";
 import { SOURCES, type SourceType } from "@/config/sources";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { TimezoneSettings } from "@/components/TimezoneSettings";
@@ -66,6 +67,12 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [profilePrTeamEmail, setProfilePrTeamEmail] = useState("");
   const [profileLegalTeamEmail, setProfileLegalTeamEmail] = useState("");
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  
+  // Brand information state
+  const [brandWebsite, setBrandWebsite] = useState("");
+  const [brandDescription, setBrandDescription] = useState("");
+  const [socialMediaLinks, setSocialMediaLinks] = useState<Record<string, string>>({});
+  const [isUpdatingBrandInfo, setIsUpdatingBrandInfo] = useState(false);
   
   // Brand management state
   const [brandData, setBrandData] = useState<{ id: string; brand_name: string; variants: string[] } | null>(null);
@@ -133,6 +140,9 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       setProfilePhoneNumber(profileData.phone_number || "");
       setProfilePrTeamEmail(profileData.pr_team_email || "");
       setProfileLegalTeamEmail(profileData.legal_team_email || "");
+      setBrandWebsite(profileData.brand_website || "");
+      setBrandDescription(profileData.brand_description || "");
+      setSocialMediaLinks(profileData.social_media_links || {});
     }
   }, [profileData]);
   const fetchBrandData = async () => {
@@ -235,6 +245,38 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
 
   const removeVariant = (index: number) => {
     setNewVariants(newVariants.filter((_, i) => i !== index));
+  };
+
+  const handleBrandInfoUpdate = async () => {
+    setIsUpdatingBrandInfo(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          brand_website: brandWebsite.trim() || null,
+          brand_description: brandDescription.trim() || null,
+          social_media_links: Object.keys(socialMediaLinks).length > 0 ? socialMediaLinks : {}
+        })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Brand information updated",
+        description: "Your brand information has been successfully updated.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating brand information",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingBrandInfo(false);
+    }
   };
 
   // Setup dialog helpers
@@ -463,8 +505,9 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="brand">Brand</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
 
@@ -1208,6 +1251,133 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
             </div>
           </CardContent>
         </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="brand" className="space-y-6">
+          <div className="grid gap-6">
+            {/* Brand Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Brand Information
+                </CardTitle>
+                <CardDescription>
+                  Update your brand details including website, description, and social media links
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="brand-website">Brand Website</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="brand-website"
+                      type="url"
+                      placeholder="https://yourcompany.com"
+                      value={brandWebsite}
+                      onChange={(e) => setBrandWebsite(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Your company's main website URL
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="brand-description">Brand Description</Label>
+                  <Textarea
+                    id="brand-description"
+                    placeholder="Describe your brand, including products/services offered and your target audience..."
+                    value={brandDescription}
+                    onChange={(e) => setBrandDescription(e.target.value)}
+                    rows={4}
+                    maxLength={2000}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Include your products/services and target audience</span>
+                    <span>{brandDescription.length}/2000</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Social Media Links</Label>
+                  <SocialMediaLinks
+                    value={socialMediaLinks}
+                    onChange={setSocialMediaLinks}
+                    showLabels={true}
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={handleBrandInfoUpdate}
+                    disabled={isUpdatingBrandInfo}
+                  >
+                    {isUpdatingBrandInfo ? "Updating..." : "Update Brand Information"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Existing Brand Setup */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Brand Monitoring Setup
+                </CardTitle>
+                <CardDescription>
+                  Configure your brand name and variants for mention monitoring
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {brandData ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">Brand Name</p>
+                        <p className="text-sm text-muted-foreground">{brandData.brand_name}</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBrandDialogOpen(true)}
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">Brand Variants</p>
+                        <p className="text-sm text-muted-foreground">
+                          {brandData.variants?.length || 0} variants configured
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setVariantsDialogOpen(true)}
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-muted-foreground mb-4">
+                      No brand monitoring setup found. Set up your brand to start monitoring mentions.
+                    </p>
+                    <Button onClick={() => setSetupDialogOpen(true)}>
+                      Set Up Brand Monitoring
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 

@@ -45,12 +45,30 @@ export interface User {
 
 export type UserType = 'admin' | 'moderator' | 'legal_user' | 'pr_user' | 'basic_user';
 
+export interface SocialMediaLinks {
+  linkedin?: string;
+  twitter?: string;
+  facebook?: string;
+  instagram?: string;
+  youtube?: string;
+  tiktok?: string;
+}
+
+export interface BrandInformation {
+  brand_website?: string | null;
+  brand_description?: string | null;
+  social_media_links?: SocialMediaLinks;
+}
+
 export interface ProfileData {
   full_name: string | null;
   phone_number: string | null;
   pr_team_email: string | null;
   legal_team_email: string | null;
   timezone?: string;
+  brand_website?: string | null;
+  brand_description?: string | null;
+  social_media_links?: SocialMediaLinks;
   notification_preferences?: {
     email?: {
       enabled: boolean;

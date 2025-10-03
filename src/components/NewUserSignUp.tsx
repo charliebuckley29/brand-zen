@@ -7,7 +7,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, AlertCircle, Loader2, Plus, X } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2, Plus, X, Globe } from "lucide-react";
+import { SocialMediaLinks } from "@/components/SocialMediaLinks";
+import type { SocialMediaLinks as SocialMediaLinksType } from "@/types";
 
 export function NewUserSignUp() {
   const [email, setEmail] = useState("");
@@ -17,6 +19,9 @@ export function NewUserSignUp() {
   const [brandName, setBrandName] = useState("");
   const [variants, setVariants] = useState<string[]>([]);
   const [newVariant, setNewVariant] = useState("");
+  const [brandWebsite, setBrandWebsite] = useState("");
+  const [brandDescription, setBrandDescription] = useState("");
+  const [socialMediaLinks, setSocialMediaLinks] = useState<SocialMediaLinksType>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
@@ -65,6 +70,9 @@ export function NewUserSignUp() {
           data: {
             full_name: fullName.trim(),
             phone_number: phoneNumber.trim() || null,
+            brand_website: brandWebsite.trim() || null,
+            brand_description: brandDescription.trim() || null,
+            social_media_links: Object.keys(socialMediaLinks).length > 0 ? socialMediaLinks : null,
           }
         }
       });
@@ -81,7 +89,10 @@ export function NewUserSignUp() {
             user_status: 'pending_approval',
             created_by_staff: true,
             automation_enabled: false, // Will be enabled after approval
-            fetch_frequency_minutes: 15
+            fetch_frequency_minutes: 15,
+            brand_website: brandWebsite.trim() || null,
+            brand_description: brandDescription.trim() || null,
+            social_media_links: Object.keys(socialMediaLinks).length > 0 ? socialMediaLinks : {}
           });
 
         if (profileError) {
@@ -260,6 +271,49 @@ export function NewUserSignUp() {
                   ))}
                 </div>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="brandwebsite">Brand Website (Optional)</Label>
+              <div className="relative">
+                <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="brandwebsite"
+                  type="url"
+                  placeholder="https://yourcompany.com"
+                  value={brandWebsite}
+                  onChange={(e) => setBrandWebsite(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Your company's main website URL
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="branddescription">Brand Description (Optional)</Label>
+              <Textarea
+                id="branddescription"
+                placeholder="Describe your brand, including products/services offered and your target audience..."
+                value={brandDescription}
+                onChange={(e) => setBrandDescription(e.target.value)}
+                rows={4}
+                maxLength={2000}
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Include your products/services and target audience</span>
+                <span>{brandDescription.length}/2000</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Social Media Links (Optional)</Label>
+              <SocialMediaLinks
+                value={socialMediaLinks}
+                onChange={setSocialMediaLinks}
+                showLabels={false}
+              />
             </div>
 
             <Alert>

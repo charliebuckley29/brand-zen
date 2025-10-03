@@ -13,7 +13,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { cleanHtmlContent } from "@/lib/contentUtils";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Flag, Settings as SettingsIcon, AlertTriangle, Eye, Mail, MailCheck } from "lucide-react";
+import { Users, Flag, Settings as SettingsIcon, AlertTriangle, Eye, Mail, MailCheck, Globe, Building2 } from "lucide-react";
+import { SocialMediaLinks } from "@/components/SocialMediaLinks";
 import type { UserType } from "@/hooks/use-user-role";
 import { GlobalSettingSwitch } from "@/components/GlobalSettingSwitch";
 import { API_ENDPOINTS, createApiUrl } from "@/lib/api";
@@ -28,6 +29,9 @@ interface User {
   fetch_frequency_minutes: number;
   email_confirmed?: boolean;
   email_confirmed_at?: string | null;
+  brand_website?: string | null;
+  brand_description?: string | null;
+  social_media_links?: Record<string, string>;
 }
 
 interface UserKeywords {
@@ -66,7 +70,10 @@ export function ModeratorPanel() {
     phone_number: '',
     brand_name: '',
     variants: '',
-    google_alert_rss_url: ''
+    google_alert_rss_url: '',
+    brand_website: '',
+    brand_description: '',
+    social_media_links: {}
   });
   const [selectedUserKeywords, setSelectedUserKeywords] = useState<UserKeywords | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -121,7 +128,10 @@ export function ModeratorPanel() {
         created_at: user.created_at,
         fetch_frequency_minutes: user.profile?.fetch_frequency_minutes || 15,
         email_confirmed: user.email_confirmed,
-        email_confirmed_at: user.email_confirmed_at
+        email_confirmed_at: user.email_confirmed_at,
+        brand_website: user.profile?.brand_website || null,
+        brand_description: user.profile?.brand_description || null,
+        social_media_links: user.profile?.social_media_links || {}
       }));
 
       // Fetch user keywords using new backend endpoint
@@ -229,7 +239,10 @@ export function ModeratorPanel() {
         .upsert({
           user_id: userId,
           full_name: profileData.full_name,
-          phone_number: profileData.phone_number || null
+          phone_number: profileData.phone_number || null,
+          brand_website: profileData.brand_website || null,
+          brand_description: profileData.brand_description || null,
+          social_media_links: Object.keys(profileData.social_media_links).length > 0 ? profileData.social_media_links : {}
         }, {
           onConflict: 'user_id'
         });
@@ -499,7 +512,10 @@ export function ModeratorPanel() {
                                    phone_number: user.phone_number || '',
                                    brand_name: userKeyword?.brand_name || '',
                                    variants: userKeyword?.variants?.join(', ') || '',
-                                   google_alert_rss_url: userKeyword?.google_alert_rss_url || ''
+                                   google_alert_rss_url: userKeyword?.google_alert_rss_url || '',
+                                   brand_website: user.brand_website || '',
+                                   brand_description: user.brand_description || '',
+                                   social_media_links: user.social_media_links || {}
                                  });
                                  setEditMode(false);
                                  setUserDetailOpen(true);
@@ -628,7 +644,10 @@ export function ModeratorPanel() {
                                   phone_number: user.phone_number || '',
                                   brand_name: userKeyword?.brand_name || '',
                                   variants: userKeyword?.variants?.join(', ') || '',
-                                  google_alert_rss_url: userKeyword?.google_alert_rss_url || ''
+                                  google_alert_rss_url: userKeyword?.google_alert_rss_url || '',
+                                  brand_website: user.brand_website || '',
+                                  brand_description: user.brand_description || '',
+                                  social_media_links: user.social_media_links || {}
                                 });
                                 setEditMode(false);
                                 setUserDetailOpen(true);
@@ -942,6 +961,43 @@ export function ModeratorPanel() {
                         </div>
                       </>
                     )}
+                    {selectedUser.brand_website && (
+                      <div>
+                        <Label className="text-sm font-medium">Brand Website</Label>
+                        <div className="flex items-center gap-2">
+                          <Globe className="h-4 w-4 text-muted-foreground" />
+                          <a 
+                            href={selectedUser.brand_website} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline break-all"
+                          >
+                            {selectedUser.brand_website}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                    {selectedUser.brand_description && (
+                      <div>
+                        <Label className="text-sm font-medium">Brand Description</Label>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                          {selectedUser.brand_description}
+                        </p>
+                      </div>
+                    )}
+                    {selectedUser.social_media_links && Object.keys(selectedUser.social_media_links).length > 0 && (
+                      <div>
+                        <Label className="text-sm font-medium">Social Media Links</Label>
+                        <div className="mt-2">
+                          <SocialMediaLinks
+                            value={selectedUser.social_media_links}
+                            onChange={() => {}} // Read-only in view mode
+                            showLabels={false}
+                            disabled={true}
+                          />
+                        </div>
+                      </div>
+                    )}
                     <div>
                       <Label className="text-sm font-medium">Member Since</Label>
                       <p className="text-sm text-muted-foreground">
@@ -1017,6 +1073,42 @@ export function ModeratorPanel() {
                         rows={3}
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="edit-brand-website">Brand Website</Label>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="edit-brand-website"
+                          type="url"
+                          value={editingProfile.brand_website}
+                          onChange={(e) => setEditingProfile(prev => ({ ...prev, brand_website: e.target.value }))}
+                          placeholder="https://yourcompany.com"
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-brand-description">Brand Description</Label>
+                      <Textarea
+                        id="edit-brand-description"
+                        value={editingProfile.brand_description}
+                        onChange={(e) => setEditingProfile(prev => ({ ...prev, brand_description: e.target.value }))}
+                        placeholder="Describe your brand, including products/services and target audience..."
+                        rows={4}
+                        maxLength={2000}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {editingProfile.brand_description.length}/2000 characters
+                      </p>
+                    </div>
+                    <div>
+                      <Label>Social Media Links</Label>
+                      <SocialMediaLinks
+                        value={editingProfile.social_media_links}
+                        onChange={(links) => setEditingProfile(prev => ({ ...prev, social_media_links: links }))}
+                        showLabels={true}
+                      />
+                    </div>
                   </div>
                   <div className="flex flex-col sm:flex-row justify-end gap-2">
                     <Button 
@@ -1029,7 +1121,10 @@ export function ModeratorPanel() {
                           phone_number: selectedUser.phone_number || '',
                           brand_name: selectedUserKeywords?.brand_name || '',
                           variants: selectedUserKeywords?.variants?.join(', ') || '',
-                          google_alert_rss_url: selectedUserKeywords?.google_alert_rss_url || ''
+                          google_alert_rss_url: selectedUserKeywords?.google_alert_rss_url || '',
+                          brand_website: selectedUser.brand_website || '',
+                          brand_description: selectedUser.brand_description || '',
+                          social_media_links: selectedUser.social_media_links || {}
                         });
                       }}
                       disabled={isUpdating}
