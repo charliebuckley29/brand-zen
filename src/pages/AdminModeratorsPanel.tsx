@@ -44,8 +44,6 @@ export default function AdminModeratorsPanel() {
     switch (userType) {
       case 'admin': return 'destructive';
       case 'moderator': return 'default';
-      case 'legal_user': return 'secondary';
-      case 'pr_user': return 'outline';
       default: return 'secondary';
     }
   };
@@ -378,8 +376,6 @@ export default function AdminModeratorsPanel() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="basic_user">Basic User</SelectItem>
-                          <SelectItem value="pr_user">PR User</SelectItem>
-                          <SelectItem value="legal_user">Legal User</SelectItem>
                           <SelectItem value="moderator">Moderator</SelectItem>
                           {!isAdmin && <SelectItem value="admin">Admin</SelectItem>}
                         </SelectContent>

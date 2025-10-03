@@ -82,7 +82,7 @@ export function ModeratorPanel() {
 
   // Helper function to check if a user can be edited by moderators
   const canEditUser = (userType: UserType) => {
-    return userType === 'basic_user' || userType === 'pr_user';
+    return userType === 'basic_user';
   };
 
   // Helper function to get badge variant for user types
@@ -90,8 +90,7 @@ export function ModeratorPanel() {
     switch (userType) {
       case 'admin': return 'destructive';
       case 'moderator': return 'default';
-      case 'legal_user': return 'secondary';
-      case 'pr_user': return 'outline';
+      case 'basic_user': return 'secondary';
       default: return 'secondary';
     }
   };
@@ -825,8 +824,6 @@ export function ModeratorPanel() {
                              </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="basic_user">Basic User</SelectItem>
-                                <SelectItem value="pr_user">PR User</SelectItem>
-                                <SelectItem value="legal_user">Legal User</SelectItem>
                                 <SelectItem value="moderator">Moderator</SelectItem>
                               </SelectContent>
                            </Select>
@@ -965,8 +962,6 @@ export function ModeratorPanel() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="basic_user">Basic User</SelectItem>
-                              <SelectItem value="pr_user">PR User</SelectItem>
-                              <SelectItem value="legal_user">Legal User</SelectItem>
                               <SelectItem value="moderator">Moderator</SelectItem>
                             </SelectContent>
                           </Select>

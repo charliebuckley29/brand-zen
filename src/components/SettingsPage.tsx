@@ -65,8 +65,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [profileFullName, setProfileFullName] = useState("");
   const [profilePhoneNumber, setProfilePhoneNumber] = useState("");
-  const [profilePrTeamEmail, setProfilePrTeamEmail] = useState("");
-  const [profileLegalTeamEmail, setProfileLegalTeamEmail] = useState("");
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   
   // Team emails management
@@ -145,8 +143,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
     if (profileData) {
       setProfileFullName(profileData.full_name || "");
       setProfilePhoneNumber(profileData.phone_number || "");
-      setProfilePrTeamEmail(profileData.pr_team_email || "");
-      setProfileLegalTeamEmail(profileData.legal_team_email || "");
       setBrandWebsite(profileData.brand_website || "");
       setBrandDescription(profileData.brand_description || "");
       setSocialMediaLinks(profileData.social_media_links || {});
@@ -541,7 +537,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
     setIsUpdatingProfile(true);
     try {
       // Update profile and team emails
-      const profileResult = await updateProfile(profileFullName, profilePhoneNumber, profilePrTeamEmail, profileLegalTeamEmail);
+      const profileResult = await updateProfile(profileFullName, profilePhoneNumber);
       const teamEmailsResult = await updateTeamEmails(teamEmails);
       
       if (profileResult.success && teamEmailsResult.success) {
@@ -767,8 +763,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                                // Reset form to current data
                                setProfileFullName(profileData?.full_name || "");
                                setProfilePhoneNumber(profileData?.phone_number || "");
-                               setProfilePrTeamEmail(profileData?.pr_team_email || "");
-                               setProfileLegalTeamEmail(profileData?.legal_team_email || "");
                              }}
                            >
                              Cancel
