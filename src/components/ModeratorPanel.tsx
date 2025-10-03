@@ -213,9 +213,29 @@ export function ModeratorPanel() {
 
       if (error) throw error;
 
+      // If RSS URL is being set, also approve the user automatically
+      if (rssUrl && rssUrl.trim() !== '') {
+        const keyword = userKeywords.find(k => k.id === keywordId);
+        if (keyword) {
+          const { error: approvalError } = await supabase
+            .from("profiles")
+            .update({
+              user_status: 'approved',
+              approved_at: new Date().toISOString(),
+              approved_by: (await supabase.auth.getUser()).data.user?.id
+            })
+            .eq("user_id", keyword.user_id)
+            .eq("user_status", "pending_approval");
+
+          if (approvalError) {
+            console.warn("Failed to auto-approve user:", approvalError);
+          }
+        }
+      }
+
       toast({
         title: "Success",
-        description: "Brand information updated successfully"
+        description: rssUrl ? "Brand information updated and user approved!" : "Brand information updated successfully"
       });
       
       fetchData(); // Refresh data

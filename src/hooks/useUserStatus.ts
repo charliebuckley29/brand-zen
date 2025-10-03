@@ -58,7 +58,7 @@ export function useUserStatus() {
 
         const hasRssUrl = keywords?.some(k => k.google_alert_rss_url && k.google_alert_rss_url.trim() !== '') || false;
 
-        // Determine user status
+        // Determine user status based on profile status and RSS URL
         let status: UserStatus = 'approved'; // Default to approved
         
         if (profile.user_status === 'pending_approval') {
@@ -67,9 +67,9 @@ export function useUserStatus() {
           status = 'rejected';
         } else if (profile.user_status === 'suspended') {
           status = 'suspended';
-        } else if (profile.user_status === 'approved' && !hasRssUrl) {
-          // User is approved but doesn't have RSS URL set up yet
-          status = 'pending_approval';
+        } else if (profile.user_status === 'approved') {
+          // User is approved - check if they have RSS URL for full access
+          status = hasRssUrl ? 'approved' : 'pending_approval';
         }
 
         setUserStatus({

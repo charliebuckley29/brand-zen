@@ -80,27 +80,8 @@ export function NewUserSignUp() {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Create profile with pending approval status
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: authData.user.id,
-            full_name: fullName.trim(),
-            user_status: 'pending_approval',
-            created_by_staff: true,
-            automation_enabled: false, // Will be enabled after approval
-            fetch_frequency_minutes: 15,
-            brand_website: brandWebsite.trim() || null,
-            brand_description: brandDescription.trim() || null,
-            social_media_links: Object.keys(socialMediaLinks).length > 0 ? socialMediaLinks : {}
-          });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          // Don't throw here - user is created, just profile creation failed
-        }
-
-        // Create initial keyword with brand information
+        // Profile is automatically created by the database trigger with all brand information
+        // Just create the initial keyword with brand information
         const { error: keywordError } = await supabase
           .from('keywords')
           .insert({
@@ -113,7 +94,7 @@ export function NewUserSignUp() {
 
         if (keywordError) {
           console.error('Keyword creation error:', keywordError);
-          // Don't throw here - user and profile are created
+          // Don't throw here - user and profile are created by trigger
         }
 
         setIsSuccess(true);
