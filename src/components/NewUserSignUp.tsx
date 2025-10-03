@@ -61,6 +61,17 @@ export function NewUserSignUp() {
     setIsLoading(true);
     
     try {
+      console.log("🔧 [SIGNUP] Starting user signup process", {
+        email,
+        fullName: fullName.trim(),
+        brandName: brandName.trim(),
+        phoneNumber: phoneNumber.trim(),
+        brandWebsite: brandWebsite.trim(),
+        brandDescription: brandDescription.trim(),
+        socialMediaLinks,
+        variants
+      });
+
       // Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -77,12 +88,50 @@ export function NewUserSignUp() {
         }
       });
 
-      if (authError) throw authError;
+      console.log("🔐 [SIGNUP] Auth signup result", {
+        hasUser: !!authData.user,
+        userId: authData.user?.id,
+        hasError: !!authError,
+        errorMessage: authError?.message
+      });
+
+      if (authError) {
+        console.error("❌ [SIGNUP] Auth signup failed", authError);
+        throw authError;
+      }
 
       if (authData.user) {
+        console.log("✅ [SIGNUP] Auth user created, creating keywords record", {
+          userId: authData.user.id,
+          brandName: brandName.trim(),
+          variants
+        });
+
+        // Verify profile was created by trigger with brand information
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, brand_website, brand_description, social_media_links')
+          .eq('user_id', authData.user.id)
+          .single();
+
+        if (profileError) {
+          console.error("❌ [SIGNUP] Profile verification failed", {
+            error: profileError,
+            userId: authData.user.id
+          });
+        } else {
+          console.log("✅ [SIGNUP] Profile verified", {
+            userId: authData.user.id,
+            profileData: profileData,
+            hasBrandWebsite: !!profileData.brand_website,
+            hasBrandDescription: !!profileData.brand_description,
+            hasSocialMediaLinks: Object.keys(profileData.social_media_links || {}).length > 0
+          });
+        }
+
         // Profile is automatically created by the database trigger with all brand information
         // Just create the initial keyword with brand information
-        const { error: keywordError } = await supabase
+        const { data: keywordData, error: keywordError } = await supabase
           .from('keywords')
           .insert({
             user_id: authData.user.id,
@@ -90,11 +139,34 @@ export function NewUserSignUp() {
             variants: variants.length > 0 ? variants : null,
             google_alerts_enabled: false, // Will be enabled after RSS URL setup
             google_alert_rss_url: null
-          });
+          })
+          .select()
+          .single();
 
         if (keywordError) {
-          console.error('Keyword creation error:', keywordError);
-          // Don't throw here - user and profile are created by trigger
+          console.error("❌ [SIGNUP] Keyword creation error", {
+            error: keywordError,
+            userId: authData.user.id,
+            brandName: brandName.trim(),
+            errorCode: keywordError.code,
+            errorMessage: keywordError.message,
+            errorDetails: keywordError.details,
+            errorHint: keywordError.hint
+          });
+          
+          // Show error to user but don't fail the entire signup
+          toast({
+            title: "Warning",
+            description: `Account created but brand setup incomplete. Error: ${keywordError.message}`,
+            variant: "destructive",
+          });
+        } else {
+          console.log("✅ [SIGNUP] Keywords record created successfully", {
+            keywordId: keywordData?.id,
+            userId: authData.user.id,
+            brandName: brandName.trim(),
+            variants: variants
+          });
         }
 
         setIsSuccess(true);
@@ -102,6 +174,9 @@ export function NewUserSignUp() {
           title: "Account created successfully!",
           description: "Please check your email to confirm your account. Your account is pending approval.",
         });
+      } else {
+        console.error("❌ [SIGNUP] No user returned from auth signup");
+        throw new Error("Failed to create user account");
       }
     } catch (error: any) {
       toast({
