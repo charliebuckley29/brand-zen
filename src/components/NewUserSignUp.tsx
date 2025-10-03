@@ -57,6 +57,24 @@ export function NewUserSignUp() {
       });
       return;
     }
+
+    if (!password || password.length < 6) {
+      toast({
+        title: "Invalid password",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      toast({
+        title: "Invalid password",
+        description: "Password must contain uppercase, lowercase, and numbers.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsLoading(true);
     
@@ -72,10 +90,10 @@ export function NewUserSignUp() {
         variants
       });
 
-      // Create user directly with Supabase
+      // Create user directly with Supabase using user-provided password
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
-        password: `TempPass123!${Math.random().toString(36).slice(2, 8)}`, // Temporary password
+        password: password, // User-provided password
         options: {
           data: {
             full_name: fullName.trim(),
@@ -107,70 +125,9 @@ export function NewUserSignUp() {
         emailConfirmed: authData.user.email_confirmed_at
       });
 
-      // Now create the profile manually since triggers might not work
-      console.log("🔧 [SIGNUP] Creating profile manually", {
+      console.log("🔧 [SIGNUP] Profile and keywords will be created automatically via database triggers", {
         userId: authData.user.id
       });
-
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: authData.user.id,
-          full_name: fullName.trim(),
-          phone_number: phoneNumber?.trim() || null,
-          brand_website: brandWebsite?.trim() || null,
-          brand_description: brandDescription?.trim() || null,
-          social_media_links: Object.keys(socialMediaLinks || {}).length > 0 ? socialMediaLinks : {},
-          user_status: 'pending_approval',
-          created_by_staff: true,
-          automation_enabled: false,
-          fetch_frequency_minutes: 15
-        })
-        .select()
-        .single();
-
-      if (profileError) {
-        console.warn("⚠️ [SIGNUP] Profile creation failed, but user was created", {
-          error: profileError.message,
-          userId: authData.user.id
-        });
-        // Don't fail the signup if profile creation fails
-      } else {
-        console.log("✅ [SIGNUP] Profile created successfully", {
-          profileId: profileData.id
-        });
-      }
-
-      // Create keywords record
-      console.log("🔧 [SIGNUP] Creating keywords record", {
-        userId: authData.user.id,
-        brandName: brandName.trim(),
-        variants: variants
-      });
-
-      const { data: keywordData, error: keywordError } = await supabase
-        .from('keywords')
-        .insert({
-          user_id: authData.user.id,
-          brand_name: brandName.trim(),
-          variants: variants.length > 0 ? variants : null,
-          google_alerts_enabled: false,
-          google_alert_rss_url: null
-        })
-        .select()
-        .single();
-
-      if (keywordError) {
-        console.warn("⚠️ [SIGNUP] Keywords creation failed, but user was created", {
-          error: keywordError.message,
-          userId: authData.user.id
-        });
-        // Don't fail the signup if keywords creation fails
-      } else {
-        console.log("✅ [SIGNUP] Keywords created successfully", {
-          keywordId: keywordData.id
-        });
-      }
 
       setIsSuccess(true);
       toast({
@@ -264,15 +221,31 @@ export function NewUserSignUp() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number (Optional)</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="Enter your phone number"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number (Optional)</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Create a secure password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Must be at least 6 characters with uppercase, lowercase, and numbers
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2">
