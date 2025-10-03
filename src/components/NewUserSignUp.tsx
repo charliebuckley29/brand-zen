@@ -312,7 +312,7 @@ export function NewUserSignUp() {
               <SocialMediaLinks
                 value={socialMediaLinks}
                 onChange={setSocialMediaLinks}
-                showLabels={false}
+                showLabels={true}
               />
             </div>
 
