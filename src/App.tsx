@@ -47,6 +47,7 @@ import AutomatedRecoveryPage from "./pages/AutomatedRecoveryPage";
 import SystemAlertsPage from "./pages/SystemAlertsPage";
 import EnhancedAnalyticsPage from "./pages/EnhancedAnalyticsPage";
 import NewUserSignUp from "./pages/NewUserSignUp";
+import { PasswordSetup } from "./components/PasswordSetup";
 import NotFound from "./pages/NotFound";
 
 /**
@@ -121,6 +122,7 @@ const App = () => {
                   <Route path="/help" element={<Help />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/new-user-signup" element={<NewUserSignUp />} />
+                  <Route path="/password-setup" element={<PasswordSetup />} />
                   
                   {/* Admin routes - protected by role-based access */}
                   <Route path="/admin" element={<AdminDashboard />} />
