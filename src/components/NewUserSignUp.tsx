@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, AlertCircle, Loader2, Plus, X, Globe } from "lucide-react";
 import { SocialMediaLinks } from "@/components/SocialMediaLinks";
 import type { SocialMediaLinks as SocialMediaLinksType } from "@/types";
-import { createApiUrl } from "@/lib/api";
 
 export function NewUserSignUp() {
   const [email, setEmail] = useState("");
@@ -62,7 +61,7 @@ export function NewUserSignUp() {
     setIsLoading(true);
     
     try {
-      console.log("🔧 [SIGNUP] Starting user signup via backend API", {
+      console.log("🔧 [SIGNUP] Starting user signup via frontend", {
         email,
         fullName: fullName.trim(),
         brandName: brandName.trim(),
@@ -73,45 +72,110 @@ export function NewUserSignUp() {
         variants
       });
 
-      // Call backend signup API using the proper backend URL
-      const response = await fetch(createApiUrl('/auth/signup'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          fullName: fullName.trim(),
-          phoneNumber: phoneNumber.trim() || null,
-          brandName: brandName.trim(),
-          variants: variants.join(','),
-          brandWebsite: brandWebsite.trim() || null,
-          brandDescription: brandDescription.trim() || null,
-          socialMediaLinks: Object.keys(socialMediaLinks).length > 0 ? socialMediaLinks : null,
-        }),
+      // Create user directly with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password: `TempPass123!${Math.random().toString(36).slice(2, 8)}`, // Temporary password
+        options: {
+          data: {
+            full_name: fullName.trim(),
+            phone_number: phoneNumber?.trim() || null,
+            brand_name: brandName.trim(),
+            brand_website: brandWebsite?.trim() || null,
+            brand_description: brandDescription?.trim() || null,
+            social_media_links: Object.keys(socialMediaLinks || {}).length > 0 ? socialMediaLinks : null,
+            variants: variants || []
+          }
+        }
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        console.error("❌ [SIGNUP] Backend signup failed", {
-          status: response.status,
-          error: result.error
+      if (authError) {
+        console.error("❌ [SIGNUP] Supabase signup failed", {
+          error: authError.message,
+          errorCode: authError.status
         });
-        throw new Error(result.error || 'Failed to create account');
+        throw new Error(authError.message || 'Failed to create account');
       }
 
-      console.log("✅ [SIGNUP] Backend signup successful", {
-        success: result.success,
-        userId: result.user?.id,
-        email: result.user?.email,
-        message: result.message
+      if (!authData.user) {
+        throw new Error('No user returned from signup');
+      }
+
+      console.log("✅ [SIGNUP] Supabase signup successful", {
+        userId: authData.user.id,
+        email: authData.user.email,
+        emailConfirmed: authData.user.email_confirmed_at
       });
+
+      // Now create the profile manually since triggers might not work
+      console.log("🔧 [SIGNUP] Creating profile manually", {
+        userId: authData.user.id
+      });
+
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: authData.user.id,
+          full_name: fullName.trim(),
+          phone_number: phoneNumber?.trim() || null,
+          brand_website: brandWebsite?.trim() || null,
+          brand_description: brandDescription?.trim() || null,
+          social_media_links: Object.keys(socialMediaLinks || {}).length > 0 ? socialMediaLinks : {},
+          user_status: 'pending_approval',
+          created_by_staff: true,
+          automation_enabled: false,
+          fetch_frequency_minutes: 15
+        })
+        .select()
+        .single();
+
+      if (profileError) {
+        console.warn("⚠️ [SIGNUP] Profile creation failed, but user was created", {
+          error: profileError.message,
+          userId: authData.user.id
+        });
+        // Don't fail the signup if profile creation fails
+      } else {
+        console.log("✅ [SIGNUP] Profile created successfully", {
+          profileId: profileData.id
+        });
+      }
+
+      // Create keywords record
+      console.log("🔧 [SIGNUP] Creating keywords record", {
+        userId: authData.user.id,
+        brandName: brandName.trim(),
+        variants: variants
+      });
+
+      const { data: keywordData, error: keywordError } = await supabase
+        .from('keywords')
+        .insert({
+          user_id: authData.user.id,
+          brand_name: brandName.trim(),
+          variants: variants.length > 0 ? variants : null,
+          google_alerts_enabled: false,
+          google_alert_rss_url: null
+        })
+        .select()
+        .single();
+
+      if (keywordError) {
+        console.warn("⚠️ [SIGNUP] Keywords creation failed, but user was created", {
+          error: keywordError.message,
+          userId: authData.user.id
+        });
+        // Don't fail the signup if keywords creation fails
+      } else {
+        console.log("✅ [SIGNUP] Keywords created successfully", {
+          keywordId: keywordData.id
+        });
+      }
 
       setIsSuccess(true);
       toast({
-        title: "Account invitation sent!",
-        description: "Please check your email to complete your account setup. Your account is pending approval.",
+        title: "Account created successfully!",
+        description: "Please check your email to confirm your account. Your account is pending approval.",
       });
 
     } catch (error: any) {
