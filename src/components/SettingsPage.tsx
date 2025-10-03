@@ -931,73 +931,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
 
         <TabsContent value="brand" className="space-y-6">
           <div className="grid gap-6">
-            {/* Brand Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  Brand Information
-                </CardTitle>
-                <CardDescription>
-                  Update your brand details including website, description, and social media links
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="brand-website">Brand Website</Label>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="brand-website"
-                      type="url"
-                      placeholder="https://yourcompany.com"
-                      value={brandWebsite}
-                      onChange={(e) => setBrandWebsite(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Your company's main website URL
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="brand-description">Brand Description</Label>
-                  <Textarea
-                    id="brand-description"
-                    placeholder="Describe your brand, including products/services offered and your target audience..."
-                    value={brandDescription}
-                    onChange={(e) => setBrandDescription(e.target.value)}
-                    rows={4}
-                    maxLength={2000}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Include your products/services and target audience</span>
-                    <span>{brandDescription.length}/2000</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Social Media Links</Label>
-                  <SocialMediaLinks
-                    value={socialMediaLinks}
-                    onChange={setSocialMediaLinks}
-                    showLabels={true}
-                  />
-                </div>
-
-                <div className="flex justify-end">
-                  <Button 
-                    onClick={handleBrandInfoUpdate}
-                    disabled={isUpdatingBrandInfo}
-                  >
-                    {isUpdatingBrandInfo ? "Updating..." : "Update Brand Information"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Existing Brand Setup */}
+            {/* Brand Management */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1006,63 +940,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                 </CardTitle>
                 <CardDescription>
                   Configure your brand name and variants for mention monitoring
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {brandData ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">Brand Name</p>
-                        <p className="text-sm text-muted-foreground">{brandData.brand_name}</p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setBrandDialogOpen(true)}
-                      >
-                        Edit
-                      </Button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">Brand Variants</p>
-                        <p className="text-sm text-muted-foreground">
-                          {brandData.variants?.length || 0} variants configured
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setVariantsDialogOpen(true)}
-                      >
-                        Edit
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <p className="text-muted-foreground mb-4">
-                      No brand monitoring setup found. Set up your brand to start monitoring mentions.
-                    </p>
-                    <Button onClick={() => setSetupDialogOpen(true)}>
-                      Set Up Brand Monitoring
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Brand Management */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  Brand Management
-                </CardTitle>
-                <CardDescription>
-                  Manage your brand name and monitoring variants
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1090,7 +967,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                             disabled={!canChangeBrandName}
                             className={!canChangeBrandName ? "opacity-50 cursor-not-allowed" : ""}
                           >
-                            Edit Brand
+                            Edit
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-md">
@@ -1158,7 +1035,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                             disabled={!canChangeBrandName}
                             className={!canChangeBrandName ? "opacity-50 cursor-not-allowed" : ""}
                           >
-                            Edit Variants
+                            Edit
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-md">
@@ -1304,6 +1181,73 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                 )}
               </CardContent>
             </Card>
+
+            {/* Brand Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Brand Information
+                </CardTitle>
+                <CardDescription>
+                  Update your brand details including website, description, and social media links
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="brand-website">Brand Website</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="brand-website"
+                      type="url"
+                      placeholder="https://yourcompany.com"
+                      value={brandWebsite}
+                      onChange={(e) => setBrandWebsite(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Your company's main website URL
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="brand-description">Brand Description</Label>
+                  <Textarea
+                    id="brand-description"
+                    placeholder="Describe your brand, including products/services offered and your target audience..."
+                    value={brandDescription}
+                    onChange={(e) => setBrandDescription(e.target.value)}
+                    rows={4}
+                    maxLength={2000}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Include your products/services and target audience</span>
+                    <span>{brandDescription.length}/2000</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Social Media Links</Label>
+                  <SocialMediaLinks
+                    value={socialMediaLinks}
+                    onChange={setSocialMediaLinks}
+                    showLabels={true}
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={handleBrandInfoUpdate}
+                    disabled={isUpdatingBrandInfo}
+                  >
+                    {isUpdatingBrandInfo ? "Updating..." : "Update Brand Information"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
           </div>
         </TabsContent>
 
