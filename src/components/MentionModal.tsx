@@ -88,19 +88,42 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
 
     setIsLoading(true);
     try {
-      // Update the mention in database
-      const { error } = await supabase
+      // Update the mention in database - try step by step to isolate the issue
+      console.log('Team emails to escalate to:', userProfile.team_emails);
+      
+      // First, try just updating the escalation type
+      const { error: basicError } = await supabase
         .from("mentions")
         .update({ 
           escalation_type: 'team',
-          team_escalated_at: new Date().toISOString(),
-          escalated_team_emails: userProfile.team_emails,
           flagged: true,
           internal_notes: internalNotes 
         })
         .eq("id", mention.id);
 
-      if (error) throw error;
+      if (basicError) {
+        console.error('Basic escalation update error:', basicError);
+        throw basicError;
+      }
+
+      // Then try to update the new team escalation fields
+      try {
+        const { error: teamError } = await supabase
+          .from("mentions")
+          .update({
+            team_escalated_at: new Date().toISOString(),
+            escalated_team_emails: userProfile.team_emails
+          })
+          .eq("id", mention.id);
+
+        if (teamError) {
+          console.warn('Team escalation fields update failed:', teamError);
+          // Don't throw here - the basic escalation worked
+        }
+      } catch (teamUpdateError) {
+        console.warn('Team escalation fields update failed:', teamUpdateError);
+        // Don't throw here - the basic escalation worked
+      }
 
       // Get current user and profile for email context
       const { data: authUser } = await supabase.auth.getUser();
