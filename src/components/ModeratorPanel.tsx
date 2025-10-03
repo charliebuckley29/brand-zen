@@ -235,6 +235,57 @@ export function ModeratorPanel() {
     }
   };
 
+  const updateUserProfileBrand = async (userId: string, profileData: { brand_website?: string; brand_description?: string; social_media_links?: Record<string, string> }) => {
+    try {
+      console.log("🔧 [MODERATOR PANEL] Updating profile brand information", {
+        userId,
+        profileData
+      });
+
+      // Get auth token
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) {
+        throw new Error('No authentication token');
+      }
+
+      // Use the backend API to update profile brand information
+      const response = await fetch(createApiUrl('/admin/update-user-profile-complete'), {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          brandWebsite: profileData.brand_website,
+          brandDescription: profileData.brand_description,
+          socialMediaLinks: profileData.social_media_links
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("✅ [MODERATOR PANEL] Profile brand update successful:", result);
+
+      toast({
+        title: "Success",
+        description: "Brand information updated successfully"
+      });
+
+      fetchData(); // Refresh data
+    } catch (error) {
+      console.error("❌ [MODERATOR PANEL] Error updating profile brand:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update brand information",
+        variant: "destructive"
+      });
+    }
+  };
+
   const updateUserBrand = async (keywordId: string, brandName: string, variants: string, rssUrl: string) => {
     try {
       console.log("🔧 [MODERATOR PANEL] ===== UPDATE USER BRAND START =====");
@@ -1010,13 +1061,18 @@ export function ModeratorPanel() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {userKeywords.map((keyword) => (
-                  <BrandEditor 
-                    key={keyword.id} 
-                    keyword={keyword} 
-                    onUpdate={updateUserBrand} 
-                  />
-                ))}
+                {userKeywords.map((keyword) => {
+                  const user = users.find(u => u.id === keyword.user_id);
+                  return user ? (
+                    <BrandEditor 
+                      key={keyword.id} 
+                      keyword={keyword} 
+                      user={user}
+                      onUpdate={updateUserBrand}
+                      onUpdateProfile={updateUserProfileBrand}
+                    />
+                  ) : null;
+                })}
                 {userKeywords.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     No brand configurations found
@@ -1315,17 +1371,31 @@ export function ModeratorPanel() {
 
 interface BrandEditorProps {
   keyword: UserKeywords;
+  user: User;
   onUpdate: (keywordId: string, brandName: string, variants: string, rssUrl: string) => void;
+  onUpdateProfile: (userId: string, profileData: { brand_website?: string; brand_description?: string; social_media_links?: Record<string, string> }) => void;
 }
 
-function BrandEditor({ keyword, onUpdate }: BrandEditorProps) {
+function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorProps) {
   const [brandName, setBrandName] = useState(keyword.brand_name);
   const [variants, setVariants] = useState(keyword.variants?.join(', ') || '');
   const [rssUrl, setRssUrl] = useState(keyword.google_alert_rss_url || '');
+  const [brandWebsite, setBrandWebsite] = useState(user.brand_website || '');
+  const [brandDescription, setBrandDescription] = useState(user.brand_description || '');
+  const [socialMediaLinks, setSocialMediaLinks] = useState<Record<string, string>>(user.social_media_links || {});
   const [isEditing, setIsEditing] = useState(false);
 
   const handleSave = () => {
+    // Update keywords (brand name, variants, RSS URL)
     onUpdate(keyword.id, brandName, variants, rssUrl);
+    
+    // Update profile brand information (website, description, social media)
+    onUpdateProfile(user.id, {
+      brand_website: brandWebsite || undefined,
+      brand_description: brandDescription || undefined,
+      social_media_links: Object.keys(socialMediaLinks).length > 0 ? socialMediaLinks : undefined
+    });
+    
     setIsEditing(false);
   };
 
@@ -1333,6 +1403,9 @@ function BrandEditor({ keyword, onUpdate }: BrandEditorProps) {
     setBrandName(keyword.brand_name);
     setVariants(keyword.variants?.join(', ') || '');
     setRssUrl(keyword.google_alert_rss_url || '');
+    setBrandWebsite(user.brand_website || '');
+    setBrandDescription(user.brand_description || '');
+    setSocialMediaLinks(user.social_media_links || {});
     setIsEditing(false);
   };
 
@@ -1363,23 +1436,61 @@ function BrandEditor({ keyword, onUpdate }: BrandEditorProps) {
 
       {isEditing ? (
         <div className="grid gap-4">
+          {/* Brand Name and Variants */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor={`brand-${keyword.id}`}>Brand Name</Label>
+              <Input
+                id={`brand-${keyword.id}`}
+                value={brandName}
+                onChange={(e) => setBrandName(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor={`variants-${keyword.id}`}>Variants (comma-separated)</Label>
+              <Input
+                id={`variants-${keyword.id}`}
+                value={variants}
+                onChange={(e) => setVariants(e.target.value)}
+                placeholder="variant1, variant2, variant3"
+              />
+            </div>
+          </div>
+
+          {/* Brand Website */}
           <div>
-            <Label htmlFor={`brand-${keyword.id}`}>Brand Name</Label>
+            <Label htmlFor={`website-${keyword.id}`}>Brand Website</Label>
             <Input
-              id={`brand-${keyword.id}`}
-              value={brandName}
-              onChange={(e) => setBrandName(e.target.value)}
+              id={`website-${keyword.id}`}
+              type="url"
+              value={brandWebsite}
+              onChange={(e) => setBrandWebsite(e.target.value)}
+              placeholder="https://www.example.com"
             />
           </div>
+
+          {/* Brand Description */}
           <div>
-            <Label htmlFor={`variants-${keyword.id}`}>Variants (comma-separated)</Label>
-            <Input
-              id={`variants-${keyword.id}`}
-              value={variants}
-              onChange={(e) => setVariants(e.target.value)}
-              placeholder="variant1, variant2, variant3"
+            <Label htmlFor={`description-${keyword.id}`}>Brand Description</Label>
+            <Textarea
+              id={`description-${keyword.id}`}
+              value={brandDescription}
+              onChange={(e) => setBrandDescription(e.target.value)}
+              placeholder="Tell us about your brand..."
+              rows={3}
             />
           </div>
+
+          {/* Social Media Links */}
+          <div>
+            <Label>Social Media Links</Label>
+            <SocialMediaLinks
+              initialLinks={socialMediaLinks}
+              onLinksChange={setSocialMediaLinks}
+            />
+          </div>
+
+          {/* RSS URL */}
           <div>
             <Label htmlFor={`rss-${keyword.id}`}>Google Alert RSS URL</Label>
             <Textarea
@@ -1392,28 +1503,71 @@ function BrandEditor({ keyword, onUpdate }: BrandEditorProps) {
           </div>
         </div>
       ) : (
-        <div className="space-y-2">
-          <div>
-            <span className="text-sm font-medium">Variants: </span>
-            <span className="text-sm">{keyword.variants?.join(', ') || 'None'}</span>
+        <div className="space-y-3">
+          {/* Brand Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <span className="text-sm font-medium">Variants: </span>
+              <span className="text-sm">{keyword.variants?.join(', ') || 'None'}</span>
+            </div>
+            <div>
+              <span className="text-sm font-medium">Google Alert RSS: </span>
+              <span className="text-sm">
+                {keyword.google_alert_rss_url ? (
+                  <a 
+                    href={keyword.google_alert_rss_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline break-all"
+                  >
+                    Configured
+                  </a>
+                ) : (
+                  'Not configured'
+                )}
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="text-sm font-medium">Google Alert RSS: </span>
-            <span className="text-sm">
-              {keyword.google_alert_rss_url ? (
-                <a 
-                  href={keyword.google_alert_rss_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline break-all"
-                >
-                  Configured
-                </a>
-              ) : (
-                'Not configured'
-              )}
-            </span>
-          </div>
+
+          {/* Brand Website */}
+          {user.brand_website && (
+            <div>
+              <span className="text-sm font-medium">Brand Website: </span>
+              <a 
+                href={user.brand_website} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline break-all"
+              >
+                {user.brand_website}
+              </a>
+            </div>
+          )}
+
+          {/* Brand Description */}
+          {user.brand_description && (
+            <div>
+              <span className="text-sm font-medium">Brand Description: </span>
+              <span className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {user.brand_description}
+              </span>
+            </div>
+          )}
+
+          {/* Social Media Links */}
+          {user.social_media_links && Object.keys(user.social_media_links).length > 0 && (
+            <div>
+              <span className="text-sm font-medium">Social Media: </span>
+              <div className="mt-1">
+                <SocialMediaLinks
+                  initialLinks={user.social_media_links}
+                  onLinksChange={() => {}} // Read-only in view mode
+                  showLabels={false}
+                  disabled={true}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
