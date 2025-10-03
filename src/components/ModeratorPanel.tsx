@@ -139,6 +139,18 @@ export function ModeratorPanel() {
         social_media_links: user.profile?.social_media_links || {}
       }));
 
+      console.log("📊 [MODERATOR PANEL] Loaded users data:", {
+        totalUsers: formattedUsers.length,
+        users: formattedUsers.map(u => ({
+          id: u.id,
+          email: u.email,
+          full_name: u.full_name,
+          brand_website: u.brand_website,
+          brand_description: u.brand_description,
+          social_media_links: u.social_media_links
+        }))
+      });
+
       // Fetch user keywords using authenticated backend endpoint
       const keywordsResponse = await fetch(createApiUrl('/admin/user-keywords?include_all=true'), {
         headers: {
@@ -149,6 +161,18 @@ export function ModeratorPanel() {
       const keywordsResult = await keywordsResponse.json();
       
       const formattedKeywords: UserKeywords[] = keywordsResult.success ? keywordsResult.data : [];
+      
+      console.log("🔑 [MODERATOR PANEL] Loaded keywords data:", {
+        totalKeywords: formattedKeywords.length,
+        keywords: formattedKeywords.map(k => ({
+          id: k.id,
+          user_id: k.user_id,
+          brand_name: k.brand_name,
+          google_alert_rss_url: k.google_alert_rss_url,
+          google_alerts_enabled: k.google_alerts_enabled,
+          variants: k.variants
+        }))
+      });
 
       // Fetch flagged mentions using authenticated backend endpoint
       const mentionsResponse = await fetch(createApiUrl('/admin/flagged-mentions?flagged=true&limit=50'), {
@@ -268,36 +292,71 @@ export function ModeratorPanel() {
     try {
       setIsUpdating(true);
 
+      console.log("🔧 [MODERATOR PANEL] Starting user profile update", {
+        userId,
+        profileData: {
+          full_name: profileData.full_name,
+          email: profileData.email,
+          brand_name: profileData.brand_name,
+          google_alert_rss_url: profileData.google_alert_rss_url,
+          brand_website: profileData.brand_website,
+          brand_description: profileData.brand_description,
+          social_media_links: profileData.social_media_links
+        }
+      });
+
+      // Get auth token
+      const { data: session } = await supabase.auth.getSession();
+      console.log("🔐 [MODERATOR PANEL] Auth session:", {
+        hasToken: !!session?.session?.access_token,
+        tokenLength: session?.session?.access_token?.length || 0
+      });
+
+      const requestBody = {
+        userId,
+        fullName: profileData.full_name,
+        phoneNumber: profileData.phone_number,
+        email: profileData.email,
+        brandName: profileData.brand_name,
+        variants: profileData.variants,
+        googleAlertRssUrl: profileData.google_alert_rss_url,
+        brandWebsite: profileData.brand_website,
+        brandDescription: profileData.brand_description,
+        socialMediaLinks: profileData.social_media_links
+      };
+
+      console.log("📤 [MODERATOR PANEL] Request body:", requestBody);
+
       // Use authenticated backend API for complete profile update
       const response = await fetch(createApiUrl('/admin/update-user-profile-complete'), {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Authorization': `Bearer ${session?.session?.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          userId,
-          fullName: profileData.full_name,
-          phoneNumber: profileData.phone_number,
-          email: profileData.email,
-          brandName: profileData.brand_name,
-          variants: profileData.variants,
-          googleAlertRssUrl: profileData.google_alert_rss_url,
-          brandWebsite: profileData.brand_website,
-          brandDescription: profileData.brand_description,
-          socialMediaLinks: profileData.social_media_links
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log("📡 [MODERATOR PANEL] API response status:", response.status, response.statusText);
+
       const result = await response.json();
+      console.log("📥 [MODERATOR PANEL] API response body:", result);
 
       if (!response.ok) {
+        console.error("❌ [MODERATOR PANEL] API request failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: result
+        });
         throw new Error(result.error || 'Failed to update user profile');
       }
 
       if (!result.success) {
+        console.error("❌ [MODERATOR PANEL] API returned success: false:", result);
         throw new Error(result.error || 'Failed to update user profile');
       }
+
+      console.log("✅ [MODERATOR PANEL] Profile update successful:", result);
 
       toast({
         title: "Profile Updated",
@@ -305,9 +364,15 @@ export function ModeratorPanel() {
       });
 
       setEditMode(false);
+      console.log("🔄 [MODERATOR PANEL] Refreshing data...");
       fetchData(); // Refresh data
     } catch (error: any) {
-      console.error("Error updating user profile:", error);
+      console.error("💥 [MODERATOR PANEL] Error updating user profile:", {
+        error: error.message,
+        stack: error.stack,
+        userId,
+        profileData
+      });
       toast({
         title: "Error",
         description: error.message || "Failed to update user profile",
@@ -315,6 +380,7 @@ export function ModeratorPanel() {
       });
     } finally {
       setIsUpdating(false);
+      console.log("🏁 [MODERATOR PANEL] Update process completed");
     }
   };
 
