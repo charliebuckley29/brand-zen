@@ -81,7 +81,6 @@ export function NewUserSignUp() {
         },
         body: JSON.stringify({
           email,
-          password,
           fullName: fullName.trim(),
           phoneNumber: phoneNumber.trim() || null,
           brandName: brandName.trim(),
@@ -111,8 +110,8 @@ export function NewUserSignUp() {
 
       setIsSuccess(true);
       toast({
-        title: "Account created successfully!",
-        description: "Please check your email to confirm your account. Your account is pending approval.",
+        title: "Account invitation sent!",
+        description: "Please check your email to complete your account setup. Your account is pending approval.",
       });
 
     } catch (error: any) {
@@ -201,28 +200,15 @@ export function NewUserSignUp() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number (Optional)</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="Enter your phone number"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Create a password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number (Optional)</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="Enter your phone number"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
