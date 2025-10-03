@@ -8,6 +8,10 @@ interface ProfileData {
   // Legacy fields (will be removed after migration)
   pr_team_email: string | null;
   legal_team_email: string | null;
+  // Brand information fields
+  brand_website: string | null;
+  brand_description: string | null;
+  social_media_links: Record<string, string> | null;
   notification_preferences?: {
     email?: {
       enabled: boolean;
@@ -35,7 +39,7 @@ export function useProfileCompletion() {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("full_name, phone_number, team_emails, pr_team_email, legal_team_email, notification_preferences")
+        .select("full_name, phone_number, team_emails, pr_team_email, legal_team_email, brand_website, brand_description, social_media_links, notification_preferences")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -49,6 +53,9 @@ export function useProfileCompletion() {
       setProfileData(profile ? {
         ...profile,
         team_emails: profile.team_emails || [],
+        brand_website: profile.brand_website || null,
+        brand_description: profile.brand_description || null,
+        social_media_links: profile.social_media_links || null,
         notification_preferences: profile.notification_preferences ? profile.notification_preferences as { 
           email?: { enabled: boolean; frequency: 'immediate' | 'daily' | 'weekly' };
         } : undefined
@@ -159,6 +166,47 @@ export function useProfileCompletion() {
     }
   };
 
+  const updateBrandInformation = async (brandInfo: {
+    brand_website?: string;
+    brand_description?: string;
+    social_media_links?: Record<string, string>;
+  }) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const updateData: any = {};
+      if (brandInfo.brand_website !== undefined) {
+        updateData.brand_website = brandInfo.brand_website.trim() || null;
+      }
+      if (brandInfo.brand_description !== undefined) {
+        updateData.brand_description = brandInfo.brand_description.trim() || null;
+      }
+      if (brandInfo.social_media_links !== undefined) {
+        updateData.social_media_links = Object.keys(brandInfo.social_media_links).length > 0 
+          ? brandInfo.social_media_links 
+          : null;
+      }
+
+      const { error } = await supabase
+        .from("profiles")
+        .update(updateData)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setProfileData(prev => prev ? ({
+        ...prev,
+        ...updateData
+      }) : null);
+      
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating brand information:", error);
+      return { success: false, error };
+    }
+  };
+
   const updateNotificationPreferences = async (preferences: { 
     email?: { enabled: boolean; frequency: 'immediate' | 'daily' | 'weekly' };
   }) => {
@@ -193,6 +241,7 @@ export function useProfileCompletion() {
     loading,
     updateProfile,
     updateTeamEmails,
+    updateBrandInformation,
     updateNotificationPreferences,
     refreshProfile: checkProfileCompletion
   };

@@ -99,7 +99,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const { toast } = useToast();
   const { userType } = useUserRole();
   const { getSetting, loading: globalSettingsLoading } = useGlobalSettings();
-  const { profileData, loading: profileLoading, updateProfile, updateTeamEmails, updateNotificationPreferences } = useProfileCompletion();
+  const { profileData, loading: profileLoading, updateProfile, updateTeamEmails, updateBrandInformation, updateNotificationPreferences } = useProfileCompletion();
 
   const { loading: prefsLoading, prefs, setPref, setAllForSource } = useSourcePreferences();
   const [googleAlertsEnabled, setGoogleAlertsEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('google_alerts_enabled') !== 'false' : true));
@@ -258,19 +258,15 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const handleBrandInfoUpdate = async () => {
     setIsUpdatingBrandInfo(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const result = await updateBrandInformation({
+        brand_website: brandWebsite,
+        brand_description: brandDescription,
+        social_media_links: socialMediaLinks
+      });
 
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          brand_website: brandWebsite.trim() || null,
-          brand_description: brandDescription.trim() || null,
-          social_media_links: Object.keys(socialMediaLinks).length > 0 ? socialMediaLinks : {}
-        })
-        .eq("user_id", user.id);
-
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error?.message || "Failed to update brand information");
+      }
 
       toast({
         title: "Brand information updated",
