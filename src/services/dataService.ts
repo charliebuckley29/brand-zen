@@ -176,18 +176,17 @@ export class DataService {
     }, { id, flagged });
   }
 
-  async escalateMention(id: string, escalationType: 'pr' | 'legal' | 'crisis'): Promise<void> {
+  async escalateMention(id: string, escalationType: 'team' | 'crisis', teamEmails?: string[]): Promise<void> {
     return this.performanceMonitor.measure('escalateMention', async () => {
       const updates: Partial<Mention> = { escalation_type: escalationType };
       
-      if (escalationType === 'pr') {
-        updates.pr_escalated_at = new Date().toISOString();
-      } else if (escalationType === 'legal') {
-        updates.legal_escalated_at = new Date().toISOString();
+      if (escalationType === 'team' && teamEmails) {
+        updates.team_escalated_at = new Date().toISOString();
+        updates.escalated_team_emails = teamEmails;
       }
       
       await this.updateMention(id, updates);
-    }, { id, escalationType });
+    }, { id, escalationType, teamEmails });
   }
 
   // Notifications operations
