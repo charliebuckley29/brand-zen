@@ -18,7 +18,7 @@ import {
 import type { SocialMediaLinks } from "@/types";
 
 interface SocialMediaLinksProps {
-  value: SocialMediaLinks;
+  value?: SocialMediaLinks;
   onChange: (links: SocialMediaLinks) => void;
   disabled?: boolean;
   showLabels?: boolean;
@@ -87,11 +87,14 @@ export function SocialMediaLinks({
   disabled = false, 
   showLabels = true 
 }: SocialMediaLinksProps) {
+  // Ensure value is never null/undefined
+  const safeValue = value || {};
+  
   const [expandedPlatforms, setExpandedPlatforms] = useState<Set<keyof SocialMediaLinks>>(new Set());
   const [errors, setErrors] = useState<Record<keyof SocialMediaLinks, string>>({} as Record<keyof SocialMediaLinks, string>);
 
   const handleLinkChange = (platform: keyof SocialMediaLinks, url: string) => {
-    const newLinks = { ...value, [platform]: url };
+    const newLinks = { ...safeValue, [platform]: url };
     onChange(newLinks);
 
     // Validate URL
@@ -108,7 +111,7 @@ export function SocialMediaLinks({
   };
 
   const removeLink = (platform: keyof SocialMediaLinks) => {
-    const newLinks = { ...value };
+    const newLinks = { ...safeValue };
     delete newLinks[platform];
     onChange(newLinks);
     setErrors(prev => ({ ...prev, [platform]: '' }));
@@ -124,14 +127,14 @@ export function SocialMediaLinks({
     setExpandedPlatforms(newExpanded);
   };
 
-  const hasAnyLinks = Object.values(value).some(link => link && link.trim() !== '');
+  const hasAnyLinks = Object.values(safeValue).some(link => link && link.trim() !== '');
 
   if (!showLabels) {
     // Compact view for display purposes
     return (
       <div className="flex flex-wrap gap-2">
         {SOCIAL_PLATFORMS.map(platform => {
-          const url = value[platform.key];
+          const url = safeValue[platform.key];
           if (!url) return null;
           
           const Icon = platform.icon;
@@ -166,7 +169,7 @@ export function SocialMediaLinks({
       </CardHeader>
       <CardContent className="space-y-4">
         {SOCIAL_PLATFORMS.map(platform => {
-          const url = value[platform.key] || '';
+          const url = safeValue[platform.key] || '';
           const isExpanded = expandedPlatforms.has(platform.key);
           const hasError = errors[platform.key];
           const Icon = platform.icon;
@@ -248,7 +251,7 @@ export function SocialMediaLinks({
           <div className="pt-4 border-t">
             <div className="flex flex-wrap gap-2">
               {SOCIAL_PLATFORMS.map(platform => {
-                const url = value[platform.key];
+                const url = safeValue[platform.key];
                 if (!url) return null;
                 
                 const Icon = platform.icon;

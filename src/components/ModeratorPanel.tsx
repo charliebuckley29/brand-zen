@@ -1489,8 +1489,8 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
           <div>
             <Label>Social Media Links</Label>
             <SocialMediaLinks
-              initialLinks={socialMediaLinks}
-              onLinksChange={setSocialMediaLinks}
+              value={socialMediaLinks}
+              onChange={setSocialMediaLinks}
             />
           </div>
 
@@ -1564,8 +1564,8 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
               <span className="text-sm font-medium">Social Media: </span>
               <div className="mt-1">
                 <SocialMediaLinks
-                  initialLinks={user.social_media_links}
-                  onLinksChange={() => {}} // Read-only in view mode
+                  value={user.social_media_links || {}}
+                  onChange={() => {}} // Read-only in view mode
                   showLabels={false}
                   disabled={true}
                 />
