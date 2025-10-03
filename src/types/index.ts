@@ -13,6 +13,10 @@ export interface Mention {
   flagged: boolean;
   escalation_type: string;
   internal_notes: string | null;
+  // New unified team escalation fields
+  team_escalated_at: string | null;
+  escalated_team_emails: string[] | null;
+  // Legacy fields (will be removed after migration)
   legal_escalated_at: string | null;
   pr_escalated_at: string | null;
   user_id: string;
@@ -63,6 +67,9 @@ export interface BrandInformation {
 export interface ProfileData {
   full_name: string | null;
   phone_number: string | null;
+  // New unified team emails field
+  team_emails: string[];
+  // Legacy fields (will be removed after migration)
   pr_team_email: string | null;
   legal_team_email: string | null;
   timezone?: string;
@@ -95,7 +102,7 @@ export interface MentionData {
   sentiment?: number;
   topics?: string[];
   flagged?: boolean;
-  escalation_type?: 'none' | 'pr' | 'legal' | 'crisis';
+  escalation_type?: 'none' | 'team' | 'crisis';
   internal_notes?: string;
 }
 

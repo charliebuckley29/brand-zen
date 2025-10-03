@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 interface ProfileData {
   full_name: string | null;
   phone_number: string | null;
+  team_emails: string[];
+  // Legacy fields (will be removed after migration)
   pr_team_email: string | null;
   legal_team_email: string | null;
   notification_preferences?: {
@@ -33,7 +35,7 @@ export function useProfileCompletion() {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("full_name, phone_number, pr_team_email, legal_team_email, notification_preferences")
+        .select("full_name, phone_number, team_emails, pr_team_email, legal_team_email, notification_preferences")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -46,6 +48,7 @@ export function useProfileCompletion() {
 
       setProfileData(profile ? {
         ...profile,
+        team_emails: profile.team_emails || [],
         notification_preferences: profile.notification_preferences ? profile.notification_preferences as { 
           email?: { enabled: boolean; frequency: 'immediate' | 'daily' | 'weekly' };
         } : undefined
@@ -109,6 +112,53 @@ export function useProfileCompletion() {
     }
   };
 
+  const updateTeamEmails = async (teamEmails: string[]) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error("No authenticated user found");
+        throw new Error("Not authenticated. Please log in again.");
+      }
+
+      // Validate email format
+      const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+      const validEmails = teamEmails.filter(email => emailRegex.test(email));
+      
+      if (validEmails.length !== teamEmails.length) {
+        throw new Error("One or more email addresses are invalid");
+      }
+
+      if (validEmails.length > 10) {
+        throw new Error("Maximum 10 team emails allowed");
+      }
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          team_emails: validEmails
+        })
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error("Supabase error:", error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      setProfileData(prev => prev ? ({
+        ...prev,
+        team_emails: validEmails
+      }) : null);
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error("Error updating team emails:", error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error : new Error("Unknown error occurred")
+      };
+    }
+  };
+
   const updateNotificationPreferences = async (preferences: { 
     email?: { enabled: boolean; frequency: 'immediate' | 'daily' | 'weekly' };
   }) => {
@@ -142,6 +192,7 @@ export function useProfileCompletion() {
     isProfileComplete,
     loading,
     updateProfile,
+    updateTeamEmails,
     updateNotificationPreferences,
     refreshProfile: checkProfileCompletion
   };

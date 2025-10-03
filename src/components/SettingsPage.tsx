@@ -69,6 +69,11 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [profileLegalTeamEmail, setProfileLegalTeamEmail] = useState("");
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   
+  // Team emails management
+  const [teamEmails, setTeamEmails] = useState<string[]>([]);
+  const [newTeamEmail, setNewTeamEmail] = useState("");
+  const [isUpdatingTeamEmails, setIsUpdatingTeamEmails] = useState(false);
+  
   // Brand information state
   const [brandWebsite, setBrandWebsite] = useState("");
   const [brandDescription, setBrandDescription] = useState("");
@@ -94,7 +99,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const { toast } = useToast();
   const { userType } = useUserRole();
   const { getSetting, loading: globalSettingsLoading } = useGlobalSettings();
-  const { profileData, loading: profileLoading, updateProfile, updateNotificationPreferences } = useProfileCompletion();
+  const { profileData, loading: profileLoading, updateProfile, updateTeamEmails, updateNotificationPreferences } = useProfileCompletion();
 
   const { loading: prefsLoading, prefs, setPref, setAllForSource } = useSourcePreferences();
   const [googleAlertsEnabled, setGoogleAlertsEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('google_alerts_enabled') !== 'false' : true));
@@ -145,6 +150,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       setBrandWebsite(profileData.brand_website || "");
       setBrandDescription(profileData.brand_description || "");
       setSocialMediaLinks(profileData.social_media_links || {});
+      setTeamEmails(profileData.team_emails || []);
     }
   }, [profileData]);
   const fetchBrandData = async () => {
@@ -288,6 +294,59 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
     setBrandDescription(profileData?.brand_description || "");
     setSocialMediaLinks(profileData?.social_media_links || {});
     setIsEditingBrandInfo(false);
+  };
+
+  // Team emails management functions
+  const addTeamEmail = () => {
+    if (newTeamEmail.trim() && !teamEmails.includes(newTeamEmail.trim())) {
+      const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+      if (emailRegex.test(newTeamEmail.trim())) {
+        setTeamEmails([...teamEmails, newTeamEmail.trim()]);
+        setNewTeamEmail("");
+      } else {
+        toast({
+          title: "Invalid email format",
+          description: "Please enter a valid email address.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const removeTeamEmail = (index: number) => {
+    setTeamEmails(teamEmails.filter((_, i) => i !== index));
+  };
+
+  const handleTeamEmailsUpdate = async () => {
+    if (teamEmails.length > 10) {
+      toast({
+        title: "Too many emails",
+        description: "Maximum 10 team emails allowed.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUpdatingTeamEmails(true);
+    try {
+      const result = await updateTeamEmails(teamEmails);
+      if (result.success) {
+        toast({
+          title: "Team emails updated",
+          description: "Your team emails have been successfully updated."
+        });
+      } else {
+        throw result.error;
+      }
+    } catch (error: any) {
+      toast({
+        title: "Failed to update team emails",
+        description: error.message || "An error occurred while updating team emails.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdatingTeamEmails(false);
+    }
   };
 
   // Setup dialog helpers
@@ -462,22 +521,22 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       return;
     }
 
-    // Validate email formats if provided
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
-    if (profilePrTeamEmail && !emailRegex.test(profilePrTeamEmail.trim())) {
+    // Validate team emails
+    if (teamEmails.length > 10) {
       toast({
-        title: "Invalid PR team email",
-        description: "Please enter a valid email address for the PR team.",
+        title: "Too many team emails",
+        description: "Maximum 10 team emails allowed.",
         variant: "destructive",
       });
       return;
     }
 
-    if (profileLegalTeamEmail && !emailRegex.test(profileLegalTeamEmail.trim())) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidEmails = teamEmails.filter(email => !emailRegex.test(email));
+    if (invalidEmails.length > 0) {
       toast({
-        title: "Invalid legal team email", 
-        description: "Please enter a valid email address for the legal team.",
+        title: "Invalid team emails",
+        description: "Please ensure all team emails are valid.",
         variant: "destructive",
       });
       return;
@@ -485,16 +544,18 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
 
     setIsUpdatingProfile(true);
     try {
-      const result = await updateProfile(profileFullName, profilePhoneNumber, profilePrTeamEmail, profileLegalTeamEmail);
+      // Update profile and team emails
+      const profileResult = await updateProfile(profileFullName, profilePhoneNumber, profilePrTeamEmail, profileLegalTeamEmail);
+      const teamEmailsResult = await updateTeamEmails(teamEmails);
       
-      if (result.success) {
+      if (profileResult.success && teamEmailsResult.success) {
         setProfileDialogOpen(false);
         toast({
           title: "Profile updated",
-          description: "Your profile has been successfully updated.",
+          description: "Your profile and team emails have been successfully updated.",
         });
       } else {
-        throw new Error("Failed to update profile");
+        throw new Error("Failed to update profile or team emails");
       }
     } catch (error: any) {
       toast({
@@ -587,22 +648,33 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                    </div>
                  </div>
 
-                 <div className="flex items-center justify-between">
+                 <div className="space-y-3">
                    <div>
-                     <h4 className="text-sm font-medium">PR Team Email</h4>
+                     <h4 className="text-sm font-medium">Team Emails</h4>
                      <p className="text-sm text-muted-foreground">
-                       {profileData?.pr_team_email || "Not set"}
+                       {teamEmails.length > 0 
+                         ? `${teamEmails.length} team email${teamEmails.length === 1 ? '' : 's'} configured`
+                         : "No team emails configured"
+                       }
                      </p>
                    </div>
-                 </div>
-
-                 <div className="flex items-center justify-between">
-                   <div>
-                     <h4 className="text-sm font-medium">Legal Team Email</h4>
-                     <p className="text-sm text-muted-foreground">
-                       {profileData?.legal_team_email || "Not set"}
-                     </p>
-                   </div>
+                   {teamEmails.length > 0 && (
+                     <div className="space-y-2">
+                       {teamEmails.map((email, index) => (
+                         <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                           <span className="text-sm">{email}</span>
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => removeTeamEmail(index)}
+                             className="h-6 w-6 p-0"
+                           >
+                             <XIcon className="h-3 w-3" />
+                           </Button>
+                         </div>
+                       ))}
+                     </div>
+                   )}
                  </div>
 
                 <div className="pt-2">
@@ -640,31 +712,55 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                              onChange={(value) => setProfilePhoneNumber(value || "")}
                            />
                          </div>
-                         <div className="space-y-2">
-                           <Label htmlFor="prTeamEmail">PR Team Email</Label>
-                           <Input
-                             id="prTeamEmail"
-                             type="email"
-                             placeholder="Enter PR team email (optional)"
-                             value={profilePrTeamEmail}
-                             onChange={(e) => setProfilePrTeamEmail(e.target.value)}
-                           />
+                         <div className="space-y-3">
+                           <Label>Team Emails</Label>
                            <p className="text-xs text-muted-foreground">
-                             Email address to notify when mentions are escalated to PR team
+                             Add email addresses that should be notified when mentions are escalated
                            </p>
-                         </div>
-                         <div className="space-y-2">
-                           <Label htmlFor="legalTeamEmail">Legal Team Email</Label>
-                           <Input
-                             id="legalTeamEmail"
-                             type="email"
-                             placeholder="Enter legal team email (optional)"
-                             value={profileLegalTeamEmail}
-                             onChange={(e) => setProfileLegalTeamEmail(e.target.value)}
-                           />
-                           <p className="text-xs text-muted-foreground">
-                             Email address to notify when mentions are escalated to legal team
-                           </p>
+                           
+                           {/* Add new email input */}
+                           <div className="flex gap-2">
+                             <Input
+                               type="email"
+                               placeholder="team@company.com"
+                               value={newTeamEmail}
+                               onChange={(e) => setNewTeamEmail(e.target.value)}
+                               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTeamEmail())}
+                             />
+                             <Button
+                               type="button"
+                               onClick={addTeamEmail}
+                               disabled={!newTeamEmail.trim() || teamEmails.includes(newTeamEmail.trim())}
+                             >
+                               Add
+                             </Button>
+                           </div>
+                           
+                           {/* Display existing emails */}
+                           {teamEmails.length > 0 && (
+                             <div className="space-y-2">
+                               {teamEmails.map((email, index) => (
+                                 <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                                   <span className="text-sm">{email}</span>
+                                   <Button
+                                     type="button"
+                                     variant="ghost"
+                                     size="sm"
+                                     onClick={() => removeTeamEmail(index)}
+                                     className="h-6 w-6 p-0"
+                                   >
+                                     <XIcon className="h-3 w-3" />
+                                   </Button>
+                                 </div>
+                               ))}
+                             </div>
+                           )}
+                           
+                           {teamEmails.length >= 10 && (
+                             <p className="text-xs text-muted-foreground">
+                               Maximum 10 team emails allowed
+                             </p>
+                           )}
                          </div>
                         <div className="flex justify-end gap-2">
                            <Button 

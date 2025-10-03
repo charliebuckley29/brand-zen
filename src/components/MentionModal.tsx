@@ -43,11 +43,9 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
   const [isLoading, setIsLoading] = useState(false);
   const [resolvedText, setResolvedText] = useState<string | null>(null);
   const [isResolving, setIsResolving] = useState(false);
-  const [userProfile, setUserProfile] = useState<{ pr_team_email: string | null; legal_team_email: string | null } | null>(null);
-  const [isLegalEscalated, setIsLegalEscalated] = useState(!!mention.legal_escalated_at);
-  const [isPrEscalated, setIsPrEscalated] = useState(!!mention.pr_escalated_at);
-  const [showLegalSpamWarning, setShowLegalSpamWarning] = useState(false);
-  const [showPrSpamWarning, setShowPrSpamWarning] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ team_emails: string[] } | null>(null);
+  const [isTeamEscalated, setIsTeamEscalated] = useState(!!mention.team_escalated_at);
+  const [showTeamSpamWarning, setShowTeamSpamWarning] = useState(false);
   const { toast } = useToast();
 
   const formatDate = (dateString: string) => {
@@ -78,14 +76,25 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
     return 'Neutral';
   };
 
-  const handleEscalate = async (type: 'legal' | 'pr') => {
+  const handleEscalateToTeam = async () => {
+    if (!userProfile?.team_emails || userProfile.team_emails.length === 0) {
+      toast({
+        title: "No team emails configured",
+        description: "Please configure team emails in your settings before escalating.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Update the mention in database
       const { error } = await supabase
         .from("mentions")
         .update({ 
-          escalation_type: type,
+          escalation_type: 'team',
+          team_escalated_at: new Date().toISOString(),
+          escalated_team_emails: userProfile.team_emails,
           flagged: true,
           internal_notes: internalNotes 
         })
@@ -102,12 +111,12 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
         .single();
 
       
-      // Send escalation email
+      // Send escalation emails to all team members
       try {
-        await supabase.functions.invoke('send-escalation-email', {
+        await supabase.functions.invoke('send-team-escalation-email', {
           body: {
             mentionId: mention.id,
-            escalationType: type,
+            teamEmails: userProfile.team_emails,
             mentionData: {
               id: mention.id,
               source_url: mention.source_url,
@@ -125,16 +134,17 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
           }
         });
       } catch (emailError) {
-        console.error('Failed to send escalation email:', emailError);
+        console.error('Failed to send escalation emails:', emailError);
         // Don't fail the escalation if email fails
       }
 
-      setEscalationType(type);
+      setEscalationType('team');
       setFlagged(true);
+      setIsTeamEscalated(true);
       
       toast({
         title: "Mention escalated",
-        description: `This mention has been escalated to ${type.toUpperCase()} team and notification email sent.`,
+        description: `This mention has been escalated to your team (${userProfile.team_emails.length} member${userProfile.team_emails.length === 1 ? '' : 's'}) and notification emails sent.`,
       });
 
       onUpdate();
@@ -223,7 +233,7 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
 
         const { data: profile, error } = await supabase
           .from("profiles")
-          .select("pr_team_email, legal_team_email")
+          .select("team_emails")
           .eq("user_id", user.id)
           .maybeSingle();
 
@@ -385,57 +395,38 @@ export function MentionModal({ mention, onClose, onUpdate, getSentimentEmoji }: 
 
             {/* Escalation Buttons */}
             <div className="space-y-3">
-              {/* Info card if emails not configured */}
-              {(!userProfile?.pr_team_email || !userProfile?.legal_team_email) && (
+
+              {/* Spam warning for team escalation */}
+              {showTeamSpamWarning && (
+                <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <Info className="h-4 w-4 text-yellow-600 mt-0.5" />
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-medium">Already escalated today</p>
+                    <p>This mention was already escalated to your team today. Only one email per day is sent to prevent spam.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Info card if no team emails configured */}
+              {(!userProfile?.team_emails || userProfile.team_emails.length === 0) && (
                 <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
                   <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
                   <div className="text-sm text-muted-foreground">
-                    <p className="font-medium">Configure team emails in settings</p>
-                    <p>Set PR and legal team emails in your profile settings to enable escalation notifications.</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Spam warning for legal */}
-              {showLegalSpamWarning && (
-                <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <Info className="h-4 w-4 text-yellow-600 mt-0.5" />
-                  <div className="text-sm text-yellow-800">
-                    <p className="font-medium">Already escalated today</p>
-                    <p>This mention was already escalated to the legal team today. Only one email per day is sent to prevent spam.</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Spam warning for PR */}
-              {showPrSpamWarning && (
-                <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <Info className="h-4 w-4 text-yellow-600 mt-0.5" />
-                  <div className="text-sm text-yellow-800">
-                    <p className="font-medium">Already escalated today</p>
-                    <p>This mention was already escalated to the PR team today. Only one email per day is sent to prevent spam.</p>
+                    <p className="font-medium">No team emails configured</p>
+                    <p>Configure team emails in your settings to enable escalation notifications.</p>
                   </div>
                 </div>
               )}
               
               <div className="flex gap-2">
                 <Button
-                  variant={isLegalEscalated ? 'default' : 'outline'}
-                  onClick={() => handleEscalate('legal')}
-                  disabled={isLoading || !userProfile?.legal_team_email}
-                  className="flex-1"
-                >
-                  <Scale className="w-4 h-4 mr-2" />
-                  {isLegalEscalated ? 'Escalated to Legal' : 'Escalate to Legal'}
-                </Button>
-                <Button
-                  variant={isPrEscalated ? 'default' : 'outline'}
-                  onClick={() => handleEscalate('pr')}
-                  disabled={isLoading || !userProfile?.pr_team_email}
+                  variant={isTeamEscalated ? 'default' : 'outline'}
+                  onClick={handleEscalateToTeam}
+                  disabled={isLoading || !userProfile?.team_emails || userProfile.team_emails.length === 0}
                   className="flex-1"
                 >
                   <Users className="w-4 h-4 mr-2" />
-                  {isPrEscalated ? 'Escalated to PR' : 'Escalate to PR'}
+                  {isTeamEscalated ? 'Escalated to Team' : 'Escalate to Team'}
                 </Button>
               </div>
             </div>
