@@ -113,35 +113,27 @@ export function NotificationPreferences() {
           </div>
 
           {emailEnabled && (
-            <div className="ml-8 space-y-2">
-              <Label htmlFor="email-frequency" className="text-sm font-medium">
-                Notification Frequency
-              </Label>
-              <Select value={emailFrequency} onValueChange={(value: 'immediate' | 'daily' | 'weekly') => setEmailFrequency(value)}>
-                <SelectTrigger id="email-frequency" className="w-full max-w-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="immediate">
-                    <div className="flex flex-col">
-                      <span>Immediate</span>
-                      <span className="text-xs text-muted-foreground">Get notified as soon as negative mentions are detected</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="daily">
-                    <div className="flex flex-col">
-                      <span>Daily Digest</span>
-                      <span className="text-xs text-muted-foreground">Receive a daily summary of negative mentions</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="weekly">
-                    <div className="flex flex-col">
-                      <span>Weekly Digest</span>
-                      <span className="text-xs text-muted-foreground">Receive a weekly summary of negative mentions</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="ml-8 space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="email-frequency" className="text-sm font-medium">
+                  Notification Frequency
+                </Label>
+                <Select value={emailFrequency} onValueChange={(value: 'immediate' | 'daily' | 'weekly') => setEmailFrequency(value)}>
+                  <SelectTrigger id="email-frequency" className="w-full max-w-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="immediate">Immediate</SelectItem>
+                    <SelectItem value="daily">Daily Digest</SelectItem>
+                    <SelectItem value="weekly">Weekly Digest</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {emailFrequency === 'immediate' && "Get notified as soon as negative mentions are detected"}
+                {emailFrequency === 'daily' && "Receive a daily summary of negative mentions"}
+                {emailFrequency === 'weekly' && "Receive a weekly summary of negative mentions"}
+              </p>
             </div>
           )}
         </div>
