@@ -1063,7 +1063,11 @@ export function ModeratorPanel() {
               <div className="space-y-4">
                 {userKeywords.map((keyword) => {
                   const user = users.find(u => u.id === keyword.user_id);
-                  return user ? (
+                  if (!user) {
+                    console.warn(`User not found for keyword ${keyword.id}, user_id: ${keyword.user_id}`);
+                    return null;
+                  }
+                  return (
                     <BrandEditor 
                       key={keyword.id} 
                       keyword={keyword} 
@@ -1071,7 +1075,7 @@ export function ModeratorPanel() {
                       onUpdate={updateUserBrand}
                       onUpdateProfile={updateUserProfileBrand}
                     />
-                  ) : null;
+                  );
                 })}
                 {userKeywords.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
@@ -1380,9 +1384,9 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
   const [brandName, setBrandName] = useState(keyword.brand_name);
   const [variants, setVariants] = useState(keyword.variants?.join(', ') || '');
   const [rssUrl, setRssUrl] = useState(keyword.google_alert_rss_url || '');
-  const [brandWebsite, setBrandWebsite] = useState(user.brand_website || '');
-  const [brandDescription, setBrandDescription] = useState(user.brand_description || '');
-  const [socialMediaLinks, setSocialMediaLinks] = useState<Record<string, string>>(user.social_media_links || {});
+  const [brandWebsite, setBrandWebsite] = useState(user?.brand_website || '');
+  const [brandDescription, setBrandDescription] = useState(user?.brand_description || '');
+  const [socialMediaLinks, setSocialMediaLinks] = useState<Record<string, string>>(user?.social_media_links || {});
   const [isEditing, setIsEditing] = useState(false);
 
   const handleSave = () => {
@@ -1403,9 +1407,9 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
     setBrandName(keyword.brand_name);
     setVariants(keyword.variants?.join(', ') || '');
     setRssUrl(keyword.google_alert_rss_url || '');
-    setBrandWebsite(user.brand_website || '');
-    setBrandDescription(user.brand_description || '');
-    setSocialMediaLinks(user.social_media_links || {});
+    setBrandWebsite(user?.brand_website || '');
+    setBrandDescription(user?.brand_description || '');
+    setSocialMediaLinks(user?.social_media_links || {});
     setIsEditing(false);
   };
 
@@ -1530,7 +1534,7 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
           </div>
 
           {/* Brand Website */}
-          {user.brand_website && (
+          {user?.brand_website && (
             <div>
               <span className="text-sm font-medium">Brand Website: </span>
               <a 
@@ -1545,7 +1549,7 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
           )}
 
           {/* Brand Description */}
-          {user.brand_description && (
+          {user?.brand_description && (
             <div>
               <span className="text-sm font-medium">Brand Description: </span>
               <span className="text-sm text-muted-foreground whitespace-pre-wrap">
@@ -1555,7 +1559,7 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
           )}
 
           {/* Social Media Links */}
-          {user.social_media_links && Object.keys(user.social_media_links).length > 0 && (
+          {user?.social_media_links && user.social_media_links && typeof user.social_media_links === 'object' && Object.keys(user.social_media_links).length > 0 && (
             <div>
               <span className="text-sm font-medium">Social Media: </span>
               <div className="mt-1">
