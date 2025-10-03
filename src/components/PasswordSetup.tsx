@@ -27,11 +27,11 @@ export function PasswordSetup() {
   const type = searchParams.get('type');
 
   useEffect(() => {
-    // Check if this is a valid invitation link
-    if (type !== 'invite' || !accessToken) {
-      setError("Invalid invitation link. Please check your email for the correct link.");
-      return;
-    }
+  // Check if this is a valid confirmation link
+  if (type !== 'signup' || !accessToken) {
+    setError("Invalid confirmation link. Please check your email for the correct link.");
+    return;
+  }
 
     // Set the session using the tokens from the URL
     const setSession = async () => {
@@ -43,15 +43,15 @@ export function PasswordSetup() {
 
         if (error) {
           console.error("Error setting session:", error);
-          setError("Invalid or expired invitation link. Please request a new invitation.");
+          setError("Invalid or expired confirmation link. Please request a new confirmation email.");
           return;
         }
 
         // Session set successfully, user can now set their password
-        console.log("✅ [PASSWORD_SETUP] Session set successfully from invitation link");
+        console.log("✅ [PASSWORD_SETUP] Session set successfully from confirmation link");
       } catch (error) {
         console.error("Error in setSession:", error);
-        setError("Failed to validate invitation link. Please try again.");
+        setError("Failed to validate confirmation link. Please try again.");
       }
     };
 
@@ -147,15 +147,15 @@ export function PasswordSetup() {
     }
   };
 
-  // Show error if invalid invitation link
-  if (error && (type !== 'invite' || !accessToken)) {
+  // Show error if invalid confirmation link
+  if (error && (type !== 'signup' || !accessToken)) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl text-destructive">Invalid Invitation</CardTitle>
+            <CardTitle className="text-2xl text-destructive">Invalid Confirmation Link</CardTitle>
             <CardDescription>
-              There was a problem with your invitation link
+              There was a problem with your confirmation link
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
