@@ -6,6 +6,7 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { 
   AlertTriangle, 
   CheckCircle, 
@@ -25,11 +26,18 @@ import {
   Filter,
   Search,
   Download,
-  Settings
+  Settings,
+  ExternalLink,
+  Database,
+  Terminal,
+  Copy,
+  Eye,
+  ChevronDown
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createApiUrl } from '@/lib/api';
 import { useQueueMonitoring } from '../../hooks/useQueueMonitoring';
+import { ErrorLogDetailsModal } from './ErrorLogDetailsModal';
 
 // Types
 interface QueueHealthData {
@@ -84,6 +92,22 @@ interface ErrorLog {
   stackTrace?: string;
   requestData?: any;
   responseData?: any;
+  logLocations?: {
+    vercelUrl: string;
+    databaseId: string;
+    consoleFilter: string;
+    supportTicketId: string;
+  };
+  context?: {
+    environment: 'production' | 'staging';
+    requestId: string;
+    relatedErrors: string[];
+  };
+  guidance?: {
+    severity: 'auto-resolvable' | 'user-action' | 'support-required';
+    instructions: string[];
+    suggestedActions: string[];
+  };
 }
 
 interface RetryAnalytics {
@@ -93,6 +117,62 @@ interface RetryAnalytics {
   commonFailureReasons: Array<{ reason: string; count: number; percentage: number }>;
   retryDistribution: Array<{ retryCount: number; frequency: number }>;
 }
+
+// Utility functions for log access
+const getVercelLogUrl = (errorId: string, timestamp: string) => {
+  const projectName = 'brand-protected';
+  const timestampParam = new Date(timestamp).toISOString();
+  return `https://vercel.com/dashboard/projects/${projectName}/functions/logs?filter=${errorId}&timestamp=${timestampParam}`;
+};
+
+const getConsoleInstructions = (errorType: string, timestamp: string) => {
+  return {
+    steps: [
+      "1. Open browser Developer Tools (F12)",
+      "2. Go to Console tab", 
+      "3. Look for errors with timestamp: " + new Date(timestamp).toLocaleString(),
+      "4. Filter by 'Brand Protected' prefix"
+    ],
+    filter: `Brand Protected ${errorType}`,
+    timestamp: new Date(timestamp).toISOString()
+  };
+};
+
+const getErrorGuidance = (errorType: string, message: string) => {
+  const guidanceMap: Record<string, any> = {
+    'queue.history_record_error': {
+      severity: 'auto-resolvable',
+      instructions: ['This is a database logging issue that will resolve automatically'],
+      actions: ['Monitor queue status', 'Check system health dashboard']
+    },
+    'debug.automation_status.logs_error': {
+      severity: 'auto-resolvable', 
+      instructions: ['Query timeout issue - system is working normally'],
+      actions: ['Check Vercel logs for more details', 'Monitor API performance']
+    },
+    'queue-error-logs.error': {
+      severity: 'auto-resolvable',
+      instructions: ['Log query optimization in progress'],
+      actions: ['System will auto-recover', 'Check back in 5 minutes']
+    },
+    'fetch.error': {
+      severity: 'user-action',
+      instructions: ['Check your API keys and rate limits'],
+      actions: ['Verify API credentials', 'Check quota usage', 'Wait for rate limit reset']
+    },
+    'network.error': {
+      severity: 'auto-resolvable',
+      instructions: ['Network connectivity issue - will retry automatically'],
+      actions: ['Check internet connection', 'Monitor system status']
+    }
+  };
+  
+  return guidanceMap[errorType] || {
+    severity: 'support-required',
+    instructions: ['Unknown error type - contact support'],
+    actions: ['Copy log ID', 'Contact support team']
+  };
+};
 
 export function QueueErrorMonitoring() {
   const [healthData, setHealthData] = useState<QueueHealthData | null>(null);
@@ -108,7 +188,65 @@ export function QueueErrorMonitoring() {
   const [severityFilter, setSeverityFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   
+  // Modal state
+  const [selectedErrorLog, setSelectedErrorLog] = useState<ErrorLog | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  
   const { toast } = useToast();
+
+  // Log access functions
+  const openVercelLogs = (errorId: string, timestamp: string) => {
+    const url = getVercelLogUrl(errorId, timestamp);
+    window.open(url, '_blank');
+    toast({
+      title: "Opening Vercel Logs",
+      description: "Vercel dashboard opened in new tab"
+    });
+  };
+
+  const showDatabaseLogs = async (errorId: string) => {
+    try {
+      // Fetch related database logs
+      const response = await fetch(createApiUrl(`/api/admin/queue-error-logs?limit=10&search=${errorId}`));
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: "Database Logs",
+          description: `Found ${data.logs?.length || 0} related log entries`
+        });
+        // Could open a modal here to show the logs
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch database logs",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const showConsoleInstructions = (log: ErrorLog) => {
+    const instructions = getConsoleInstructions(log.errorType, log.timestamp);
+    const message = instructions.steps.join('\n');
+    toast({
+      title: "Console Log Instructions",
+      description: message,
+      duration: 10000
+    });
+  };
+
+  const copyLogId = (errorId: string) => {
+    navigator.clipboard.writeText(errorId);
+    toast({
+      title: "Log ID Copied",
+      description: `Log ID ${errorId} copied to clipboard`
+    });
+  };
+
+  const openErrorDetails = (log: ErrorLog) => {
+    setSelectedErrorLog(log);
+    setIsDetailsModalOpen(true);
+  };
 
   // Add queue monitoring hook for basic queue status
   const {
@@ -149,8 +287,24 @@ export function QueueErrorMonitoring() {
       }
 
       if (logsResult.success) {
-        // Use the transformed logs from the new endpoint
-        setErrorLogs(logsResult.data?.errors || []);
+        // Use the transformed logs from the new endpoint and enhance with guidance
+        const rawLogs = logsResult.data?.errors || [];
+        const enhancedLogs = rawLogs.map((log: ErrorLog) => ({
+          ...log,
+          guidance: log.guidance || getErrorGuidance(log.errorType, log.errorMessage),
+          logLocations: log.logLocations || {
+            vercelUrl: getVercelLogUrl(log.id, log.timestamp),
+            databaseId: log.id,
+            consoleFilter: `Brand Protected ${log.errorType}`,
+            supportTicketId: `BP-${log.id.slice(0, 8)}`
+          },
+          context: log.context || {
+            environment: 'production',
+            requestId: log.id,
+            relatedErrors: []
+          }
+        }));
+        setErrorLogs(enhancedLogs);
       }
 
       if (analyticsResult.success) {
@@ -672,6 +826,7 @@ export function QueueErrorMonitoring() {
                       <TableHead>Message</TableHead>
                       <TableHead>Severity</TableHead>
                       <TableHead>Retries</TableHead>
+                      <TableHead>Log Access</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -698,6 +853,38 @@ export function QueueErrorMonitoring() {
                         </TableCell>
                         <TableCell className="text-center">
                           {log.retryCount}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <Eye className="h-4 w-4" />
+                                <span className="sr-only">View logs</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openErrorDetails(log)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openVercelLogs(log.id, log.timestamp)}>
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Vercel Dashboard
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => showDatabaseLogs(log.id)}>
+                                <Database className="h-4 w-4 mr-2" />
+                                Database Logs
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => showConsoleInstructions(log)}>
+                                <Terminal className="h-4 w-4 mr-2" />
+                                Console Instructions
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => copyLogId(log.id)}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Copy Log ID
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -814,6 +1001,13 @@ export function QueueErrorMonitoring() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Error Log Details Modal */}
+      <ErrorLogDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        errorLog={selectedErrorLog}
+      />
     </div>
   );
 }
