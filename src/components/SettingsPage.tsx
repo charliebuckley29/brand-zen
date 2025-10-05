@@ -15,7 +15,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { TimezoneSettings } from "@/components/TimezoneSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { startMonitoring } from "@/lib/monitoring";
 import { Switch } from "@/components/ui/switch";
 import { useSourcePreferences } from "@/hooks/useSourcePreferences";
 import { useGlobalSettings } from "@/hooks/useGlobalSettings";
@@ -385,11 +384,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
         setNewBrandName(keyword.brand_name as string);
         setNewVariants((keyword.variants as string[]) || []);
         setSetupDialogOpen(false);
-        try {
-          await startMonitoring(keyword.id as string);
-        } catch (err) {
-          console.error("Failed to start monitoring:", err);
-        }
+        // Monitoring is handled automatically by backend queue system
         toast({
           title: "Brand created",
           description: "Your brand is now set up for monitoring.",

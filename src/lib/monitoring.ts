@@ -74,25 +74,6 @@ export async function getUserMentions(page = 1, pageSize = 50, sourceTypes?: str
   return { data: data || [], count: count || 0 } as PaginatedResponse<any>;
 }
 
-export async function startMonitoring(keywordId: string) {
-  const rssEnabled = (typeof window !== 'undefined') ? localStorage.getItem('rss_news_ingestion') !== 'false' : true;
-  const googleAlertsEnabled = (typeof window !== 'undefined') ? localStorage.getItem('google_alerts_enabled') !== 'false' : true;
-  
-  const calls: any[] = [supabase.functions.invoke('aggregate-sources', { body: { keywordId } })];
-  if (rssEnabled) calls.push(supabase.functions.invoke('monitor-news', { body: { keywordId } }));
-  if (googleAlertsEnabled) calls.push(supabase.functions.invoke('google-alerts', { body: {} }));
-  
-  const results = await Promise.allSettled(calls);
-  const agg = results[0] as any;
-  const news = results[1] as any;
-  const alerts = results[2] as any;
-  
-  if (agg?.value?.error && news?.value?.error && alerts?.value?.error) {
-    throw agg.value.error || news.value.error || alerts.value.error;
-  }
-  
-  return (agg?.value?.data) || (news?.value?.data) || (alerts?.value?.data);
-}
 
 export async function analyzeSentiment(text: string): Promise<number> {
   // Simple sentiment analysis - in a real app, you'd use a proper service
@@ -201,11 +182,7 @@ export async function reAllowExclusion(exclusionId: string, keywordId: string) {
 
   if (error) throw error;
 
-  try {
-    await startMonitoring(keywordId);
-  } catch (e) {
-    // ignore background refresh errors
-  }
+  // Monitoring is handled automatically by backend queue system
 
   return { success: true };
 }

@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { X, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { startMonitoring } from "@/lib/monitoring";
 
 interface BrandSetupProps {
   onComplete: () => void;
@@ -52,10 +51,7 @@ export function BrandSetup({ onComplete }: BrandSetupProps) {
 
       if (error) throw error;
 
-      // Start monitoring automatically
-      if (keyword) {
-        await startMonitoring(keyword.id);
-      }
+      // Monitoring is handled automatically by backend queue system
 
       toast({
         title: "Brand setup complete!",

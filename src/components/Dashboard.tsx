@@ -216,28 +216,20 @@ export function Dashboard() {
   const handleRefreshMentions = async () => {
     try {
       setIsRefreshing(true);
-      const googleAlertsEnabled = (typeof window !== 'undefined') ? localStorage.getItem('google_alerts_enabled') !== 'false' : true;
       
-      const calls = [supabase.functions.invoke('aggregate-sources', { body: {} })];
-      if (googleAlertsEnabled) calls.push(supabase.functions.invoke('google-alerts', { body: {} }));
-      
-      const results = await Promise.allSettled(calls as any);
-      
-      // Wait a moment for mentions to be processed, then refresh
-      setTimeout(async () => {
-        await fetchMentions();
-      }, 2000);
+      // Just refresh the mentions display - fetching is handled automatically by backend queue
+      await fetchMentions();
       
       toast({ 
-        title: "Fetch started", 
-        description: "Checking all sources for new mentions. Results will appear shortly." 
+        title: "Mentions refreshed", 
+        description: "Your mentions are automatically fetched by our queue system. Display updated." 
       });
     } catch (err: any) {
-      console.error("Error during manual fetch:", err);
+      console.error("Error refreshing mentions:", err);
       toast({ 
-        title: "Queue undergoing maintenance", 
-        description: "Our systems are currently being updated. Please try again in a few minutes.", 
-        variant: "destructive" 
+        title: "Refresh failed", 
+        description: "Unable to refresh mentions display. Please try again.", 
+        variant: "destructive"
       });
     } finally {
       setIsRefreshing(false);

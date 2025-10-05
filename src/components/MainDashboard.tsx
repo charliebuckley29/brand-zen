@@ -8,7 +8,6 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ModeratorPanel } from "@/components/ModeratorPanel";
 import { supabase } from "@/integrations/supabase/client";
-import { startMonitoring } from "@/lib/monitoring";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useNavigation } from "@/contexts/NavigationContext";

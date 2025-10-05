@@ -24,27 +24,12 @@ export function AutomationStatus({ className, onMentionsUpdated }: AutomationSta
       await updateAutomationEnabled(enabled);
       
       if (enabled) {
-        // Trigger immediate fetch when automation is enabled
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: automatedData, error: automatedError } = await supabase.functions.invoke('automated-mention-fetch', { 
-            body: { 
-              check_frequencies: false, 
-              manual: true,
-              user_id: user.id
-            } 
-          });
-
-          if (automatedError) {
-            console.error('Initial automation fetch error:', automatedError);
-          } else {
-            console.log('Automation enabled, initial fetch successful:', automatedData);
-            if (onMentionsUpdated) {
-              setTimeout(async () => {
-                await onMentionsUpdated();
-              }, 2000);
-            }
-          }
+        // Automation is handled automatically by backend queue system
+        // Just refresh the mentions display after a short delay
+        if (onMentionsUpdated) {
+          setTimeout(async () => {
+            await onMentionsUpdated();
+          }, 2000);
         }
 
         toast({
