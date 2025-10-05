@@ -31,6 +31,10 @@ interface User {
   brand_website?: string | null;
   brand_description?: string | null;
   social_media_links?: Record<string, string>;
+  user_status?: 'pending_approval' | 'approved' | 'rejected' | 'suspended';
+  approved_at?: string | null;
+  approved_by?: string | null;
+  rejection_reason?: string | null;
 }
 
 interface UserKeywords {
@@ -78,6 +82,7 @@ export function ModeratorPanel() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [resendingEmails, setResendingEmails] = useState<Set<string>>(new Set());
   const [sendingPasswordReset, setSendingPasswordReset] = useState<Set<string>>(new Set());
+  const [approvalStatusFilter, setApprovalStatusFilter] = useState<string>('all');
   const { toast } = useToast();
 
   // Helper function to check if a user can be edited by moderators
@@ -94,6 +99,23 @@ export function ModeratorPanel() {
       default: return 'secondary';
     }
   };
+
+  // Helper function to get approval status badge variant
+  const getApprovalStatusBadgeVariant = (status: string | undefined) => {
+    switch (status) {
+      case 'approved': return 'default';
+      case 'pending_approval': return 'secondary';
+      case 'rejected': return 'destructive';
+      case 'suspended': return 'outline';
+      default: return 'secondary';
+    }
+  };
+
+  // Filter users based on approval status
+  const filteredUsers = users.filter(user => {
+    if (approvalStatusFilter === 'all') return true;
+    return user.user_status === approvalStatusFilter;
+  });
 
   useEffect(() => {
     fetchData();
@@ -134,7 +156,11 @@ export function ModeratorPanel() {
         email_confirmed_at: user.email_confirmed_at,
         brand_website: user.profile?.brand_website || null,
         brand_description: user.profile?.brand_description || null,
-        social_media_links: user.profile?.social_media_links || {}
+        social_media_links: user.profile?.social_media_links || {},
+        user_status: user.profile?.user_status || 'pending_approval',
+        approved_at: user.profile?.approved_at || null,
+        approved_by: user.profile?.approved_by || null,
+        rejection_reason: user.profile?.rejection_reason || null
       }));
 
       console.log("📊 [MODERATOR PANEL] Loaded users data:", {
@@ -694,6 +720,28 @@ export function ModeratorPanel() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Filter controls */}
+              <div className="mb-4 flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="approval-filter">Filter by Status:</Label>
+                  <Select value={approvalStatusFilter} onValueChange={setApprovalStatusFilter}>
+                    <SelectTrigger id="approval-filter" className="w-48">
+                      <SelectValue placeholder="All users" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All users</SelectItem>
+                      <SelectItem value="pending_approval">Pending Approval</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                      <SelectItem value="suspended">Suspended</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Showing {filteredUsers.length} of {users.length} users
+                </div>
+              </div>
+              
               {/* Desktop table view */}
               <div className="hidden md:block">
                 <Table>
@@ -701,6 +749,7 @@ export function ModeratorPanel() {
                     <TableRow>
                       <TableHead>User Name</TableHead>
                       <TableHead>Email Status</TableHead>
+                      <TableHead>Approval Status</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead>Fetch Frequency</TableHead>
@@ -708,7 +757,7 @@ export function ModeratorPanel() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users.map((user) => (
+                    {filteredUsers.map((user) => (
                       <TableRow key={user.id}>
                          <TableCell>
                            {canEditUser(user.user_type) ? (
@@ -782,6 +831,25 @@ export function ModeratorPanel() {
                             </div>
                           </TableCell>
                           <TableCell>
+                            <div className="flex flex-col gap-1">
+                              <Badge variant={getApprovalStatusBadgeVariant(user.user_status)}>
+                                {user.user_status?.replace('_', ' ') || 'pending_approval'}
+                              </Badge>
+                              {user.user_status === 'approved' && user.approved_at && (
+                                <span className="text-xs text-muted-foreground">
+                                  Approved {new Date(user.approved_at).toLocaleDateString()}
+                                </span>
+                              )}
+                              {user.user_status === 'rejected' && user.rejection_reason && (
+                                <span className="text-xs text-red-600" title={user.rejection_reason}>
+                                  {user.rejection_reason.length > 30 
+                                    ? user.rejection_reason.substring(0, 30) + '...' 
+                                    : user.rejection_reason}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
                             <Badge variant={getUserBadgeVariant(user.user_type)}>
                               {user.user_type.replace('_', ' ')}
                             </Badge>
@@ -836,7 +904,7 @@ export function ModeratorPanel() {
 
               {/* Mobile card view */}
               <div className="md:hidden space-y-4">
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                   <Card key={user.id} className="p-4">
                     <div className="space-y-3">
                       <div className="flex items-start justify-between">
@@ -894,6 +962,17 @@ export function ModeratorPanel() {
                                   <span className="text-xs">Email Unconfirmed</span>
                                 </div>
                               )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={getApprovalStatusBadgeVariant(user.user_status)} className="text-xs">
+                                {user.user_status?.replace('_', ' ') || 'pending_approval'}
+                              </Badge>
+                              {user.user_status === 'approved' && user.approved_at && (
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(user.approved_at).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
                               <div className="flex gap-1">
                                 {!user.email_confirmed && user.email !== 'Email not available' && (
                                   <Button
