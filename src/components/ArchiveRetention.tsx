@@ -7,37 +7,21 @@ import { Alert, AlertDescription } from './ui/alert';
 import { Badge } from './ui/badge';
 import { Trash2, Settings, Save, AlertTriangle } from 'lucide-react';
 import { createApiUrl } from '../lib/api';
+import { useGlobalSettings } from '../hooks/useGlobalSettings';
 
-interface RetentionSettings {
-  retentionDays: number;
-  description: string;
-}
 
 export default function ArchiveRetention() {
-  const [settings, setSettings] = useState<RetentionSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { settings: globalSettings, loading: settingsLoading, refreshSettings } = useGlobalSettings();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [newRetentionDays, setNewRetentionDays] = useState<number>(90);
 
-  const fetchRetentionSettings = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(createApiUrl('/api/admin/archive-retention'));
-      const data = await response.json();
+  // Get retention days from global settings
+  const retentionDays = globalSettings.archive_retention_days || 90;
 
-      if (data.success) {
-        setSettings(data);
-        setNewRetentionDays(data.retentionDays);
-      } else {
-        setMessage({ type: 'error', text: data.error });
-      }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to fetch retention settings' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    setNewRetentionDays(retentionDays);
+  }, [retentionDays]);
 
   const updateRetention = async () => {
     try {
@@ -57,7 +41,7 @@ export default function ArchiveRetention() {
 
       if (data.success) {
         setMessage({ type: 'success', text: data.message });
-        await fetchRetentionSettings();
+        await refreshSettings(); // Refresh global settings
       } else {
         setMessage({ type: 'error', text: data.error });
       }
@@ -78,7 +62,7 @@ export default function ArchiveRetention() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'delete_old_archives',
-          retentionDays: settings?.retentionDays || 90
+          retentionDays: retentionDays
         })
       });
 
@@ -96,11 +80,9 @@ export default function ArchiveRetention() {
     }
   };
 
-  useEffect(() => {
-    fetchRetentionSettings();
-  }, []);
+  // No need for useEffect since useGlobalSettings handles loading
 
-  if (loading) {
+  if (settingsLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
@@ -140,17 +122,17 @@ export default function ArchiveRetention() {
             <div>
               <Label className="text-sm font-medium">Retention Period</Label>
               <div className="text-2xl font-bold text-blue-600">
-                {settings?.retentionDays || 90} days
+                {retentionDays} days
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {settings?.description || 'Archived logs are automatically deleted after this period'}
+                Archived logs are automatically deleted after this period
               </p>
             </div>
             
             <div className="pt-4 border-t">
               <h4 className="font-medium mb-2">How it works:</h4>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Archives older than {settings?.retentionDays || 90} days are automatically deleted</li>
+                <li>• Archives older than {retentionDays} days are automatically deleted</li>
                 <li>• Cleanup runs after each archiving session</li>
                 <li>• Files are removed from Supabase Storage and metadata</li>
                 <li>• You can manually trigger cleanup anytime</li>
@@ -183,18 +165,18 @@ export default function ArchiveRetention() {
 
             <Button
               onClick={updateRetention}
-              disabled={actionLoading === 'update' || newRetentionDays === settings?.retentionDays}
+              disabled={actionLoading === 'update' || newRetentionDays === retentionDays}
               className="w-full"
             >
               <Save className="h-4 w-4 mr-2" />
               {actionLoading === 'update' ? 'Updating...' : 'Update Retention'}
             </Button>
 
-            {newRetentionDays !== settings?.retentionDays && (
+            {newRetentionDays !== retentionDays && (
               <Alert className="border-yellow-200 bg-yellow-50">
                 <AlertTriangle className="h-4 w-4 text-yellow-600" />
                 <AlertDescription className="text-yellow-800">
-                  This will change the retention period from {settings?.retentionDays || 90} to {newRetentionDays} days.
+                  This will change the retention period from {retentionDays} to {newRetentionDays} days.
                 </AlertDescription>
               </Alert>
             )}
@@ -213,7 +195,7 @@ export default function ArchiveRetention() {
         <CardContent>
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              Manually delete archive files older than the current retention period ({settings?.retentionDays || 90} days).
+              Manually delete archive files older than the current retention period ({retentionDays} days).
               This action cannot be undone.
             </p>
             
