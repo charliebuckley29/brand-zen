@@ -1046,7 +1046,6 @@ export function ModeratorPanel() {
                           </Select>
                         </div>
                       </div>
-                    </div>
                   </Card>
                 ))}
               </div>
