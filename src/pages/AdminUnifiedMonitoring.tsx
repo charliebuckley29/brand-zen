@@ -11,6 +11,7 @@ import { ApiMonitoring } from '../components/admin/ApiMonitoring';
 import { UserMonitoring } from '../components/admin/UserMonitoring';
 import { AlertMonitoring } from '../components/admin/AlertMonitoring';
 import { SentimentWorkerMonitoring } from '../components/SentimentWorkerMonitoring';
+import LogArchives from '../components/LogArchives';
 
 export default function AdminUnifiedMonitoring() {
   const { userType, loading: roleLoading } = useUserRole();
@@ -85,12 +86,13 @@ export default function AdminUnifiedMonitoring() {
 
         {/* Main Content */}
         <Tabs defaultValue="system" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="system">System</TabsTrigger>
             <TabsTrigger value="api">APIs</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="alerts">Alerts</TabsTrigger>
             <TabsTrigger value="sentiment">Sentiment</TabsTrigger>
+            <TabsTrigger value="archives">Log Archives</TabsTrigger>
         </TabsList>
 
           <TabsContent value="system" className="space-y-6">
@@ -111,6 +113,10 @@ export default function AdminUnifiedMonitoring() {
 
           <TabsContent value="sentiment" className="space-y-6">
             <SentimentWorkerMonitoring />
+        </TabsContent>
+
+          <TabsContent value="archives" className="space-y-6">
+            <LogArchives />
         </TabsContent>
       </Tabs>
       </div>
