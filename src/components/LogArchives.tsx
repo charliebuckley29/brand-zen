@@ -13,6 +13,8 @@ interface ArchiveFile {
   archive_date: string;
   created_at: string;
   batch_number: number;
+  time_range_from?: string;
+  time_range_to?: string;
 }
 
 interface ArchiveStats {
@@ -237,11 +239,15 @@ export default function LogArchives() {
                     <div className="text-sm text-gray-500">
                       {Math.round(file.file_size / (1024 * 1024) * 100) / 100} MB • 
                       {file.log_count.toLocaleString()} logs • 
-                      Batch {file.batch_number} • 
-                      Created: {new Date(file.created_at).toLocaleDateString()}
+                      Batch {file.batch_number}
                     </div>
+                    {file.time_range_from && file.time_range_to && (
+                      <div className="text-sm text-blue-600 font-medium">
+                        📅 {new Date(file.time_range_from).toLocaleString()} → {new Date(file.time_range_to).toLocaleString()}
+                      </div>
+                    )}
                     <div className="text-xs text-gray-400">
-                      Path: {file.file_path}
+                      Created: {new Date(file.created_at).toLocaleString()} • Path: {file.file_path}
                     </div>
                   </div>
                   <div className="flex gap-2">
