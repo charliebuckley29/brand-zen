@@ -132,7 +132,8 @@ export default function ArchiveRetention() {
             <div className="pt-4 border-t">
               <h4 className="font-medium mb-2">How it works:</h4>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Archives older than {retentionDays} days are automatically deleted</li>
+                <li>• Archives containing logs older than {retentionDays} days are automatically deleted</li>
+                <li>• Retention is based on the age of logs inside the archive, not when the archive was created</li>
                 <li>• Cleanup runs after each archiving session</li>
                 <li>• Files are removed from Supabase Storage and metadata</li>
                 <li>• You can manually trigger cleanup anytime</li>
@@ -195,7 +196,8 @@ export default function ArchiveRetention() {
         <CardContent>
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              Manually delete archive files older than the current retention period ({retentionDays} days).
+              Manually delete archive files containing logs older than the current retention period ({retentionDays} days).
+              Retention is based on the age of logs inside the archive, not when the archive was created.
               This action cannot be undone.
             </p>
             
