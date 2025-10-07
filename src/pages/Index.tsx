@@ -99,6 +99,11 @@ const IndexContent = () => {
   // Show pending approval if user status is not approved or doesn't have RSS URL
   // Handle emergency signin - redirect to settings
   if (user && searchParams.get('emergency') === 'true') {
+    console.log("🔧 [INDEX] Emergency signin detected, rendering SettingsPage with params:", {
+      emergency: searchParams.get('emergency'),
+      tab: searchParams.get('tab'),
+      allParams: Object.fromEntries(searchParams.entries())
+    });
     return (
       <SettingsPage 
         onSignOut={handleSignOut}

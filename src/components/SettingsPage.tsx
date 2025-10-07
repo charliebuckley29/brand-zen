@@ -120,6 +120,14 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   // Handle URL parameters for tab navigation
   useEffect(() => {
     const tab = searchParams.get('tab');
+    const emergency = searchParams.get('emergency');
+    
+    console.log("🔧 [SETTINGS_PAGE] URL parameters changed:", {
+      tab,
+      emergency,
+      allParams: Object.fromEntries(searchParams.entries())
+    });
+    
     if (tab === 'notifications') {
       setActiveTab('notifications');
     } else if (tab === 'security') {
