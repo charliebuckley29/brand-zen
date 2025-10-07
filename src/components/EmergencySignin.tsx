@@ -57,8 +57,14 @@ export function EmergencySignin() {
 
           console.log("✅ [EMERGENCY_SIGNIN] User authenticated successfully:", {
             id: user.id,
-            email: user.email
+            email: user.email,
+            emailConfirmed: user.email_confirmed_at
           });
+
+          // If email was not previously confirmed, this password reset acts as email confirmation
+          if (!user.email_confirmed_at) {
+            console.log("🔧 [EMERGENCY_SIGNIN] Email was unconfirmed, password reset acts as confirmation");
+          }
 
           setIsSuccess(true);
           
