@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { MainDashboard } from "@/components/MainDashboard";
 import { Auth } from "@/components/Auth";
 import { ProfileCompletion } from "@/components/ProfileCompletion";
 import { PendingApproval } from "@/components/PendingApproval";
+import { SettingsPage } from "@/components/SettingsPage";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
@@ -25,6 +27,8 @@ const IndexContent = () => {
   const [user, setUser] = useState<any>(null);
   const [hasKeywords, setHasKeywords] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { profileData, isProfileComplete, loading: profileLoading, updateProfile, refreshProfile } = useProfileCompletion();
   const { status: userStatus, hasRssUrl, profile, keywords } = useUserStatus();
   const { unreadCount } = useNotifications();
@@ -93,6 +97,15 @@ const IndexContent = () => {
   }
 
   // Show pending approval if user status is not approved or doesn't have RSS URL
+  // Handle emergency signin - redirect to settings
+  if (user && searchParams.get('emergency') === 'true') {
+    return (
+      <SettingsPage 
+        onSignOut={handleSignOut}
+      />
+    );
+  }
+
   if (user && (userStatus === 'pending_approval' || userStatus === 'rejected' || userStatus === 'suspended' || userStatus === 'error')) {
     return (
       <PendingApproval 

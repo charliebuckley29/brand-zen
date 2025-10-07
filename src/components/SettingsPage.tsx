@@ -122,6 +122,8 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
     const tab = searchParams.get('tab');
     if (tab === 'notifications') {
       setActiveTab('notifications');
+    } else if (tab === 'security') {
+      setActiveTab('security');
     } else {
       setActiveTab('general');
     }
@@ -132,6 +134,8 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
     setActiveTab(value);
     if (value === 'notifications') {
       setSearchParams({ tab: 'notifications' });
+    } else if (value === 'security') {
+      setSearchParams({ tab: 'security' });
     } else {
       setSearchParams({});
     }
@@ -564,10 +568,11 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="brand">Brand</TabsTrigger>
           <TabsTrigger value="sources">Sources</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
 
@@ -1501,6 +1506,208 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                     <div className="text-sm text-gray-500">No quota data available</div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="security" className="space-y-6">
+          <div className="grid gap-6">
+            {/* Emergency Alert */}
+            {searchParams.get('emergency') === 'true' && (
+              <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
+                <AlertCircle className="h-4 w-4 text-orange-600" />
+                <AlertTitle className="text-orange-800 dark:text-orange-200">
+                  Emergency Access - Password Reset Required
+                </AlertTitle>
+                <AlertDescription className="text-orange-700 dark:text-orange-300">
+                  You've been signed in via password reset link. For your security, please change your password immediately.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Password Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Lock className="h-5 w-5" />
+                  <span>Password & Security</span>
+                  {searchParams.get('emergency') === 'true' && (
+                    <Badge variant="destructive" className="ml-2">
+                      Action Required
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  Manage your account password and security settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Lock className="h-4 w-4" />
+                    <div>
+                      <h4 className="text-sm font-medium">Password</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Change your account password
+                      </p>
+                    </div>
+                  </div>
+                  <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant={searchParams.get('emergency') === 'true' ? 'default' : 'outline'} 
+                        size="sm"
+                        className={searchParams.get('emergency') === 'true' ? 'bg-orange-600 hover:bg-orange-700' : ''}
+                      >
+                        {searchParams.get('emergency') === 'true' ? 'Reset Password Now' : 'Change Password'}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>
+                          {searchParams.get('emergency') === 'true' ? 'Reset Your Password' : 'Change Password'}
+                        </DialogTitle>
+                        <DialogDescription>
+                          {searchParams.get('emergency') === 'true' 
+                            ? 'Please set a new secure password for your account.' 
+                            : 'Choose a new password. Your new password must be at least 6 characters long.'
+                          }
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            <Label htmlFor="newPassword">New Password</Label>
+                            <Input
+                              id="newPassword"
+                              type="password"
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              placeholder="Enter new password"
+                              required
+                              disabled={isUpdatingPassword}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                            <Input
+                              id="confirmPassword"
+                              type="password"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              placeholder="Confirm new password"
+                              required
+                              disabled={isUpdatingPassword}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setPasswordDialogOpen(false);
+                              setNewPassword("");
+                              setConfirmPassword("");
+                            }}
+                            disabled={isUpdatingPassword}
+                          >
+                            Cancel
+                          </Button>
+                          <Button type="submit" disabled={isUpdatingPassword}>
+                            {isUpdatingPassword ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Updating...
+                              </>
+                            ) : (
+                              'Update Password'
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Email Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Mail className="h-5 w-5" />
+                  <span>Email Address</span>
+                </CardTitle>
+                <CardDescription>
+                  Manage your account email address
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Mail className="h-4 w-4" />
+                    <div>
+                      <h4 className="text-sm font-medium">Email Address</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Current: {profileData?.email || 'Loading...'}
+                      </p>
+                    </div>
+                  </div>
+                  <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        Change Email
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Change Email Address</DialogTitle>
+                        <DialogDescription>
+                          Enter your new email address. You'll need to verify it before the change takes effect.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleEmailUpdate} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="newEmail">New Email Address</Label>
+                          <Input
+                            id="newEmail"
+                            type="email"
+                            value={newEmail}
+                            onChange={(e) => setNewEmail(e.target.value)}
+                            placeholder="Enter new email address"
+                            required
+                            disabled={isUpdatingEmail}
+                          />
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setEmailDialogOpen(false);
+                              setNewEmail("");
+                            }}
+                            disabled={isUpdatingEmail}
+                          >
+                            Cancel
+                          </Button>
+                          <Button type="submit" disabled={isUpdatingEmail}>
+                            {isUpdatingEmail ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Updating...
+                              </>
+                            ) : (
+                              'Update Email'
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </CardContent>
             </Card>
           </div>
