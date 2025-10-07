@@ -167,21 +167,25 @@ export function EmergencySignin() {
       accessToken: accessToken ? `${accessToken.substring(0, 20)}...` : null,
       refreshToken: refreshToken ? `${refreshToken.substring(0, 20)}...` : null,
       type,
+      customToken: customToken ? `${customToken.substring(0, 20)}...` : null,
+      email,
       hasAccessToken: !!accessToken,
       hasRefreshToken: !!refreshToken,
+      hasCustomToken: !!customToken,
       currentUrl: window.location.href,
       hash: window.location.hash,
       search: window.location.search
     });
 
-    if (accessToken && refreshToken) {
+    // Handle both Supabase tokens and custom tokens
+    if ((accessToken && refreshToken) || (customToken && type === 'recovery')) {
       handleAuthCallback();
     } else {
       console.log("🔧 [EMERGENCY_SIGNIN] No auth tokens found, redirecting to home");
       // No auth tokens, redirect to home
       navigate("/");
     }
-  }, [accessToken, refreshToken, type, navigate, toast]);
+  }, [accessToken, refreshToken, type, customToken, email, navigate, toast]);
 
   if (isLoading) {
     return (
