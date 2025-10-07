@@ -33,6 +33,14 @@ export function EmergencySignin() {
         setIsLoading(true);
         setError(null);
 
+        console.log("🔧 [EMERGENCY_SIGNIN] Starting auth callback with params:", {
+          accessToken: accessToken ? `${accessToken.substring(0, 20)}...` : null,
+          refreshToken: refreshToken ? `${refreshToken.substring(0, 20)}...` : null,
+          type,
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken
+        });
+
         // Check if this is a password recovery callback
         if (type === 'recovery') {
           console.log("🔧 [EMERGENCY_SIGNIN] Processing password recovery callback");
@@ -48,10 +56,13 @@ export function EmergencySignin() {
             throw new Error(`Authentication failed: ${sessionError.message}`);
           }
 
+          console.log("✅ [EMERGENCY_SIGNIN] Session set successfully");
+
           // Verify the user is now authenticated
           const { data: { user }, error: userError } = await supabase.auth.getUser();
           
           if (userError || !user) {
+            console.error("❌ [EMERGENCY_SIGNIN] User verification failed:", userError);
             throw new Error("Failed to authenticate user");
           }
 
@@ -81,6 +92,7 @@ export function EmergencySignin() {
           }, 3000);
 
         } else {
+          console.log("🔧 [EMERGENCY_SIGNIN] Not a recovery callback, type:", type);
           // Not a recovery callback, redirect to home
           navigate("/");
         }
@@ -92,9 +104,18 @@ export function EmergencySignin() {
       }
     };
 
+    console.log("🔧 [EMERGENCY_SIGNIN] useEffect triggered with:", {
+      accessToken: accessToken ? `${accessToken.substring(0, 20)}...` : null,
+      refreshToken: refreshToken ? `${refreshToken.substring(0, 20)}...` : null,
+      type,
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken
+    });
+
     if (accessToken && refreshToken) {
       handleAuthCallback();
     } else {
+      console.log("🔧 [EMERGENCY_SIGNIN] No auth tokens found, redirecting to home");
       // No auth tokens, redirect to home
       navigate("/");
     }
