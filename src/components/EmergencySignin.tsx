@@ -23,9 +23,10 @@ export function EmergencySignin() {
   const { toast } = useToast();
 
   // Get URL parameters from Supabase auth callback
-  const accessToken = searchParams.get('access_token');
-  const refreshToken = searchParams.get('refresh_token');
-  const type = searchParams.get('type');
+  // Handle both query parameters (?) and hash fragments (#)
+  const accessToken = searchParams.get('access_token') || new URLSearchParams(window.location.hash.substring(1)).get('access_token');
+  const refreshToken = searchParams.get('refresh_token') || new URLSearchParams(window.location.hash.substring(1)).get('refresh_token');
+  const type = searchParams.get('type') || new URLSearchParams(window.location.hash.substring(1)).get('type');
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -109,7 +110,10 @@ export function EmergencySignin() {
       refreshToken: refreshToken ? `${refreshToken.substring(0, 20)}...` : null,
       type,
       hasAccessToken: !!accessToken,
-      hasRefreshToken: !!refreshToken
+      hasRefreshToken: !!refreshToken,
+      currentUrl: window.location.href,
+      hash: window.location.hash,
+      search: window.location.search
     });
 
     if (accessToken && refreshToken) {
