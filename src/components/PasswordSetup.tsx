@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
+import { createApiUrl } from "@/lib/api";
 
 export function PasswordSetup() {
   const [password, setPassword] = useState("");
@@ -25,38 +26,72 @@ export function PasswordSetup() {
   const accessToken = searchParams.get('access_token');
   const refreshToken = searchParams.get('refresh_token');
   const type = searchParams.get('type');
+  const customToken = searchParams.get('token');
+  const email = searchParams.get('email');
 
   useEffect(() => {
-  // Check if this is a valid confirmation link
-  if (type !== 'signup' || !accessToken) {
-    setError("Invalid confirmation link. Please check your email for the correct link.");
-    return;
-  }
+    const initializePasswordSetup = async () => {
+      // Handle custom password reset flow (type=recovery with custom token)
+      if (type === 'recovery' && customToken && email) {
+        console.log("🔧 [PASSWORD_SETUP] Processing custom password reset flow");
+        
+        try {
+          // Validate the custom token with the backend
+          const response = await fetch(createApiUrl('/api/auth/validate-password-reset-token'), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token: customToken, email })
+          });
 
-    // Set the session using the tokens from the URL
-    const setSession = async () => {
-      try {
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken || ''
-        });
+          const data = await response.json();
 
-        if (error) {
-          console.error("Error setting session:", error);
-          setError("Invalid or expired confirmation link. Please request a new confirmation email.");
+          if (!response.ok || !data.valid) {
+            setError(data.error || 'Invalid or expired password reset token');
+            return;
+          }
+
+          console.log("✅ [PASSWORD_SETUP] Custom token validated successfully");
+          // Token is valid, user can now set their password
+          return;
+        } catch (error: any) {
+          console.error("❌ [PASSWORD_SETUP] Error validating custom token:", error);
+          setError("Failed to validate password reset token. Please try again.");
           return;
         }
-
-        // Session set successfully, user can now set their password
-        console.log("✅ [PASSWORD_SETUP] Session set successfully from confirmation link");
-      } catch (error) {
-        console.error("Error in setSession:", error);
-        setError("Failed to validate confirmation link. Please try again.");
       }
+
+      // Handle Supabase signup flow (type=signup with access_token)
+      if (type === 'signup' && accessToken) {
+        console.log("🔧 [PASSWORD_SETUP] Processing Supabase signup flow");
+        
+        try {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || ''
+          });
+
+          if (error) {
+            console.error("Error setting session:", error);
+            setError("Invalid or expired confirmation link. Please request a new confirmation email.");
+            return;
+          }
+
+          console.log("✅ [PASSWORD_SETUP] Session set successfully from confirmation link");
+        } catch (error) {
+          console.error("Error in setSession:", error);
+          setError("Failed to validate confirmation link. Please try again.");
+        }
+        return;
+      }
+
+      // Invalid parameters
+      setError("Invalid confirmation link. Please check your email for the correct link.");
     };
 
-    setSession();
-  }, [accessToken, refreshToken, type]);
+    initializePasswordSetup();
+  }, [accessToken, refreshToken, type, customToken, email]);
 
   const validatePassword = (password: string): string | null => {
     if (password.length < 6) {
@@ -98,45 +133,84 @@ export function PasswordSetup() {
     setIsLoading(true);
 
     try {
-      console.log("🔧 [PASSWORD_SETUP] Setting up password for invited user");
+      // Handle custom password reset flow
+      if (type === 'recovery' && customToken && email) {
+        console.log("🔧 [PASSWORD_SETUP] Setting password via custom reset flow");
 
-      // Update the user's password
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      });
-
-      if (error) {
-        console.error("❌ [PASSWORD_SETUP] Error updating password:", error);
-        throw error;
-      }
-
-      console.log("✅ [PASSWORD_SETUP] Password set successfully");
-
-      // Wait a moment for the session to be established
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Check if user is now authenticated
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        console.log("✅ [PASSWORD_SETUP] User authenticated successfully:", {
-          id: user.id,
-          email: user.email,
-          emailConfirmed: user.email_confirmed_at
+        // Call backend API to update password using the custom token
+        const response = await fetch(createApiUrl('/api/auth/reset-password'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            token: customToken, 
+            email: email,
+            newPassword: password 
+          })
         });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to reset password');
+        }
+
+        console.log("✅ [PASSWORD_SETUP] Password reset successfully via custom flow");
 
         setIsSuccess(true);
         toast({
-          title: "Password set successfully!",
-          description: "Your account is now ready. You'll be redirected to the dashboard shortly.",
+          title: "Password reset successfully!",
+          description: "Your password has been updated. You can now sign in with your new password.",
         });
 
-        // Redirect to main app after a short delay
+        // Redirect to sign in page after a short delay
         setTimeout(() => {
           navigate("/");
         }, 2000);
+
       } else {
-        throw new Error("Failed to authenticate user after password setup");
+        // Handle Supabase signup flow
+        console.log("🔧 [PASSWORD_SETUP] Setting up password for invited user");
+
+        // Update the user's password
+        const { error } = await supabase.auth.updateUser({
+          password: password
+        });
+
+        if (error) {
+          console.error("❌ [PASSWORD_SETUP] Error updating password:", error);
+          throw error;
+        }
+
+        console.log("✅ [PASSWORD_SETUP] Password set successfully");
+
+        // Wait a moment for the session to be established
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Check if user is now authenticated
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          console.log("✅ [PASSWORD_SETUP] User authenticated successfully:", {
+            id: user.id,
+            email: user.email,
+            emailConfirmed: user.email_confirmed_at
+          });
+
+          setIsSuccess(true);
+          toast({
+            title: "Password set successfully!",
+            description: "Your account is now ready. You'll be redirected to the dashboard shortly.",
+          });
+
+          // Redirect to main app after a short delay
+          setTimeout(() => {
+            navigate("/");
+          }, 2000);
+        } else {
+          throw new Error("Failed to authenticate user after password setup");
+        }
       }
 
     } catch (error: any) {
@@ -148,7 +222,10 @@ export function PasswordSetup() {
   };
 
   // Show error if invalid confirmation link
-  if (error && (type !== 'signup' || !accessToken)) {
+  if (error && (
+    (type !== 'signup' || !accessToken) && 
+    (type !== 'recovery' || !customToken || !email)
+  )) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <Card className="w-full max-w-md">
