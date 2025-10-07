@@ -619,7 +619,9 @@ export function ModeratorPanel() {
         hasSession: !!session.data.session,
         hasAccessToken: !!session.data.session?.access_token,
         userRole: session.data.session?.user?.user_metadata?.role,
-        userId: session.data.session?.user?.id
+        userId: session.data.session?.user?.id,
+        tokenLength: session.data.session?.access_token?.length,
+        tokenPreview: session.data.session?.access_token?.substring(0, 50) + '...'
       });
 
       if (!session.data.session?.access_token) {
