@@ -70,23 +70,10 @@ export function EmergencySignin() {
             throw new Error(data.error || 'Invalid or expired password reset token');
           }
 
-          // Sign in the user using Supabase admin
-          const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: data.user.email,
-            password: 'temp-password' // This will fail, but we'll handle it
-          });
-
-          if (signInError && signInError.message.includes('Invalid login credentials')) {
-            // This is expected - we need to use the admin API to generate a session
-            // For now, we'll redirect to a special flow
-            console.log("🔧 [EMERGENCY_SIGNIN] Custom token validated, redirecting to password setup");
-            navigate(`/password-setup?token=${customToken}&email=${encodeURIComponent(email || '')}&type=recovery`);
-            return;
-          } else if (signInError) {
-            throw new Error(`Authentication failed: ${signInError.message}`);
-          }
-
-          console.log("✅ [EMERGENCY_SIGNIN] Custom token authentication successful");
+          // Token is valid, redirect to password setup page
+          console.log("🔧 [EMERGENCY_SIGNIN] Custom token validated, redirecting to password setup");
+          navigate(`/password-setup?token=${customToken}&email=${encodeURIComponent(email || '')}&type=recovery`);
+          return;
           
           setIsSuccess(true);
           
