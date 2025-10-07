@@ -22,11 +22,13 @@ export function EmergencySignin() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Get URL parameters from Supabase auth callback
-  // Prioritize query parameters (?) over hash fragments (#)
+  // Get URL parameters from password reset callback
+  // Handle both Supabase tokens and custom tokens
   const accessToken = searchParams.get('access_token') || new URLSearchParams(window.location.hash.substring(1)).get('access_token');
   const refreshToken = searchParams.get('refresh_token') || new URLSearchParams(window.location.hash.substring(1)).get('refresh_token');
   const type = searchParams.get('type') || new URLSearchParams(window.location.hash.substring(1)).get('type');
+  const customToken = searchParams.get('token');
+  const email = searchParams.get('email');
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -38,15 +40,68 @@ export function EmergencySignin() {
           accessToken: accessToken ? `${accessToken.substring(0, 20)}...` : null,
           refreshToken: refreshToken ? `${refreshToken.substring(0, 20)}...` : null,
           type,
+          customToken: customToken ? `${customToken.substring(0, 20)}...` : null,
+          email,
           hasAccessToken: !!accessToken,
           hasRefreshToken: !!refreshToken,
+          hasCustomToken: !!customToken,
           currentUrl: window.location.href,
           hash: window.location.hash,
           search: window.location.search
         });
 
-        // Check if this is a password recovery callback
-        if (type === 'recovery') {
+        // Check if this is a custom password reset token
+        if (customToken && type === 'recovery') {
+          console.log("🔧 [EMERGENCY_SIGNIN] Processing custom password reset token");
+          
+          // Validate the custom token with the backend
+          const response = await fetch('/api/auth/validate-password-reset-token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token: customToken, email })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok || !data.valid) {
+            throw new Error(data.error || 'Invalid or expired password reset token');
+          }
+
+          // Sign in the user using Supabase admin
+          const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: data.user.email,
+            password: 'temp-password' // This will fail, but we'll handle it
+          });
+
+          if (signInError && signInError.message.includes('Invalid login credentials')) {
+            // This is expected - we need to use the admin API to generate a session
+            // For now, we'll redirect to a special flow
+            console.log("🔧 [EMERGENCY_SIGNIN] Custom token validated, redirecting to password setup");
+            navigate(`/password-setup?token=${customToken}&email=${encodeURIComponent(email || '')}&type=recovery`);
+            return;
+          } else if (signInError) {
+            throw new Error(`Authentication failed: ${signInError.message}`);
+          }
+
+          console.log("✅ [EMERGENCY_SIGNIN] Custom token authentication successful");
+          
+          setIsSuccess(true);
+          
+          // Show success toast
+          toast({
+            title: "Emergency Access Granted",
+            description: "You've been signed in via password reset. Please change your password now.",
+            variant: "default"
+          });
+
+          // Auto-redirect to settings after a short delay
+          setTimeout(() => {
+            navigate("/?tab=security&emergency=true");
+          }, 3000);
+
+        } else if (type === 'recovery') {
           console.log("🔧 [EMERGENCY_SIGNIN] Processing password recovery callback");
           
           // Set the session using the tokens from the URL

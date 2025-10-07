@@ -42,6 +42,15 @@ const IndexContent = () => {
   });
 
   useEffect(() => {
+    // Check for password reset tokens in hash fragments on root page
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token') && hash.includes('type=recovery')) {
+      console.log("🔧 [INDEX] Password reset tokens detected in hash, redirecting to auth callback");
+      // Redirect to the auth callback route with the hash parameters
+      window.location.href = `/auth/callback${hash}`;
+      return;
+    }
+
     // Check authentication status
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user || null);
