@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, AlertCircle, Loader2, Shield, ArrowRight } from "lucide-react";
+import { createApiUrl } from "@/lib/api";
 
 /**
  * EmergencySignin Component
@@ -55,7 +56,7 @@ export function EmergencySignin() {
           console.log("🔧 [EMERGENCY_SIGNIN] Processing custom password reset token");
           
           // Validate the custom token with the backend
-          const response = await fetch('/api/auth/validate-password-reset-token', {
+          const response = await fetch(createApiUrl('/api/auth/validate-password-reset-token'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
