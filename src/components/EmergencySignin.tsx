@@ -23,7 +23,7 @@ export function EmergencySignin() {
   const { toast } = useToast();
 
   // Get URL parameters from Supabase auth callback
-  // Handle both query parameters (?) and hash fragments (#)
+  // Prioritize query parameters (?) over hash fragments (#)
   const accessToken = searchParams.get('access_token') || new URLSearchParams(window.location.hash.substring(1)).get('access_token');
   const refreshToken = searchParams.get('refresh_token') || new URLSearchParams(window.location.hash.substring(1)).get('refresh_token');
   const type = searchParams.get('type') || new URLSearchParams(window.location.hash.substring(1)).get('type');
