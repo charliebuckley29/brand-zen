@@ -646,9 +646,14 @@ export function ModeratorPanel() {
       }
 
       if (data.success) {
+        // Get the user's name from the users list for a better message
+        const targetUser = users.find(u => u.id === userId);
+        const actualEmail = data.data?.email || email;
+        const userDisplayName = targetUser?.full_name || actualEmail || 'the user';
+        
         toast({
           title: "Password Reset Sent",
-          description: `Password reset email sent to ${email}. The user can now set a new password without entering their old one.`
+          description: `Password reset email sent to ${userDisplayName}. The user can now set a new password without entering their old one.`
         });
       } else {
         toast({
