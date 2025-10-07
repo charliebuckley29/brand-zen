@@ -33,6 +33,14 @@ const IndexContent = () => {
   const { status: userStatus, hasRssUrl, profile, keywords } = useUserStatus();
   const { unreadCount } = useNotifications();
 
+  // Debug: Log when Index component loads
+  console.log("🔧 [INDEX] Index component loaded with:", {
+    currentPath: window.location.pathname,
+    currentSearch: window.location.search,
+    currentHash: window.location.hash,
+    urlParams: Object.fromEntries(searchParams.entries())
+  });
+
   useEffect(() => {
     // Check authentication status
     supabase.auth.getSession().then(({ data: { session } }) => {

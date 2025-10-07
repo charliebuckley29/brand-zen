@@ -39,7 +39,10 @@ export function EmergencySignin() {
           refreshToken: refreshToken ? `${refreshToken.substring(0, 20)}...` : null,
           type,
           hasAccessToken: !!accessToken,
-          hasRefreshToken: !!refreshToken
+          hasRefreshToken: !!refreshToken,
+          currentUrl: window.location.href,
+          hash: window.location.hash,
+          search: window.location.search
         });
 
         // Check if this is a password recovery callback
