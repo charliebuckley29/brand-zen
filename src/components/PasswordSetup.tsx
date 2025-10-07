@@ -153,7 +153,17 @@ export function PasswordSetup() {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to reset password');
+          // Handle specific error messages from the backend
+          let errorMessage = data.error || 'Failed to reset password';
+          
+          // Provide more helpful error messages for common issues
+          if (errorMessage.includes('Password is known to be weak')) {
+            errorMessage = 'Password is too weak. Please choose a stronger password with a mix of letters, numbers, and symbols.';
+          } else if (errorMessage.includes('Invalid or expired token')) {
+            errorMessage = 'This password reset link has expired or is invalid. Please request a new password reset.';
+          }
+          
+          throw new Error(errorMessage);
         }
 
         console.log("✅ [PASSWORD_SETUP] Password reset successfully via custom flow");
@@ -332,7 +342,7 @@ export function PasswordSetup() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Must be at least 6 characters with uppercase, lowercase, and numbers
+                Must be at least 6 characters with uppercase, lowercase, numbers, and symbols. Avoid common words or patterns.
               </p>
             </div>
 
