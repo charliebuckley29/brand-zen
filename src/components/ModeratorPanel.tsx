@@ -613,19 +613,34 @@ export function ModeratorPanel() {
     try {
       setSendingPasswordReset(prev => new Set(prev).add(userId));
 
+      // Debug: Check session before making request
+      const session = await supabase.auth.getSession();
+      console.log('🔧 [PASSWORD_RESET] Session check:', {
+        hasSession: !!session.data.session,
+        hasAccessToken: !!session.data.session?.access_token,
+        userRole: session.data.session?.user?.user_metadata?.role,
+        userId: session.data.session?.user?.id
+      });
+
+      if (!session.data.session?.access_token) {
+        throw new Error('No valid session found. Please sign in again.');
+      }
+
       const response = await fetch(createApiUrl(API_ENDPOINTS.SEND_PASSWORD_RESET), {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Authorization': `Bearer ${session.data.session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ userId, email }),
       });
 
       const data = await response.json();
+      console.log('🔧 [PASSWORD_RESET] Response:', { status: response.status, data });
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to send password reset email');
+        console.error('❌ [PASSWORD_RESET] Error response:', { status: response.status, data });
+        throw new Error(data.error || data.message || `HTTP ${response.status}: Failed to send password reset email`);
       }
 
       if (data.success) {
