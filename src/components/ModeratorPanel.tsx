@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { cleanHtmlContent } from "@/lib/contentUtils";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Flag, Settings as SettingsIcon, AlertTriangle, Eye, Mail, MailCheck, Globe, Building2 } from "lucide-react";
+import { Users, Flag, Settings as SettingsIcon, AlertTriangle, Eye, Mail, MailCheck, Globe, Building2, Trash2 } from "lucide-react";
 import { SocialMediaLinks } from "@/components/SocialMediaLinks";
 import type { UserType } from "@/hooks/use-user-role";
 import { GlobalSettingSwitch } from "@/components/GlobalSettingSwitch";
@@ -82,12 +82,31 @@ export function ModeratorPanel() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [resendingEmails, setResendingEmails] = useState<Set<string>>(new Set());
   const [sendingPasswordReset, setSendingPasswordReset] = useState<Set<string>>(new Set());
+  const [deletingUsers, setDeletingUsers] = useState<Set<string>>(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [deleteReason, setDeleteReason] = useState('');
   const [approvalStatusFilter, setApprovalStatusFilter] = useState<string>('all');
   const { toast } = useToast();
 
   // Helper function to check if a user can be edited by moderators
   const canEditUser = (userType: UserType) => {
     return userType === 'basic_user';
+  };
+
+  // Helper function to check if a user can be deleted
+  const canDeleteUser = (user: User) => {
+    // Get current user session to check if they're trying to delete themselves
+    return supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) return false;
+      
+      // Cannot delete yourself
+      if (user.id === session.user.id) return false;
+      
+      // Only basic users can be deleted by moderators/admins
+      // Admins can only be deleted by other admins
+      return user.user_type === 'basic_user';
+    });
   };
 
   // Helper function to get badge variant for user types
@@ -678,6 +697,97 @@ export function ModeratorPanel() {
     }
   };
 
+  const deleteUser = async (userId: string, reason: string) => {
+    try {
+      setDeletingUsers(prev => new Set(prev).add(userId));
+
+      const session = await supabase.auth.getSession();
+      console.log('🗑️ [DELETE_USER] Starting deletion process:', {
+        targetUserId: userId,
+        currentUserId: session.data.session?.user?.id,
+        reason: reason
+      });
+
+      if (!session.data.session?.access_token) {
+        throw new Error('No valid session found. Please sign in again.');
+      }
+
+      const response = await fetch(createApiUrl(`${API_ENDPOINTS.DELETE_USER}/${userId}`), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.data.session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          confirmDelete: true,
+          reason: reason || 'No reason provided'
+        }),
+      });
+
+      const data = await response.json();
+      console.log('🗑️ [DELETE_USER] Response:', { status: response.status, data });
+
+      if (!response.ok) {
+        console.error('❌ [DELETE_USER] Error response:', { status: response.status, data });
+        throw new Error(data.error || data.message || `HTTP ${response.status}: Failed to delete user`);
+      }
+
+      if (data.success) {
+        // Remove user from local state
+        setUsers(prev => prev.filter(user => user.id !== userId));
+        setUserKeywords(prev => prev.filter(keyword => keyword.user_id !== userId));
+        
+        // Close delete dialog
+        setDeleteDialogOpen(false);
+        setUserToDelete(null);
+        setDeleteReason('');
+        
+        toast({
+          title: "User Deleted",
+          description: data.message || `User has been permanently deleted.`,
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to delete user",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user",
+        variant: "destructive"
+      });
+    } finally {
+      setDeletingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleDeleteUserClick = async (user: User) => {
+    // Check if user can be deleted
+    const canDelete = await canDeleteUser(user);
+    if (!canDelete) {
+      toast({
+        title: "Cannot Delete User",
+        description: user.user_type === 'basic_user' 
+          ? "You cannot delete your own account" 
+          : "Only basic users can be deleted by moderators",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -848,6 +958,16 @@ export function ModeratorPanel() {
                                   >
                                     {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
                                   </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDeleteUserClick(user)}
+                                    disabled={deletingUsers.has(user.id)}
+                                    className="h-7 px-2 text-xs"
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    {deletingUsers.has(user.id) ? 'Deleting...' : 'Delete'}
+                                  </Button>
                                 </div>
                               </div>
                             </div>
@@ -1015,6 +1135,16 @@ export function ModeratorPanel() {
                                   className="h-6 px-2 text-xs"
                                 >
                                   {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleDeleteUserClick(user)}
+                                  disabled={deletingUsers.has(user.id)}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  {deletingUsers.has(user.id) ? 'Deleting...' : 'Delete'}
                                 </Button>
                               </div>
                             </div>
@@ -1243,6 +1373,16 @@ export function ModeratorPanel() {
                             >
                               {sendingPasswordReset.has(selectedUser.id) ? 'Sending...' : 'Reset Password'}
                             </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteUserClick(selectedUser)}
+                              disabled={deletingUsers.has(selectedUser.id)}
+                              className="h-7 px-2 text-xs"
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              {deletingUsers.has(selectedUser.id) ? 'Deleting...' : 'Delete'}
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -1460,6 +1600,80 @@ export function ModeratorPanel() {
                   </div>
                 </>
               )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Delete User Account
+            </DialogTitle>
+            <DialogDescription>
+              This action will permanently delete the user account and all associated data. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {userToDelete && (
+            <div className="space-y-4">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <h4 className="font-semibold text-red-800 mb-2">User to be deleted:</h4>
+                <div className="space-y-1 text-sm text-red-700">
+                  <p><strong>Name:</strong> {userToDelete.full_name}</p>
+                  <p><strong>Email:</strong> {userToDelete.email}</p>
+                  <p><strong>Role:</strong> {userToDelete.user_type.replace('_', ' ')}</p>
+                  <p><strong>Created:</strong> {new Date(userToDelete.created_at).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="delete-reason" className="text-sm font-medium">
+                  Reason for deletion (required):
+                </Label>
+                <Textarea
+                  id="delete-reason"
+                  placeholder="Enter the reason for deleting this user account..."
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDeleteDialogOpen(false);
+                    setUserToDelete(null);
+                    setDeleteReason('');
+                  }}
+                  disabled={deletingUsers.has(userToDelete.id)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => deleteUser(userToDelete.id, deleteReason)}
+                  disabled={deletingUsers.has(userToDelete.id) || !deleteReason.trim()}
+                  className="min-w-[100px]"
+                >
+                  {deletingUsers.has(userToDelete.id) ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete User
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

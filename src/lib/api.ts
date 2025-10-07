@@ -53,6 +53,7 @@ export const API_ENDPOINTS = {
   USER_QUOTA_MANAGEMENT: '/api/admin/user-quota-management',
   RESEND_EMAIL_CONFIRMATION: '/api/admin/resend-email-confirmation',
   SEND_PASSWORD_RESET: '/api/admin/send-password-reset',
+  DELETE_USER: '/api/admin/delete-user',
   SYSTEM_STATUS: '/api/system/status',
   
   // Debug endpoints
