@@ -246,54 +246,54 @@ export default function AdminDashboard() {
           </Link>
 
           <Link to="/admin/enhanced-analytics">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
+            <EnhancedCard variant="interactive" hover="lift">
+              <EnhancedCardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Brain className="w-5 h-5 text-purple-600" />
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Brain className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Enhanced Analytics</CardTitle>
-                    <CardDescription>
+                    <EnhancedCardTitle size="lg">Enhanced Analytics</EnhancedCardTitle>
+                    <EnhancedCardDescription>
                       Predictive insights and performance benchmarking
-                    </CardDescription>
+                    </EnhancedCardDescription>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </EnhancedCardHeader>
+              <EnhancedCardContent>
                 <p className="text-sm text-muted-foreground">
                   AI-powered predictive insights, trend analysis, performance benchmarking, and system health scoring for proactive optimization.
                 </p>
-              </CardContent>
-            </Card>
+              </EnhancedCardContent>
+            </EnhancedCard>
           </Link>
 
           <Link to="/admin/email-delivery">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
+            <EnhancedCard variant="interactive" hover="lift">
+              <EnhancedCardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Mail className="w-5 h-5 text-blue-600" />
+                  <div className="w-12 h-12 bg-info-100 rounded-lg flex items-center justify-center">
+                    <Mail className="w-6 h-6 text-info-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Email Delivery Monitoring</CardTitle>
-                    <CardDescription>
+                    <EnhancedCardTitle size="lg">Email Delivery Monitoring</EnhancedCardTitle>
+                    <EnhancedCardDescription>
                       Track email delivery rates, monitor failed deliveries, and analyze template performance
-                    </CardDescription>
+                    </EnhancedCardDescription>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </EnhancedCardHeader>
+              <EnhancedCardContent>
                 <p className="text-sm text-muted-foreground">
                   Monitor email delivery statistics, retry failed emails, and analyze template performance across all email types including sentiment notifications, password resets, and account signups.
                 </p>
                 <div className="mt-3">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800">
                     Active
                   </span>
                 </div>
-              </CardContent>
-            </Card>
+              </EnhancedCardContent>
+            </EnhancedCard>
           </Link>
 
           <Link to="/admin/test-debug">

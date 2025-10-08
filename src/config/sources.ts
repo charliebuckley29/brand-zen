@@ -117,7 +117,6 @@ export const SOURCES: Record<SourceType, SourceConfig> = {
     apiProvider: "X API v2",
     implementationNotes: "Monitors public posts and replies for brand mentions",
     limitations: [
-      "500,000 tweets per month on Basic tier",
       "Public content only",
       "Rate limited by X API"
     ],
