@@ -9,130 +9,227 @@ import {
   Key,
   Users,
   Settings,
-  Database,
-  Bug,
-  MessageSquare,
+  Wrench,
   Activity,
+  Shield,
+  ChevronDown,
+  ChevronRight,
+  UserCheck,
   BarChart3,
-  TestTube,
-  Mail,
   AlertTriangle,
+  Brain,
   Zap,
   Bell,
-  Brain,
-  Shield
+  MessageSquare,
+  Mail,
+  TestTube,
+  Bug,
+  FileText,
+  Database
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useUserRole } from "@/hooks/use-user-role";
 
-interface AdminNavItem {
+interface AdminNavSubItem {
+  id: string;
+  label: string;
+  path: string;
+  badge?: number;
+  needsBackend?: boolean;
+}
+
+interface AdminNavSection {
   id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   path: string;
-  badge?: number;
   description?: string;
+  subItems?: AdminNavSubItem[];
 }
 
 export function AdminNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<string[]>(['users', 'monitoring', 'configuration', 'tools']);
   const location = useLocation();
   const { isAdmin, isModerator } = useUserRole();
 
-  const adminNavItems: AdminNavItem[] = [
+  const adminNavSections: AdminNavSection[] = [
     {
       id: "dashboard",
-      label: "Admin Dashboard",
+      label: "Dashboard",
       icon: Activity,
       path: "/admin",
-      description: "Overview and quick access"
+      description: "Admin overview"
     },
     {
-      id: "api",
-      label: "API Management",
-      icon: Key,
-      path: "/admin/api",
-      description: "Quota limits and API keys"
-    },
-    {
-      id: "moderators",
+      id: "users",
       label: "User Management",
       icon: Users,
-      path: "/admin/moderators",
-      description: "Manage users and roles"
-    },
-    {
-      id: "bug-reports",
-      label: "Bug Reports",
-      icon: Bug,
-      path: "/admin/bug-reports",
-      description: "User feedback and issues"
-    },
-    {
-      id: "twilio",
-      label: "Notifications",
-      icon: MessageSquare,
-      path: "/admin/twilio",
-      description: "SMS and WhatsApp alerts"
+      path: "/admin/users",
+      description: "Users, quotas, moderators",
+      subItems: [
+        { id: "users-overview", label: "Overview", path: "/admin/users" },
+        { id: "users-quotas", label: "Quota Management", path: "/admin/users/quotas" },
+        { id: "users-moderators", label: "Moderators", path: "/admin/users/moderators" },
+        { id: "users-approvals", label: "Approvals", path: "/admin/users/approvals" }
+      ]
     },
     {
       id: "monitoring",
       label: "System Monitoring",
       icon: BarChart3,
-      path: "/admin/unified-monitoring",
-      description: "System health and performance"
+      path: "/admin/monitoring",
+      description: "Health, queues, analytics",
+      subItems: [
+        { id: "monitoring-overview", label: "Overview", path: "/admin/monitoring" },
+        { id: "monitoring-unified", label: "Unified Dashboard", path: "/admin/unified-monitoring" },
+        { id: "monitoring-queues", label: "Queue Monitoring", path: "/admin/queue-errors" },
+        { id: "monitoring-alerts", label: "System Alerts", path: "/admin/system-alerts" },
+        { id: "monitoring-analytics", label: "Enhanced Analytics", path: "/admin/enhanced-analytics", needsBackend: true },
+        { id: "monitoring-recovery", label: "Auto Recovery", path: "/admin/automated-recovery", needsBackend: true }
+      ]
     },
     {
-      id: "queue-errors",
-      label: "Queue Monitoring",
-      icon: AlertTriangle,
-      path: "/admin/queue-errors",
-      description: "Queue health and errors"
+      id: "configuration",
+      label: "Configuration",
+      icon: Settings,
+      path: "/admin/configuration",
+      description: "Settings and integrations",
+      subItems: [
+        { id: "config-overview", label: "Overview", path: "/admin/configuration" },
+        { id: "config-integrations", label: "Integrations", path: "/admin/twilio" },
+        { id: "config-api", label: "API Keys", path: "/admin/api" },
+        { id: "config-email", label: "Email Monitoring", path: "/admin/email-delivery" }
+      ]
     },
     {
-      id: "recovery",
-      label: "Auto Recovery",
-      icon: Zap,
-      path: "/admin/automated-recovery",
-      description: "Automated system recovery"
-    },
-    {
-      id: "alerts",
-      label: "System Alerts",
-      icon: Bell,
-      path: "/admin/system-alerts",
-      description: "Real-time alerts and notifications"
-    },
-    {
-      id: "analytics",
-      label: "Enhanced Analytics",
-      icon: Brain,
-      path: "/admin/enhanced-analytics",
-      description: "Predictive insights and benchmarking"
-    },
-    {
-      id: "email-delivery",
-      label: "Email Monitoring",
-      icon: Mail,
-      path: "/admin/email-delivery",
-      description: "Email delivery tracking"
-    },
-    {
-      id: "test-debug",
-      label: "Test & Debug",
-      icon: TestTube,
-      path: "/admin/test-debug",
-      description: "Testing and debugging tools"
+      id: "tools",
+      label: "Tools & Debugging",
+      icon: Wrench,
+      path: "/admin/tools",
+      description: "Debug, test, logs",
+      subItems: [
+        { id: "tools-overview", label: "Overview", path: "/admin/tools" },
+        { id: "tools-debug", label: "Debug Tools", path: "/admin/test-debug" },
+        { id: "tools-bugs", label: "Bug Reports", path: "/admin/bug-reports" },
+        { id: "tools-logs", label: "Log Archives", path: "/admin/unified-monitoring" }
+      ]
     }
   ];
 
   const currentPath = location.pathname;
-  const currentItem = adminNavItems.find(item => item.path === currentPath);
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => 
+      prev.includes(sectionId) 
+        ? prev.filter(id => id !== sectionId)
+        : [...prev, sectionId]
+    );
+  };
+
+  const isPathActive = (path: string) => {
+    if (path === '/admin') {
+      return currentPath === '/admin';
+    }
+    return currentPath.startsWith(path);
+  };
+
+  const renderNavItem = (section: AdminNavSection, isMobile: boolean = false) => {
+    const Icon = section.icon;
+    const isActive = isPathActive(section.path);
+    const isExpanded = expandedSections.includes(section.id);
+    const hasSubItems = section.subItems && section.subItems.length > 0;
+
+    return (
+      <div key={section.id}>
+        {/* Main Section Item */}
+        <div className="flex items-center gap-1">
+          <Link 
+            to={section.path} 
+            className="flex-1"
+            onClick={() => isMobile && !hasSubItems && setIsMobileMenuOpen(false)}
+          >
+            <Button
+              variant={isActive && !hasSubItems ? "default" : "ghost"}
+              className={cn(
+                "w-full justify-start h-auto py-2.5 px-3",
+                isActive && !hasSubItems && "bg-primary text-primary-foreground"
+              )}
+            >
+              <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
+              <div className="flex flex-col items-start text-left flex-1">
+                <span className="font-medium text-sm">{section.label}</span>
+                {section.description && (
+                  <span className="text-xs opacity-70 mt-0.5">
+                    {section.description}
+                  </span>
+                )}
+              </div>
+            </Button>
+          </Link>
+          
+          {/* Expand/Collapse Button */}
+          {hasSubItems && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-10 w-8 p-0"
+              onClick={() => toggleSection(section.id)}
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+        </div>
+
+        {/* Sub Items */}
+        {hasSubItems && isExpanded && (
+          <div className="ml-4 mt-1 space-y-1 border-l-2 border-border pl-2">
+            {section.subItems!.map((subItem) => {
+              const isSubActive = currentPath === subItem.path;
+              
+              return (
+                <Link 
+                  key={subItem.id} 
+                  to={subItem.path}
+                  onClick={() => isMobile && setIsMobileMenuOpen(false)}
+                >
+                  <Button
+                    variant={isSubActive ? "default" : "ghost"}
+                    size="sm"
+                    className={cn(
+                      "w-full justify-start h-auto py-2 px-3 text-sm",
+                      isSubActive && "bg-primary text-primary-foreground"
+                    )}
+                  >
+                    <span className="flex-1 text-left">{subItem.label}</span>
+                    {subItem.needsBackend && (
+                      <Badge variant="destructive" className="ml-2 text-xs px-1.5 py-0">
+                        Backend
+                      </Badge>
+                    )}
+                    {subItem.badge && subItem.badge > 0 && (
+                      <Badge variant="destructive" className="ml-2">
+                        {subItem.badge > 99 ? '99+' : subItem.badge}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block fixed left-0 top-0 h-full w-72 bg-card border-r shadow-sm z-40">
+      <div className="hidden lg:block fixed left-0 top-0 h-full w-72 bg-card border-r shadow-sm z-40 overflow-y-auto">
         <div className="p-4 pt-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
@@ -148,36 +245,8 @@ export function AdminNavigation() {
           </div>
 
           {/* Navigation */}
-          <nav className="space-y-2">
-            {adminNavItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentPath === item.path;
-              
-              return (
-                <Link key={item.id} to={item.path}>
-                  <Button
-                    variant={isActive ? "default" : "ghost"}
-                    className={cn(
-                      "w-full justify-start h-auto py-3 px-3",
-                      isActive && "bg-primary text-primary-foreground"
-                    )}
-                  >
-                    <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
-                    <div className="flex flex-col items-start text-left">
-                      <span className="font-medium">{item.label}</span>
-                      <span className="text-xs opacity-70 mt-0.5">
-                        {item.description}
-                      </span>
-                    </div>
-                    {item.badge && item.badge > 0 && (
-                      <Badge variant="destructive" className="ml-auto">
-                        {item.badge > 99 ? '99+' : item.badge}
-                      </Badge>
-                    )}
-                  </Button>
-                </Link>
-              );
-            })}
+          <nav className="space-y-1">
+            {adminNavSections.map((section) => renderNavItem(section, false))}
           </nav>
 
           {/* Back to Main App */}
@@ -201,9 +270,9 @@ export function AdminNavigation() {
             </div>
             <div>
               <h2 className="text-lg font-bold">Admin Panel</h2>
-              {currentItem && (
-                <p className="text-xs text-muted-foreground">{currentItem.label}</p>
-              )}
+              <p className="text-xs text-muted-foreground">
+                {adminNavSections.find(s => isPathActive(s.path))?.label || 'Dashboard'}
+              </p>
             </div>
           </div>
           <Button
@@ -219,7 +288,7 @@ export function AdminNavigation() {
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm">
-          <div className="fixed left-0 top-0 h-full w-80 bg-card border-r shadow-lg">
+          <div className="fixed left-0 top-0 h-full w-80 bg-card border-r shadow-lg overflow-y-auto">
             <div className="p-4 pt-16">
               {/* Close Button */}
               <div className="flex items-center justify-between mb-6">
@@ -233,37 +302,9 @@ export function AdminNavigation() {
                 </Button>
               </div>
 
-              {/* Mobile Navigation - Stacked Tabs */}
-              <div className="space-y-2">
-                {adminNavItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = currentPath === item.path;
-                  
-                  return (
-                    <Link key={item.id} to={item.path} onClick={() => setIsMobileMenuOpen(false)}>
-                      <Button
-                        variant={isActive ? "default" : "ghost"}
-                        className={cn(
-                          "w-full justify-start h-auto py-3 px-3 text-left",
-                          isActive && "bg-primary text-primary-foreground"
-                        )}
-                      >
-                        <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
-                        <div className="flex flex-col items-start text-left">
-                          <span className="font-medium">{item.label}</span>
-                          <span className="text-xs opacity-70 mt-0.5">
-                            {item.description}
-                          </span>
-                        </div>
-                        {item.badge && item.badge > 0 && (
-                          <Badge variant="destructive" className="ml-auto">
-                            {item.badge > 99 ? '99+' : item.badge}
-                          </Badge>
-                        )}
-                      </Button>
-                    </Link>
-                  );
-                })}
+              {/* Mobile Navigation */}
+              <div className="space-y-1">
+                {adminNavSections.map((section) => renderNavItem(section, true))}
               </div>
 
               {/* Back to Main App */}
