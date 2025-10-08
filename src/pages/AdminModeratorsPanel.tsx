@@ -378,9 +378,8 @@ export default function AdminModeratorsPanel() {
             </Table>
           </CardContent>
         </Card>
-      </div>
 
-      <Dialog open={userDetailOpen} onOpenChange={setUserDetailOpen}>
+        <Dialog open={userDetailOpen} onOpenChange={setUserDetailOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
