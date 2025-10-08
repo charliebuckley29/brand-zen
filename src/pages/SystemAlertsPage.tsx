@@ -4,60 +4,51 @@ import { Button } from "../components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AlertDashboard } from "@/components/admin/AlertDashboard";
+import { AdminLayout } from "../components/ui/admin-layout";
 
 export default function SystemAlertsPage() {
   const { isAdmin, loading: roleLoading } = useUserRole();
 
   if (roleLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
+      <AdminLayout
+        title="System Alerts"
+        description="Loading..."
+      >
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </AdminLayout>
     );
   }
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">Access Denied</CardTitle>
-            <CardDescription className="text-center">
-              You need admin privileges to access this page.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Link to="/">
-              <Button variant="outline" className="w-full">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      <AdminLayout
+        title="System Alerts"
+        description="Access denied"
+      >
+        <div className="text-center py-12">
+          <Card className="w-full max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle className="text-center">Access Denied</CardTitle>
+              <CardDescription className="text-center">
+                You need admin privileges to access this page.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Link to="/admin">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Admin Dashboard
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold">System Alerts</h1>
-            <p className="text-muted-foreground">
-              Monitor and manage system alerts, notifications, and escalation policies.
-            </p>
-          </div>
-        </div>
-        <AlertDashboard />
-      </div>
-    </div>
+    <AdminLayout
+      title="System Alerts"
+      description="Monitor and manage system alerts, notifications, and escalation policies"
+    >
+      <AlertDashboard />
+    </AdminLayout>
   );
 }
