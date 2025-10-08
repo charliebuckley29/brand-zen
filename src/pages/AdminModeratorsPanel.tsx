@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Users, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserRole, type UserType } from "@/hooks/use-user-role";
+import { AdminLayout } from "@/components/ui/admin-layout";
 
 interface ModeratorUser {
   id: string;
@@ -277,25 +278,15 @@ export default function AdminModeratorsPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Link to="/">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold">Moderator Management</h1>
-            <p className="text-muted-foreground">
-              Manage moderator and admin accounts
-            </p>
-          </div>
-          <Button onClick={fetchModerators} variant="outline">
-            Refresh Data
-          </Button>
-        </div>
+    <AdminLayout 
+      title="Moderator Management"
+      description="Manage moderator and admin accounts"
+      actions={
+        <Button onClick={fetchModerators} variant="outline">
+          Refresh Data
+        </Button>
+      }
+    >
 
         <Card>
           <CardHeader>
@@ -495,6 +486,6 @@ export default function AdminModeratorsPanel() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </AdminLayout>
   );
 }

@@ -3,7 +3,8 @@ import { EnhancedCard, EnhancedCardContent, EnhancedCardDescription, EnhancedCar
 import { Button } from "../components/ui/button";
 import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare, Activity, BarChart3, GitBranch, TestTube, Mail, AlertTriangle, Zap, Bell, Brain } from "lucide-react";
 import { Link } from "react-router-dom";
-import { PageContainer, PageHeader, Grid } from "../components/ui/layout-system";
+import { AdminLayout } from "../components/ui/admin-layout";
+import { Grid } from "../components/ui/layout-system";
 
 export default function AdminDashboard() {
   const { isAdmin, loading: roleLoading } = useUserRole();
@@ -40,27 +41,19 @@ export default function AdminDashboard() {
   }
 
   return (
-    <PageContainer>
-      <div className="space-y-8">
-        <PageHeader
-          title="Admin Dashboard"
-          description="Manage system settings and user accounts"
-          breadcrumbs={
-            <Link to="/" className="text-primary hover:underline">
-              Dashboard
-            </Link>
-          }
-          actions={
-            <Link to="/">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
-          }
-        />
-
-        <Grid columns={2} gap="lg">
+    <AdminLayout 
+      title="Admin Dashboard"
+      description="Manage system settings and user accounts"
+      actions={
+        <Link to="/">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Main App
+          </Button>
+        </Link>
+      }
+    >
+      <Grid columns={2} gap="lg">
           <Link to="/admin/api">
             <EnhancedCard variant="interactive" hover="lift">
               <EnhancedCardHeader>
@@ -360,8 +353,7 @@ export default function AdminDashboard() {
               </p>
             </EnhancedCardContent>
           </EnhancedCard>
-        </Grid>
-      </div>
-    </PageContainer>
+      </Grid>
+    </AdminLayout>
   );
 }
