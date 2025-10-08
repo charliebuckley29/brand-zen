@@ -38,15 +38,56 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
-    /* Brand monitoring specific colors */
+    /* Enhanced brand monitoring colors */
     --success: 142 69% 58%;
     --success-foreground: 210 40% 98%;
+    --success-50: 138 76% 97%;
+    --success-100: 141 84% 93%;
+    --success-200: 141 79% 85%;
+    --success-300: 142 76% 73%;
+    --success-400: 142 71% 45%;
+    --success-500: 142 69% 58%;
+    --success-600: 142 71% 45%;
+    --success-700: 142 76% 36%;
+    --success-800: 143 64% 24%;
+    --success-900: 144 61% 20%;
     
     --warning: 48 96% 53%;
     --warning-foreground: 222.2 84% 4.9%;
+    --warning-50: 48 96% 89%;
+    --warning-100: 48 96% 77%;
+    --warning-200: 48 96% 71%;
+    --warning-300: 46 95% 53%;
+    --warning-400: 43 96% 56%;
+    --warning-500: 38 92% 50%;
+    --warning-600: 32 95% 44%;
+    --warning-700: 26 90% 37%;
+    --warning-800: 23 83% 31%;
+    --warning-900: 22 78% 26%;
     
     --info: 213 94% 68%;
     --info-foreground: 210 40% 98%;
+    --info-50: 213 94% 93%;
+    --info-100: 213 97% 87%;
+    --info-200: 212 96% 78%;
+    --info-300: 213 94% 68%;
+    --info-400: 213 91% 60%;
+    --info-500: 213 94% 68%;
+    --info-600: 213 91% 60%;
+    --info-700: 213 87% 47%;
+    --info-800: 213 85% 39%;
+    --info-900: 213 84% 32%;
+
+    --danger-50: 0 86% 97%;
+    --danger-100: 0 93% 94%;
+    --danger-200: 0 96% 89%;
+    --danger-300: 0 94% 82%;
+    --danger-400: 0 91% 71%;
+    --danger-500: 0 84% 60%;
+    --danger-600: 0 72% 51%;
+    --danger-700: 0 74% 42%;
+    --danger-800: 0 70% 35%;
+    --danger-900: 0 63% 31%;
 
     /* Gradients for beautiful effects */
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(213 94% 68%));

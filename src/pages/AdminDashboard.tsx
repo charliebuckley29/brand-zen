@@ -1,8 +1,9 @@
 import { useUserRole } from "../hooks/use-user-role";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { EnhancedCard, EnhancedCardContent, EnhancedCardDescription, EnhancedCardHeader, EnhancedCardTitle } from "../components/ui/enhanced-card";
 import { Button } from "../components/ui/button";
 import { ArrowLeft, Key, Users, Settings, Database, Bug, MessageSquare, Activity, BarChart3, GitBranch, TestTube, Mail, AlertTriangle, Zap, Bell, Brain } from "lucide-react";
 import { Link } from "react-router-dom";
+import { PageContainer, PageHeader, Grid } from "../components/ui/layout-system";
 
 export default function AdminDashboard() {
   const { isAdmin, loading: roleLoading } = useUserRole();
@@ -17,228 +18,231 @@ export default function AdminDashboard() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">Access Denied</CardTitle>
-            <CardDescription className="text-center">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <EnhancedCard variant="elevated" className="w-full max-w-md">
+          <EnhancedCardHeader>
+            <EnhancedCardTitle className="text-center">Access Denied</EnhancedCardTitle>
+            <EnhancedCardDescription className="text-center">
               You need admin privileges to access this page.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
+            </EnhancedCardDescription>
+          </EnhancedCardHeader>
+          <EnhancedCardContent className="text-center">
             <Link to="/">
               <Button variant="outline" className="w-full">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Dashboard
               </Button>
             </Link>
-          </CardContent>
-        </Card>
+          </EnhancedCardContent>
+        </EnhancedCard>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Link to="/">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground">
-              Manage system settings and user accounts
-            </p>
-          </div>
-        </div>
+    <PageContainer>
+      <div className="space-y-8">
+        <PageHeader
+          title="Admin Dashboard"
+          description="Manage system settings and user accounts"
+          breadcrumbs={
+            <Link to="/" className="text-primary hover:underline">
+              Dashboard
+            </Link>
+          }
+          actions={
+            <Link to="/">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Button>
+            </Link>
+          }
+        />
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <Grid columns={2} gap="lg">
           <Link to="/admin/api">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
+            <EnhancedCard variant="interactive" hover="lift">
+              <EnhancedCardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Key className="w-5 h-5 text-primary" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Key className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">User Quota Management</CardTitle>
-                    <CardDescription>
+                    <EnhancedCardTitle size="lg">User Quota Management</EnhancedCardTitle>
+                    <EnhancedCardDescription>
                       Manage monthly quota limits and user exceptions
-                    </CardDescription>
+                    </EnhancedCardDescription>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </EnhancedCardHeader>
+              <EnhancedCardContent>
                 <p className="text-sm text-muted-foreground">
                   Set default monthly limits for each data source and create individual user exceptions as needed.
                 </p>
-              </CardContent>
-            </Card>
+              </EnhancedCardContent>
+            </EnhancedCard>
           </Link>
 
           <Link to="/admin/moderators">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
+            <EnhancedCard variant="interactive" hover="lift">
+              <EnhancedCardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Users className="w-5 h-5 text-primary" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Users className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Moderator Management</CardTitle>
-                    <CardDescription>
+                    <EnhancedCardTitle size="lg">Moderator Management</EnhancedCardTitle>
+                    <EnhancedCardDescription>
                       Manage moderator and admin accounts
-                    </CardDescription>
+                    </EnhancedCardDescription>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </EnhancedCardHeader>
+              <EnhancedCardContent>
                 <p className="text-sm text-muted-foreground">
                   View, edit, and manage moderator and admin user accounts, roles, and permissions.
                 </p>
-              </CardContent>
-            </Card>
+              </EnhancedCardContent>
+            </EnhancedCard>
           </Link>
 
           <Link to="/admin/bug-reports">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
+            <EnhancedCard variant="interactive" hover="lift">
+              <EnhancedCardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Bug className="w-5 h-5 text-primary" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Bug className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Bug Reports</CardTitle>
-                    <CardDescription>
+                    <EnhancedCardTitle size="lg">Bug Reports</EnhancedCardTitle>
+                    <EnhancedCardDescription>
                       Manage and track user bug reports
-                    </CardDescription>
+                    </EnhancedCardDescription>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </EnhancedCardHeader>
+              <EnhancedCardContent>
                 <p className="text-sm text-muted-foreground">
                   View, assign, and manage bug reports submitted by users with detailed tracking and resolution workflow.
                 </p>
-              </CardContent>
-            </Card>
+              </EnhancedCardContent>
+            </EnhancedCard>
           </Link>
 
           <Link to="/admin/twilio">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
+            <EnhancedCard variant="interactive" hover="lift">
+              <EnhancedCardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <MessageSquare className="w-5 h-5 text-primary" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <MessageSquare className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Twilio Configuration</CardTitle>
-                    <CardDescription>
+                    <EnhancedCardTitle size="lg">Twilio Configuration</EnhancedCardTitle>
+                    <EnhancedCardDescription>
                       SMS and WhatsApp notifications
-                    </CardDescription>
+                    </EnhancedCardDescription>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </EnhancedCardHeader>
+              <EnhancedCardContent>
                 <p className="text-sm text-muted-foreground">
                   Configure Twilio settings for sending SMS and WhatsApp alerts for negative sentiment mentions.
                 </p>
-              </CardContent>
-            </Card>
+              </EnhancedCardContent>
+            </EnhancedCard>
           </Link>
 
           <Link to="/admin/unified-monitoring">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
+            <EnhancedCard variant="interactive" hover="lift">
+              <EnhancedCardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <BarChart3 className="w-5 h-5 text-green-600" />
+                  <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="w-6 h-6 text-success-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Unified Monitoring Dashboard</CardTitle>
-                    <CardDescription>
+                    <EnhancedCardTitle size="lg">Unified Monitoring Dashboard</EnhancedCardTitle>
+                    <EnhancedCardDescription>
                       Comprehensive system monitoring & analytics
-                    </CardDescription>
+                    </EnhancedCardDescription>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </EnhancedCardHeader>
+              <EnhancedCardContent>
                 <p className="text-sm text-muted-foreground">
                   Monitor API usage, user quotas, system health, performance metrics, and user activity in one unified dashboard.
                 </p>
-              </CardContent>
-            </Card>
+              </EnhancedCardContent>
+            </EnhancedCard>
           </Link>
 
           <Link to="/admin/queue-errors">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
+            <EnhancedCard variant="interactive" hover="lift">
+              <EnhancedCardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                    <AlertTriangle className="w-5 h-5 text-red-600" />
+                  <div className="w-12 h-12 bg-danger-100 rounded-lg flex items-center justify-center">
+                    <AlertTriangle className="w-6 h-6 text-danger-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Queue Error Monitoring</CardTitle>
-                    <CardDescription>
+                    <EnhancedCardTitle size="lg">Queue Error Monitoring</EnhancedCardTitle>
+                    <EnhancedCardDescription>
                       Monitor queue health, errors, and retry patterns
-                    </CardDescription>
+                    </EnhancedCardDescription>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </EnhancedCardHeader>
+              <EnhancedCardContent>
                 <p className="text-sm text-muted-foreground">
                   Track queue failures, retry analytics, and manage queue recovery for Google Alerts and other API sources.
                 </p>
-              </CardContent>
-            </Card>
+              </EnhancedCardContent>
+            </EnhancedCard>
           </Link>
 
           <Link to="/admin/automated-recovery">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
+            <EnhancedCard variant="interactive" hover="lift">
+              <EnhancedCardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Zap className="w-5 h-5 text-blue-600" />
+                  <div className="w-12 h-12 bg-info-100 rounded-lg flex items-center justify-center">
+                    <Zap className="w-6 h-6 text-info-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Automated Recovery System</CardTitle>
-                    <CardDescription>
+                    <EnhancedCardTitle size="lg">Automated Recovery System</EnhancedCardTitle>
+                    <EnhancedCardDescription>
                       Smart recovery for queue failures and system issues
-                    </CardDescription>
+                    </EnhancedCardDescription>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </EnhancedCardHeader>
+              <EnhancedCardContent>
                 <p className="text-sm text-muted-foreground">
                   Monitor and manage automated recovery actions that detect and fix queue failures, API issues, and system problems automatically.
                 </p>
-              </CardContent>
-            </Card>
+              </EnhancedCardContent>
+            </EnhancedCard>
           </Link>
 
           <Link to="/admin/system-alerts">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
+            <EnhancedCard variant="interactive" hover="lift">
+              <EnhancedCardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Bell className="w-5 h-5 text-orange-600" />
+                  <div className="w-12 h-12 bg-warning-100 rounded-lg flex items-center justify-center">
+                    <Bell className="w-6 h-6 text-warning-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">System Alerts</CardTitle>
-                    <CardDescription>
+                    <EnhancedCardTitle size="lg">System Alerts</EnhancedCardTitle>
+                    <EnhancedCardDescription>
                       Real-time alerts and notifications
-                    </CardDescription>
+                    </EnhancedCardDescription>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </EnhancedCardHeader>
+              <EnhancedCardContent>
                 <p className="text-sm text-muted-foreground">
                   View and manage system alerts, notifications, and escalation policies for critical issues and recovery failures.
                 </p>
-              </CardContent>
-            </Card>
+              </EnhancedCardContent>
+            </EnhancedCard>
           </Link>
 
           <Link to="/admin/enhanced-analytics">
@@ -293,71 +297,71 @@ export default function AdminDashboard() {
           </Link>
 
           <Link to="/admin/test-debug">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
+            <EnhancedCard variant="interactive" hover="lift">
+              <EnhancedCardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <TestTube className="w-5 h-5 text-orange-600" />
+                  <div className="w-12 h-12 bg-warning-100 rounded-lg flex items-center justify-center">
+                    <TestTube className="w-6 h-6 text-warning-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Test & Debug Tools</CardTitle>
-                    <CardDescription>
+                    <EnhancedCardTitle size="lg">Test & Debug Tools</EnhancedCardTitle>
+                    <EnhancedCardDescription>
                       Comprehensive testing and debugging tools for troubleshooting
-                    </CardDescription>
+                    </EnhancedCardDescription>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </EnhancedCardHeader>
+              <EnhancedCardContent>
                 <p className="text-sm text-muted-foreground">
                   Run system tests, debug API issues, test cursor continuity, and generate test data for monitoring.
                 </p>
-              </CardContent>
-            </Card>
+              </EnhancedCardContent>
+            </EnhancedCard>
           </Link>
 
-          <Card className="opacity-50 cursor-not-allowed">
-            <CardHeader>
+          <EnhancedCard variant="default" className="opacity-50 cursor-not-allowed">
+            <EnhancedCardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <Settings className="w-5 h-5 text-muted-foreground" />
+                <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                  <Settings className="w-6 h-6 text-muted-foreground" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg text-muted-foreground">System Settings</CardTitle>
-                  <CardDescription>
+                  <EnhancedCardTitle size="lg" className="text-muted-foreground">System Settings</EnhancedCardTitle>
+                  <EnhancedCardDescription>
                     Configure global system settings
-                  </CardDescription>
+                  </EnhancedCardDescription>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
+            </EnhancedCardHeader>
+            <EnhancedCardContent>
               <p className="text-sm text-muted-foreground">
                 Coming soon: Global system configuration, maintenance settings, and advanced options.
               </p>
-            </CardContent>
-          </Card>
+            </EnhancedCardContent>
+          </EnhancedCard>
 
-          <Card className="opacity-50 cursor-not-allowed">
-            <CardHeader>
+          <EnhancedCard variant="default" className="opacity-50 cursor-not-allowed">
+            <EnhancedCardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <Database className="w-5 h-5 text-muted-foreground" />
+                <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                  <Database className="w-6 h-6 text-muted-foreground" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg text-muted-foreground">Database Management</CardTitle>
-                  <CardDescription>
+                  <EnhancedCardTitle size="lg" className="text-muted-foreground">Database Management</EnhancedCardTitle>
+                  <EnhancedCardDescription>
                     Database maintenance and analytics
-                  </CardDescription>
+                  </EnhancedCardDescription>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
+            </EnhancedCardHeader>
+            <EnhancedCardContent>
               <p className="text-sm text-muted-foreground">
                 Coming soon: Database statistics, cleanup tools, and performance monitoring.
               </p>
-            </CardContent>
-          </Card>
-        </div>
+            </EnhancedCardContent>
+          </EnhancedCard>
+        </Grid>
       </div>
-    </div>
+    </PageContainer>
   );
 }

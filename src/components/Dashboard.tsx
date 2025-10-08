@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import { EnhancedCard, EnhancedCardContent, EnhancedCardDescription, EnhancedCardHeader, EnhancedCardTitle } from "@/components/ui/enhanced-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MentionsTable } from "./MentionsTable";
@@ -7,6 +7,7 @@ import { MonitoringControls } from "./MonitoringControls";
 import { MentionModal } from "./MentionModal";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, AlertTriangle, MessageSquare, BarChart3, RefreshCw, Trash2 } from "lucide-react";
+import { PageContainer, PageHeader, StatsGrid } from "@/components/ui/layout-system";
 import { useToast } from "@/hooks/use-toast";
 import { showToastWithStorage } from "@/lib/notifications";
 import { excludeMention } from "@/lib/monitoring";
@@ -275,70 +276,77 @@ export function Dashboard() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center sm:gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Brand Monitoring Dashboard</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Track and analyze brand mentions across the web</p>
-        </div>
-        
-        <RealtimeIndicator />
-      </div>
+    <PageContainer>
+      <div className="space-y-8">
+        {/* Header */}
+        <PageHeader
+          title="Brand Monitoring Dashboard"
+          description="Track and analyze brand mentions across the web"
+          actions={<RealtimeIndicator />}
+        />
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">Total Mentions</CardTitle>
-              <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg sm:text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
+        <StatsGrid>
+          <EnhancedCard variant="elevated" hover="lift">
+            <EnhancedCardHeader padding="sm">
+              <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <EnhancedCardTitle size="sm">Total Mentions</EnhancedCardTitle>
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </EnhancedCardHeader>
+            <EnhancedCardContent padding="sm">
+              <div className="text-2xl font-bold">{stats.total}</div>
+            </EnhancedCardContent>
+          </EnhancedCard>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">Positive</CardTitle>
-              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg sm:text-2xl font-bold text-success">{stats.positive}</div>
-            </CardContent>
-          </Card>
+          <EnhancedCard variant="elevated" hover="lift">
+            <EnhancedCardHeader padding="sm">
+              <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <EnhancedCardTitle size="sm">Positive</EnhancedCardTitle>
+                <TrendingUp className="h-4 w-4 text-success-600" />
+              </div>
+            </EnhancedCardHeader>
+            <EnhancedCardContent padding="sm">
+              <div className="text-2xl font-bold text-success-600">{stats.positive}</div>
+            </EnhancedCardContent>
+          </EnhancedCard>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">Neutral</CardTitle>
-              <div className="h-3 w-3 sm:h-4 sm:w-4 bg-warning rounded-full" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg sm:text-2xl font-bold text-warning">{stats.neutral}</div>
-            </CardContent>
-          </Card>
+          <EnhancedCard variant="elevated" hover="lift">
+            <EnhancedCardHeader padding="sm">
+              <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <EnhancedCardTitle size="sm">Neutral</EnhancedCardTitle>
+                <div className="h-4 w-4 bg-warning-500 rounded-full" />
+              </div>
+            </EnhancedCardHeader>
+            <EnhancedCardContent padding="sm">
+              <div className="text-2xl font-bold text-warning-600">{stats.neutral}</div>
+            </EnhancedCardContent>
+          </EnhancedCard>
 
-          <Card className="sm:col-span-1">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">Negative</CardTitle>
-              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg sm:text-2xl font-bold text-destructive">{stats.negative}</div>
-            </CardContent>
-          </Card>
+          <EnhancedCard variant="elevated" hover="lift">
+            <EnhancedCardHeader padding="sm">
+              <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <EnhancedCardTitle size="sm">Negative</EnhancedCardTitle>
+                <AlertTriangle className="h-4 w-4 text-danger-600" />
+              </div>
+            </EnhancedCardHeader>
+            <EnhancedCardContent padding="sm">
+              <div className="text-2xl font-bold text-danger-600">{stats.negative}</div>
+            </EnhancedCardContent>
+          </EnhancedCard>
 
-          <Card className="sm:col-span-1">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">Flagged</CardTitle>
-              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-warning" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg sm:text-2xl font-bold text-warning">{stats.flagged}</div>
-            </CardContent>
-          </Card>
-        </div>
-
+          <EnhancedCard variant="elevated" hover="lift">
+            <EnhancedCardHeader padding="sm">
+              <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <EnhancedCardTitle size="sm">Flagged</EnhancedCardTitle>
+                <AlertTriangle className="h-4 w-4 text-warning-600" />
+              </div>
+            </EnhancedCardHeader>
+            <EnhancedCardContent padding="sm">
+              <div className="text-2xl font-bold text-warning-600">{stats.flagged}</div>
+            </EnhancedCardContent>
+          </EnhancedCard>
+        </StatsGrid>
 
         {/* Monitoring Controls */}
         <MonitoringControls 
@@ -346,14 +354,14 @@ export function Dashboard() {
         />
 
         {/* Mentions Table */}
-        <Card>
-          <CardHeader className="pb-3 sm:pb-6">
-            <CardTitle className="text-lg sm:text-xl">Recent Mentions</CardTitle>
-            <CardDescription className="text-sm">
+        <EnhancedCard variant="elevated">
+          <EnhancedCardHeader padding="lg">
+            <EnhancedCardTitle size="lg">Recent Mentions</EnhancedCardTitle>
+            <EnhancedCardDescription>
               Click on any mention to view details and take action
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0 sm:p-6 sm:pt-0">
+            </EnhancedCardDescription>
+          </EnhancedCardHeader>
+          <EnhancedCardContent padding="none">
             <MentionsTable 
               mentions={mentions} 
               onMentionClick={(m) => setSelectedMention(m)}
@@ -368,8 +376,8 @@ export function Dashboard() {
               sortDirection={sortDirection}
               onSort={handleSort}
             />
-          </CardContent>
-        </Card>
+          </EnhancedCardContent>
+        </EnhancedCard>
 
         {/* Mention Detail Modal */}
         {selectedMention && (
@@ -384,5 +392,6 @@ export function Dashboard() {
           />
         )}
       </div>
-    );
-  }
+    </PageContainer>
+  );
+}

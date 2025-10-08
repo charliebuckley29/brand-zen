@@ -18,7 +18,7 @@ import type { UserType } from "@/hooks/use-user-role";
 import { GlobalSettingSwitch } from "@/components/GlobalSettingSwitch";
 import { API_ENDPOINTS, createApiUrl } from "@/lib/api";
 import { EnhancedUserCard } from "@/components/ui/enhanced-user-card";
-import { EnhancedStatusBadge } from "@/components/ui/enhanced-status-badge";
+import { StatusIndicator, EmailStatusIndicator, UserStatusIndicator } from "@/components/ui/status-indicator";
 import { MobileNavBar } from "@/components/ui/mobile-nav-bar";
 
 interface User {
