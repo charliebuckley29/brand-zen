@@ -29,6 +29,7 @@ import {
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useUserRole } from '@/hooks/use-user-role';
+import { AdminLayout } from '@/components/ui/admin-layout';
 
 interface TestResult {
   id: string;
@@ -61,32 +62,35 @@ export default function AdminTestDebugTools() {
   // Access control
   if (roleLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
+      <AdminLayout
+        title="Test & Debug Tools"
+        description="Loading..."
+      >
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </AdminLayout>
     );
   }
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">Access Denied</CardTitle>
-            <CardDescription className="text-center">
-              You need admin privileges to access the Test & Debug Tools.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Link to="/">
-              <Button variant="outline" className="w-full">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      <AdminLayout
+        title="Test & Debug Tools"
+        description="Access denied"
+      >
+        <div className="text-center py-12">
+          <Card className="w-full max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle className="text-center">Access Denied</CardTitle>
+              <CardDescription className="text-center">
+                You need admin privileges to access the Test & Debug Tools.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </AdminLayout>
     );
   }
 
@@ -263,24 +267,10 @@ export default function AdminTestDebugTools() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link to="/admin">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Admin
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold">Test & Debug Tools</h1>
-            <p className="text-muted-foreground">
-              Comprehensive testing and debugging tools for system troubleshooting
-            </p>
-          </div>
-        </div>
-
+    <AdminLayout
+      title="Test & Debug Tools"
+      description="Comprehensive testing and debugging tools for system troubleshooting"
+    >
         <Tabs defaultValue="testing" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="testing">Testing Tools</TabsTrigger>
@@ -492,7 +482,6 @@ export default function AdminTestDebugTools() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+    </AdminLayout>
   );
 }

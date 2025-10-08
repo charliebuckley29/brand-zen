@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, XCircle, AlertCircle, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { AdminLayout } from "@/components/ui/admin-layout";
 
 interface ApiSource {
   name: string;
@@ -65,30 +66,30 @@ export default function AdminApiStatus() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold">API Configuration Status</h1>
-              <p className="text-muted-foreground">Loading API key status...</p>
-            </div>
-          </div>
+      <AdminLayout
+        title="API Configuration Status"
+        description="Loading API key status..."
+      >
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center py-12">
-            <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-            <p className="text-muted-foreground">You need admin privileges to view this page.</p>
-          </div>
+      <AdminLayout
+        title="API Configuration Status"
+        description="Access denied"
+      >
+        <div className="text-center py-12">
+          <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+          <p className="text-muted-foreground">You need admin privileges to view this page.</p>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
@@ -96,27 +97,15 @@ export default function AdminApiStatus() {
   const totalCount = Object.keys(sources).length;
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">API Configuration Status</h1>
-            <p className="text-muted-foreground">
-              API keys are now managed via environment variables for security
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" asChild>
-              <Link to="/admin">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Admin
-              </Link>
-            </Button>
-            <Button onClick={fetchApiStatus}>
-              Refresh Status
-            </Button>
-          </div>
-        </div>
+    <AdminLayout
+      title="API Configuration Status"
+      description="API keys are now managed via environment variables for security"
+      actions={
+        <Button onClick={fetchApiStatus}>
+          Refresh Status
+        </Button>
+      }
+    >
 
         {/* Status Overview */}
         <Card className="mb-6">
@@ -216,7 +205,6 @@ export default function AdminApiStatus() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </AdminLayout>
   );
 }
