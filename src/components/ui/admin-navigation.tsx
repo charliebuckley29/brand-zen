@@ -85,8 +85,8 @@ export function AdminNavigation() {
         { id: "monitoring-unified", label: "Unified Dashboard", path: "/admin/unified-monitoring" },
         { id: "monitoring-queues", label: "Queue Monitoring", path: "/admin/queue-errors" },
         { id: "monitoring-alerts", label: "System Alerts", path: "/admin/system-alerts" },
-        { id: "monitoring-analytics", label: "Enhanced Analytics", path: "/admin/enhanced-analytics", needsBackend: true },
-        { id: "monitoring-recovery", label: "Auto Recovery", path: "/admin/automated-recovery", needsBackend: true }
+        { id: "monitoring-analytics", label: "Enhanced Analytics", path: "/admin/enhanced-analytics" },
+        { id: "monitoring-recovery", label: "Auto Recovery", path: "/admin/automated-recovery" }
       ]
     },
     {
