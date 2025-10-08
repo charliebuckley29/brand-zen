@@ -54,7 +54,7 @@ export function MainDashboard({ onSignOut, hasKeywords, onKeywordsUpdated, unrea
       
       {/* Main Content */}
       <div className="lg:ml-64 min-h-screen flex flex-col">
-        <div className="flex-1 p-3 sm:p-4 lg:p-8 pt-16 lg:pt-8">
+        <div className="flex-1 p-3 sm:p-4 lg:p-8 pt-20 lg:pt-8">
           {renderCurrentView()}
         </div>
         <Footer />

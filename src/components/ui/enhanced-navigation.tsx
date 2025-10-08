@@ -122,7 +122,7 @@ export function EnhancedNavigation({ unreadCount: propUnreadCount = 0 }: Navigat
     <>
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-background border-b z-50">
-        <div className="flex items-center justify-between p-4">
+        <div className="flex items-center justify-between p-4 h-16">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
               <Home className="w-5 h-5 text-primary" />
@@ -141,9 +141,9 @@ export function EnhancedNavigation({ unreadCount: propUnreadCount = 0 }: Navigat
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsMobileMenuOpen(true)}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              <Menu className="h-5 w-5" />
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>

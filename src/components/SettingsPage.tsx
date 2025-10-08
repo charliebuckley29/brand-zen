@@ -575,14 +575,45 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="brand">Brand</TabsTrigger>
-          <TabsTrigger value="sources">Sources</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 sm:space-y-6">
+        <div className="block sm:hidden">
+          <TabsList className="grid w-full grid-cols-1 gap-1 h-auto p-1">
+            <TabsTrigger value="general" className="text-xs px-2 py-1.5 h-auto">
+              General
+            </TabsTrigger>
+            <TabsTrigger value="brand" className="text-xs px-2 py-1.5 h-auto">
+              Brand
+            </TabsTrigger>
+            <TabsTrigger value="sources" className="text-xs px-2 py-1.5 h-auto">
+              Sources
+            </TabsTrigger>
+            <TabsTrigger value="security" className="text-xs px-2 py-1.5 h-auto">
+              Security
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="text-xs px-2 py-1.5 h-auto">
+              Notifications
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        <div className="hidden sm:block">
+          <TabsList className="grid w-full grid-cols-5 gap-1 h-auto p-1">
+            <TabsTrigger value="general" className="text-sm px-3 py-2 h-auto">
+              General
+            </TabsTrigger>
+            <TabsTrigger value="brand" className="text-sm px-3 py-2 h-auto">
+              Brand
+            </TabsTrigger>
+            <TabsTrigger value="sources" className="text-sm px-3 py-2 h-auto">
+              Sources
+            </TabsTrigger>
+            <TabsTrigger value="security" className="text-sm px-3 py-2 h-auto">
+              Security
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="text-sm px-3 py-2 h-auto">
+              Notifications
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="general" className="space-y-6">
           <div className="grid gap-6">
