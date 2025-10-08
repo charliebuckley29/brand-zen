@@ -13,6 +13,7 @@ import { Eye, EyeOff, Save, ArrowLeft, CheckCircle, XCircle, AlertCircle, Chevro
 import { Link } from "react-router-dom";
 import { SOURCES, SOURCE_CATEGORIES } from "@/config/sources";
 import { AdminQuotaManagerV2 } from "@/components/AdminQuotaManagerV2";
+import { AdminLayout } from "@/components/ui/admin-layout";
 
 type ApiKey = {
   id: string;
@@ -185,22 +186,10 @@ export default function AdminApiPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Link to="/">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold">API Management</h1>
-            <p className="text-muted-foreground">
-              Configure API keys for external data sources
-            </p>
-          </div>
-        </div>
+    <AdminLayout
+      title="API Management"
+      description="Configure API keys for external data sources"
+    >
 
         {/* Tab Navigation */}
         <div className="border-b">
@@ -458,7 +447,6 @@ export default function AdminApiPanel() {
         {activeTab === 'quota-management' && (
           <AdminQuotaManagerV2 />
         )}
-      </div>
-    </div>
+    </AdminLayout>
   );
 }

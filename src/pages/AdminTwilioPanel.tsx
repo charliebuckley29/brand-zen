@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Save, ArrowLeft, MessageSquare, Smartphone } from "lucide-react";
 import { Link } from "react-router-dom";
+import { AdminLayout } from "@/components/ui/admin-layout";
 
 type TwilioSettings = {
   id?: string;
@@ -134,22 +135,10 @@ export default function AdminTwilioPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Link to="/admin">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Admin
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold">Twilio Configuration</h1>
-            <p className="text-muted-foreground">
-              Configure Twilio settings for SMS and WhatsApp notifications
-            </p>
-          </div>
-        </div>
+    <AdminLayout
+      title="Twilio Configuration"
+      description="Configure Twilio settings for SMS and WhatsApp notifications"
+    >
 
         <Card>
           <CardHeader>
@@ -293,7 +282,6 @@ export default function AdminTwilioPanel() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </AdminLayout>
   );
 }

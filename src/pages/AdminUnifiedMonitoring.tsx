@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { AdminLayout } from '../components/ui/admin-layout';
 
 // Import the new smaller components
 import { SystemOverview } from '../components/admin/SystemOverview';
@@ -64,26 +65,10 @@ export default function AdminUnifiedMonitoring() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-        <div className="mb-8">
-      <div className="flex items-center justify-between">
-          <div>
-              <h1 className="text-3xl font-bold text-gray-900">Unified Monitoring Dashboard</h1>
-              <p className="text-gray-600 mt-2">
-                Comprehensive system monitoring and administration
-            </p>
-          </div>
-            <Link 
-              to="/admin" 
-              className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Admin
-            </Link>
-        </div>
-      </div>
+    <AdminLayout
+      title="Unified Monitoring Dashboard"
+      description="Comprehensive system monitoring and administration"
+    >
 
         {/* Main Content */}
         <Tabs defaultValue="system" className="space-y-6">
@@ -125,8 +110,7 @@ export default function AdminUnifiedMonitoring() {
             <ArchiveRetention />
         </TabsContent>
       </Tabs>
-      </div>
-    </div>
+    </AdminLayout>
   );
 }
 

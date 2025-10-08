@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AdminBugReportsPanel } from "@/components/AdminBugReportsPanel";
+import { AdminLayout } from "@/components/ui/admin-layout";
 
 export default function AdminBugReportsPage() {
   const { isModerator, loading: roleLoading } = useUserRole();
@@ -40,19 +41,11 @@ export default function AdminBugReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Link to="/admin">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Admin
-            </Button>
-          </Link>
-        </div>
-
-        <AdminBugReportsPanel />
-      </div>
-    </div>
+    <AdminLayout
+      title="Bug Reports"
+      description="Manage and track user bug reports"
+    >
+      <AdminBugReportsPanel />
+    </AdminLayout>
   );
 }
