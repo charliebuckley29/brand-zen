@@ -12,11 +12,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { cleanHtmlContent } from "@/lib/contentUtils";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Flag, Settings as SettingsIcon, AlertTriangle, Eye, Mail, MailCheck, Globe, Building2, Trash2 } from "lucide-react";
+import { Users, Flag, Settings as SettingsIcon, AlertTriangle, Eye, Mail, MailCheck, Globe, Building2, Trash2, RefreshCw } from "lucide-react";
 import { SocialMediaLinks } from "@/components/SocialMediaLinks";
 import type { UserType } from "@/hooks/use-user-role";
 import { GlobalSettingSwitch } from "@/components/GlobalSettingSwitch";
 import { API_ENDPOINTS, createApiUrl } from "@/lib/api";
+import { EnhancedUserCard } from "@/components/ui/enhanced-user-card";
+import { EnhancedStatusBadge } from "@/components/ui/enhanced-status-badge";
+import { MobileNavBar } from "@/components/ui/mobile-nav-bar";
 
 interface User {
   id: string;
@@ -87,6 +90,7 @@ export function ModeratorPanel() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [deleteReason, setDeleteReason] = useState('');
   const [approvalStatusFilter, setApprovalStatusFilter] = useState<string>('all');
+  const [currentTab, setCurrentTab] = useState<string>('users');
   const { toast } = useToast();
 
   // Helper function to check if a user can be edited by moderators
@@ -797,37 +801,23 @@ export function ModeratorPanel() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 md:pb-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Moderator Panel</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Moderator Panel</h1>
           <p className="text-muted-foreground text-sm sm:text-base">
             Manage users, monitor flagged mentions, and configure brand settings
           </p>
         </div>
         <Button onClick={fetchData} variant="outline" className="w-full sm:w-auto">
+          <RefreshCw className="h-4 w-4 mr-2" />
           Refresh Data
         </Button>
       </div>
 
-      <Tabs defaultValue="users" className="space-y-6">
-        {/* Mobile tabs - single column */}
-        <TabsList className="grid w-full grid-cols-1 gap-2 h-auto md:hidden">
-          <TabsTrigger value="users" className="flex items-center gap-2 justify-start">
-            <Users className="h-4 w-4" />
-            Users ({users.length})
-          </TabsTrigger>
-          <TabsTrigger value="mentions" className="flex items-center gap-2 justify-start">
-            <Flag className="h-4 w-4" />
-            Flagged Mentions ({flaggedMentions.length})
-          </TabsTrigger>
-          <TabsTrigger value="brands" className="flex items-center gap-2 justify-start">
-            <SettingsIcon className="h-4 w-4" />
-            Brand Management ({userKeywords.length})
-          </TabsTrigger>
-        </TabsList>
-        
-        {/* Desktop tabs - horizontal layout */}
+      {/* Desktop Navigation */}
+      <Tabs value={currentTab} onValueChange={setCurrentTab} className="space-y-6">
         <TabsList className="hidden md:grid w-full grid-cols-3">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
@@ -846,16 +836,16 @@ export function ModeratorPanel() {
         <TabsContent value="users" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>User Management</CardTitle>
+              <CardTitle className="text-xl font-semibold">User Management</CardTitle>
               <CardDescription>
                 View and manage user roles and permissions
               </CardDescription>
             </CardHeader>
             <CardContent>
               {/* Filter controls */}
-              <div className="mb-4 flex items-center gap-4">
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="approval-filter">Filter by Status:</Label>
+                  <Label htmlFor="approval-filter" className="text-sm font-medium">Filter by Status:</Label>
                   <Select value={approvalStatusFilter} onValueChange={setApprovalStatusFilter}>
                     <SelectTrigger id="approval-filter" className="w-48">
                       <SelectValue placeholder="All users" />
@@ -874,332 +864,53 @@ export function ModeratorPanel() {
                 </div>
               </div>
               
-              {/* Desktop table view */}
-              <div className="hidden md:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User Name</TableHead>
-                      <TableHead>Email Status</TableHead>
-                      <TableHead>Approval Status</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Fetch Frequency</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
-                         <TableCell>
-                           {canEditUser(user.user_type) ? (
-                             <Button
-                               variant="link"
-                               className="p-0 h-auto font-medium"
-                               onClick={() => {
-                                 setSelectedUser(user);
-                                 const userKeyword = userKeywords.find(k => k.user_id === user.id);
-                                 setSelectedUserKeywords(userKeyword || null);
-                                 setEditingProfile({
-                                   full_name: user.full_name,
-                                   email: user.email,
-                                   phone_number: user.phone_number || '',
-                                   brand_name: userKeyword?.brand_name || '',
-                                   variants: userKeyword?.variants?.join(', ') || '',
-                                   google_alert_rss_url: userKeyword?.google_alert_rss_url || '',
-                                   brand_website: user.brand_website || '',
-                                   brand_description: user.brand_description || '',
-                                   social_media_links: user.social_media_links || {}
-                                 });
-                                 setEditMode(false);
-                                 setUserDetailOpen(true);
-                               }}
-                             >
-                               {user.full_name}
-                             </Button>
-                           ) : (
-                             <span className="font-medium text-muted-foreground cursor-not-allowed" title="Cannot edit moderators or admins">
-                               {user.full_name}
-                             </span>
-                           )}
-                         </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-2">
-                                {user.email_confirmed ? (
-                                  <div className="flex items-center gap-1 text-green-600">
-                                    <MailCheck className="h-4 w-4" />
-                                    <span className="text-sm">Confirmed</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1 text-orange-600">
-                                    <Mail className="h-4 w-4" />
-                                    <span className="text-sm">Unconfirmed</span>
-                                  </div>
-                                )}
-                                <div className="flex gap-1">
-                                  {!user.email_confirmed && user.email !== 'Email not available' && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => resendEmailConfirmation(user.id, user.email)}
-                                      disabled={resendingEmails.has(user.id)}
-                                      className="h-7 px-2 text-xs"
-                                    >
-                                      {resendingEmails.has(user.id) ? 'Sending...' : 'Resend'}
-                                    </Button>
-                                  )}
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => sendPasswordReset(user.id, user.email)}
-                                    disabled={sendingPasswordReset.has(user.id)}
-                                    className="h-7 px-2 text-xs"
-                                  >
-                                    {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => handleDeleteUserClick(user)}
-                                    disabled={deletingUsers.has(user.id)}
-                                    className="h-7 px-2 text-xs"
-                                  >
-                                    <Trash2 className="h-3 w-3 mr-1" />
-                                    {deletingUsers.has(user.id) ? 'Deleting...' : 'Delete'}
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col gap-1">
-                              <Badge variant={getApprovalStatusBadgeVariant(user.user_status)}>
-                                {user.user_status?.replace('_', ' ') || 'pending_approval'}
-                              </Badge>
-                              {user.user_status === 'approved' && user.approved_at && (
-                                <span className="text-xs text-muted-foreground">
-                                  Approved {new Date(user.approved_at).toLocaleDateString()}
-                                </span>
-                              )}
-                              {user.user_status === 'rejected' && user.rejection_reason && (
-                                <span className="text-xs text-red-600" title={user.rejection_reason}>
-                                  {user.rejection_reason.length > 30 
-                                    ? user.rejection_reason.substring(0, 30) + '...' 
-                                    : user.rejection_reason}
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getUserBadgeVariant(user.user_type)}>
-                              {user.user_type.replace('_', ' ')}
-                            </Badge>
-                            {!canEditUser(user.user_type) && (
-                              <span className="text-xs text-muted-foreground ml-2">
-                                (Protected)
-                              </span>
-                            )}
-                          </TableCell>
-                        <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-                         <TableCell>
-                           <div className="flex items-center gap-2">
-                             <Select 
-                               value={user.fetch_frequency_minutes.toString()} 
-                               onValueChange={(value: string) => updateUserFetchFrequency(user.id, parseInt(value))}
-                               disabled={!canEditUser(user.user_type)}
-                             >
-                               <SelectTrigger className="w-24">
-                                 <SelectValue />
-                               </SelectTrigger>
-                               <SelectContent>
-                                 <SelectItem value="5">5min</SelectItem>
-                                 <SelectItem value="10">10min</SelectItem>
-                                 <SelectItem value="15">15min</SelectItem>
-                                 <SelectItem value="30">30min</SelectItem>
-                                 <SelectItem value="60">1hr</SelectItem>
-                                 <SelectItem value="120">2hr</SelectItem>
-                               </SelectContent>
-                             </Select>
-                           </div>
-                         </TableCell>
-                         <TableCell>
-                           <Select 
-                             value={user.user_type} 
-                             onValueChange={(value: UserType) => updateUserRole(user.id, value)}
-                             disabled={!canEditUser(user.user_type)}
-                           >
-                             <SelectTrigger className="w-32">
-                               <SelectValue />
-                             </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="basic_user">Basic User</SelectItem>
-                                <SelectItem value="moderator">Moderator</SelectItem>
-                              </SelectContent>
-                           </Select>
-                         </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              {/* Enhanced User Cards - Both Desktop and Mobile */}
+              <div className="space-y-4">
+                {filteredUsers.map((user) => {
+                  const canEdit = canEditUser(user.user_type);
+                  const canDelete = user.user_type === 'basic_user';
+                  
+                  const loadingStates = {
+                    deleting: deletingUsers.has(user.id),
+                    passwordReset: sendingPasswordReset.has(user.id),
+                    emailResend: resendingEmails.has(user.id)
+                  };
 
-              {/* Mobile card view */}
-              <div className="md:hidden space-y-4">
-                {filteredUsers.map((user) => (
-                  <Card key={user.id} className="p-4">
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          {canEditUser(user.user_type) ? (
-                            <Button
-                              variant="link"
-                              className="p-0 h-auto font-medium text-left"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                const userKeyword = userKeywords.find(k => k.user_id === user.id);
-                                setSelectedUserKeywords(userKeyword || null);
-                                setEditingProfile({
-                                  full_name: user.full_name,
-                                  email: user.email,
-                                  phone_number: user.phone_number || '',
-                                  brand_name: userKeyword?.brand_name || '',
-                                  variants: userKeyword?.variants?.join(', ') || '',
-                                  google_alert_rss_url: userKeyword?.google_alert_rss_url || '',
-                                  brand_website: user.brand_website || '',
-                                  brand_description: user.brand_description || '',
-                                  social_media_links: user.social_media_links || {}
-                                });
-                                setEditMode(false);
-                                setUserDetailOpen(true);
-                              }}
-                            >
-                              {user.full_name}
-                            </Button>
-                          ) : (
-                            <span className="font-medium text-muted-foreground" title="Cannot edit moderators or admins">
-                              {user.full_name}
-                            </span>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <Badge variant={getUserBadgeVariant(user.user_type)} className="text-xs">
-                              {user.user_type.replace('_', ' ')}
-                            </Badge>
-                            {!canEditUser(user.user_type) && (
-                              <span className="text-xs text-muted-foreground">
-                                (Protected)
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-2">
-                              {user.email_confirmed ? (
-                                <div className="flex items-center gap-1 text-green-600">
-                                  <MailCheck className="h-3 w-3" />
-                                  <span className="text-xs">Email Confirmed</span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1 text-orange-600">
-                                  <Mail className="h-3 w-3" />
-                                  <span className="text-xs">Email Unconfirmed</span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={getApprovalStatusBadgeVariant(user.user_status)} className="text-xs">
-                                {user.user_status?.replace('_', ' ') || 'pending_approval'}
-                              </Badge>
-                              {user.user_status === 'approved' && user.approved_at && (
-                                <span className="text-xs text-muted-foreground">
-                                  {new Date(user.approved_at).toLocaleDateString()}
-                                </span>
-                              )}
-                            </div>
-                              <div className="flex gap-1">
-                                {!user.email_confirmed && user.email !== 'Email not available' && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => resendEmailConfirmation(user.id, user.email)}
-                                    disabled={resendingEmails.has(user.id)}
-                                    className="h-6 px-2 text-xs"
-                                  >
-                                    {resendingEmails.has(user.id) ? 'Sending...' : 'Resend'}
-                                  </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => sendPasswordReset(user.id, user.email)}
-                                  disabled={sendingPasswordReset.has(user.id)}
-                                  className="h-6 px-2 text-xs"
-                                >
-                                  {sendingPasswordReset.has(user.id) ? 'Sending...' : 'Reset Password'}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleDeleteUserClick(user)}
-                                  disabled={deletingUsers.has(user.id)}
-                                  className="h-6 px-2 text-xs"
-                                >
-                                  <Trash2 className="h-3 w-3 mr-1" />
-                                  {deletingUsers.has(user.id) ? 'Deleting...' : 'Delete'}
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right text-sm text-muted-foreground">
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 gap-3">
-                        <div>
-                          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                            Fetch Frequency
-                          </label>
-                          <Select 
-                            value={user.fetch_frequency_minutes.toString()} 
-                            onValueChange={(value: string) => updateUserFetchFrequency(user.id, parseInt(value))}
-                            disabled={!canEditUser(user.user_type)}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="5">5 minutes</SelectItem>
-                              <SelectItem value="10">10 minutes</SelectItem>
-                              <SelectItem value="15">15 minutes</SelectItem>
-                              <SelectItem value="30">30 minutes</SelectItem>
-                              <SelectItem value="60">1 hour</SelectItem>
-                              <SelectItem value="120">2 hours</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        <div>
-                          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                            Role
-                          </label>
-                          <Select 
-                            value={user.user_type} 
-                            onValueChange={(value: UserType) => updateUserRole(user.id, value)}
-                            disabled={!canEditUser(user.user_type)}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="basic_user">Basic User</SelectItem>
-                              <SelectItem value="moderator">Moderator</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                  </Card>
-                ))}
+                  const handleEdit = () => {
+                    setSelectedUser(user);
+                    const userKeyword = userKeywords.find(k => k.user_id === user.id);
+                    setSelectedUserKeywords(userKeyword || null);
+                    setEditingProfile({
+                      full_name: user.full_name,
+                      email: user.email,
+                      phone_number: user.phone_number || '',
+                      brand_name: userKeyword?.brand_name || '',
+                      variants: userKeyword?.variants?.join(', ') || '',
+                      google_alert_rss_url: userKeyword?.google_alert_rss_url || '',
+                      brand_website: user.brand_website || '',
+                      brand_description: user.brand_description || '',
+                      social_media_links: user.social_media_links || {}
+                    });
+                    setEditMode(false);
+                    setUserDetailOpen(true);
+                  };
+
+                  return (
+                    <EnhancedUserCard
+                      key={user.id}
+                      user={user}
+                      onEdit={handleEdit}
+                      onDelete={() => handleDeleteUserClick(user)}
+                      onPasswordReset={() => sendPasswordReset(user.id, user.email)}
+                      onEmailResend={() => resendEmailConfirmation(user.id, user.email)}
+                      onRoleChange={(role: UserType) => updateUserRole(user.id, role)}
+                      onFrequencyChange={(frequency: number) => updateUserFetchFrequency(user.id, frequency)}
+                      loadingStates={loadingStates}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                    />
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -1678,6 +1389,17 @@ export function ModeratorPanel() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Mobile Navigation Bar */}
+      <MobileNavBar
+        currentTab={currentTab}
+        onTabChange={setCurrentTab}
+        badgeCounts={{
+          users: users.length,
+          mentions: flaggedMentions.length,
+          brands: userKeywords.length
+        }}
+      />
     </div>
   );
 }
