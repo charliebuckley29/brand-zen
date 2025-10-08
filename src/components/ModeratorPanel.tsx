@@ -712,7 +712,7 @@ export function ModeratorPanel() {
         throw new Error('No valid session found. Please sign in again.');
       }
 
-      const response = await fetch(createApiUrl(`${API_ENDPOINTS.DELETE_USER}/${userId}`), {
+      const response = await fetch(createApiUrl(`${API_ENDPOINTS.DELETE_USER}-manual/${userId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.data.session.access_token}`,
