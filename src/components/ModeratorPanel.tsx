@@ -345,8 +345,6 @@ export function ModeratorPanel() {
         hasRssUrl: !!rssUrl?.trim()
       });
 
-      const variantsArray = variants.split(',').map(v => v.trim()).filter(v => v);
-      
       // Get the keyword to find user_id
       const keyword = userKeywords.find(k => k.id === keywordId);
       console.log("🔍 [MODERATOR PANEL] Found keyword:", keyword);
@@ -356,96 +354,48 @@ export function ModeratorPanel() {
         throw new Error("Keyword not found");
       }
 
-      // Check current profile data BEFORE update
-      console.log("🔍 [MODERATOR PANEL] Checking profile data BEFORE update...");
-      const { data: profileBefore, error: profileBeforeError } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, brand_website, brand_description, social_media_links, user_status")
-        .eq("user_id", keyword.user_id)
-        .single();
-
-      if (profileBeforeError) {
-        console.error("❌ [MODERATOR PANEL] Error fetching profile before update:", profileBeforeError);
-      } else {
-        console.log("✅ [MODERATOR PANEL] Profile data BEFORE update:", profileBefore);
+      // Get auth token
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) {
+        throw new Error('No authentication token');
       }
-      
-      console.log("🔧 [MODERATOR PANEL] Updating keywords table...");
-      const { error } = await supabase
-        .from("keywords")
-        .update({ 
-          brand_name: brandName,
-          variants: variantsArray,
-          google_alert_rss_url: rssUrl || null,
-          google_alerts_enabled: rssUrl ? true : false
-        })
-        .eq("id", keywordId);
 
-      if (error) {
-        console.error("❌ [MODERATOR PANEL] Keywords update failed:", error);
-        throw error;
+      console.log("🔧 [MODERATOR PANEL] Using backend API to update keywords...");
+      
+      // Use the backend API to update keywords/brand information
+      const response = await fetch(createApiUrl('/admin/update-user-profile-complete'), {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: keyword.user_id,
+          brandName: brandName,
+          variants: variants,
+          googleAlertRssUrl: rssUrl
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ [MODERATOR PANEL] Backend API failed:", response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("✅ [MODERATOR PANEL] Backend API response:", result);
+
+      if (!result.success) {
+        console.error("❌ [MODERATOR PANEL] Backend API returned error:", result.error);
+        throw new Error(result.error || "Failed to update brand information");
       }
 
       console.log("✅ [MODERATOR PANEL] Keywords updated successfully");
 
-      // If RSS URL is being set, also approve the user automatically
-      if (rssUrl && rssUrl.trim() !== '') {
-        console.log("🔧 [MODERATOR PANEL] RSS URL provided, attempting to approve user...");
-        
-        const { error: approvalError } = await supabase
-          .from("profiles")
-          .update({
-            user_status: 'approved',
-            approved_at: new Date().toISOString(),
-            approved_by: (await supabase.auth.getUser()).data.user?.id
-          })
-          .eq("user_id", keyword.user_id)
-          .eq("user_status", "pending_approval");
-
-        if (approvalError) {
-          console.warn("⚠️ [MODERATOR PANEL] Failed to auto-approve user:", approvalError);
-        } else {
-          console.log("✅ [MODERATOR PANEL] User auto-approved successfully");
-        }
-      }
-
-      // Check profile data AFTER update to see if anything changed
-      console.log("🔍 [MODERATOR PANEL] Checking profile data AFTER update...");
-      const { data: profileAfter, error: profileAfterError } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, brand_website, brand_description, social_media_links, user_status, updated_at")
-        .eq("user_id", keyword.user_id)
-        .single();
-
-      if (profileAfterError) {
-        console.error("❌ [MODERATOR PANEL] Error fetching profile after update:", profileAfterError);
-      } else {
-        console.log("✅ [MODERATOR PANEL] Profile data AFTER update:", profileAfter);
-        
-        // Compare before and after
-        if (profileBefore && profileAfter) {
-          const brandDataChanged = (
-            profileBefore.brand_website !== profileAfter.brand_website ||
-            profileBefore.brand_description !== profileAfter.brand_description ||
-            JSON.stringify(profileBefore.social_media_links) !== JSON.stringify(profileAfter.social_media_links)
-          );
-          
-          if (brandDataChanged) {
-            console.error("❌ [MODERATOR PANEL] BRAND DATA WAS OVERWRITTEN!");
-            console.log("❌ [MODERATOR PANEL] Changes detected:", {
-              brandWebsite: { before: profileBefore.brand_website, after: profileAfter.brand_website },
-              brandDescription: { before: profileBefore.brand_description, after: profileAfter.brand_description },
-              socialMediaLinks: { before: profileBefore.social_media_links, after: profileAfter.social_media_links }
-            });
-          } else {
-            console.log("✅ [MODERATOR PANEL] Brand data preserved correctly");
-          }
-        }
-      }
-
       toast({
         title: "Success",
-        description: rssUrl ? "Brand information updated and user approved!" : "Brand information updated successfully"
+        description: "Brand information updated successfully"
       });
       
       console.log("🔧 [MODERATOR PANEL] Refreshing data...");
