@@ -109,32 +109,46 @@ export function NewUserSignUp() {
       console.log("🔧 [SIGNUP] User Metadata Being Sent to Supabase:", userMetaData);
       console.log("🔧 [SIGNUP] User Metadata JSON String:", JSON.stringify(userMetaData, null, 2));
 
-      // Create user directly with Supabase using user-provided password
-      console.log("🔧 [SIGNUP] Calling supabase.auth.signUp...");
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password: password, // User-provided password
-        options: {
-          data: userMetaData
-        }
+      // Use our backend API for signup (creates complete user data)
+      console.log("🔧 [SIGNUP] Calling backend API...");
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName: fullName.trim(),
+          phoneNumber: phoneNumber?.trim() || null,
+          brandName: brandName.trim(),
+          variants: variants.join(','),
+          brandWebsite: brandWebsite?.trim() || null,
+          brandDescription: brandDescription?.trim() || null,
+          socialMediaLinks: Object.keys(socialMediaLinks || {}).length > 0 ? socialMediaLinks : {}
+        }),
       });
 
-      if (authError) {
-        console.error("❌ [SIGNUP] Supabase signup failed", {
-          error: authError.message,
-          errorCode: authError.status,
-          fullError: authError
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("❌ [SIGNUP] Backend API failed", {
+          status: response.status,
+          error: errorData.error
         });
-        throw new Error(authError.message || 'Failed to create account');
+        throw new Error(errorData.error || 'Failed to create account');
       }
 
-      if (!authData.user) {
-        console.error("❌ [SIGNUP] No user returned from signup", { authData });
-        throw new Error('No user returned from signup');
+      const result = await response.json();
+      
+      if (!result.success) {
+        console.error("❌ [SIGNUP] Backend API returned error", result.error);
+        throw new Error(result.error || 'Failed to create account');
       }
+
+      const authData = result.data;
 
       // COMPREHENSIVE LOGGING - POST-SIGNUP SUCCESS
-      console.log("✅ [SIGNUP] Supabase signup successful!");
+      console.log("✅ [SIGNUP] Backend API signup successful!");
       console.log("✅ [SIGNUP] User Created:", {
         userId: authData.user.id,
         email: authData.user.email,
