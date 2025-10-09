@@ -362,6 +362,15 @@ export function ModeratorPanel() {
 
       console.log("🔧 [MODERATOR PANEL] Using backend API to update keywords...");
       
+      // Get current profile data to preserve existing fields
+      const { data: currentProfile } = await supabase
+        .from("profiles")
+        .select("full_name, phone_number, brand_website, brand_description, social_media_links")
+        .eq("user_id", keyword.user_id)
+        .single();
+
+      console.log("🔍 [MODERATOR PANEL] Current profile data:", currentProfile);
+
       // Use the backend API to update keywords/brand information
       const response = await fetch(createApiUrl('/admin/update-user-profile-complete'), {
         method: 'PUT',
@@ -371,9 +380,14 @@ export function ModeratorPanel() {
         },
         body: JSON.stringify({
           userId: keyword.user_id,
+          fullName: currentProfile?.full_name || 'Unknown User', // Preserve existing full_name
+          phoneNumber: currentProfile?.phone_number || null,
           brandName: brandName,
           variants: variants,
-          googleAlertRssUrl: rssUrl
+          googleAlertRssUrl: rssUrl,
+          brandWebsite: currentProfile?.brand_website || null,
+          brandDescription: currentProfile?.brand_description || null,
+          socialMediaLinks: currentProfile?.social_media_links || {}
         }),
       });
 
