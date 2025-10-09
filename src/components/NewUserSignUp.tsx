@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { createApiUrl } from "@/lib/api";
 import { CheckCircle, AlertCircle, Loader2, Plus, X, Globe } from "lucide-react";
 import { SocialMediaLinks } from "@/components/SocialMediaLinks";
 import type { SocialMediaLinks as SocialMediaLinksType } from "@/types";
@@ -111,7 +112,7 @@ export function NewUserSignUp() {
 
       // Use our backend API for signup (creates complete user data)
       console.log("🔧 [SIGNUP] Calling backend API...");
-      const response = await fetch('/api/auth/signup', {
+      const response = await fetch(createApiUrl('/api/auth/signup'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
