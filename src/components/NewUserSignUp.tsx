@@ -146,21 +146,17 @@ export function NewUserSignUp() {
         throw new Error(result.error || 'Failed to create account');
       }
 
-      const authData = result.data;
+      // Backend returns user directly, not nested in data
+      const user = result.user;
 
       // COMPREHENSIVE LOGGING - POST-SIGNUP SUCCESS
       console.log("✅ [SIGNUP] Backend API signup successful!");
       console.log("✅ [SIGNUP] User Created:", {
-        userId: authData.user.id,
-        email: authData.user.email,
-        emailConfirmed: authData.user.email_confirmed_at,
-        createdAt: authData.user.created_at
+        userId: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        brandName: user.brandName
       });
-
-      // COMPREHENSIVE LOGGING - CHECK WHAT'S IN USER METADATA AFTER CREATION
-      console.log("🔍 [SIGNUP] Checking user metadata after creation...");
-      console.log("🔍 [SIGNUP] User raw_user_meta_data:", authData.user.user_metadata);
-      console.log("🔍 [SIGNUP] User raw_user_meta_data JSON:", JSON.stringify(authData.user.user_metadata, null, 2));
 
       // COMPREHENSIVE LOGGING - WAIT AND CHECK DATABASE
       console.log("🔧 [SIGNUP] Waiting 2 seconds for database triggers to complete...");
