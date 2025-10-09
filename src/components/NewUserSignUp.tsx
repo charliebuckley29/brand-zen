@@ -167,7 +167,7 @@ export function NewUserSignUp() {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', authData.user.id)
+        .eq('user_id', user.id)
         .single();
 
       if (profileError) {
@@ -186,7 +186,7 @@ export function NewUserSignUp() {
       const { data: keywordsData, error: keywordsError } = await supabase
         .from('keywords')
         .select('*')
-        .eq('user_id', authData.user.id)
+        .eq('user_id', user.id)
         .single();
 
       if (keywordsError) {
