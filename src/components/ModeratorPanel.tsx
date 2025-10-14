@@ -20,6 +20,8 @@ import { API_ENDPOINTS, createApiUrl } from "@/lib/api";
 import { EnhancedUserCard } from "@/components/ui/enhanced-user-card";
 import { StatusIndicator, EmailStatusIndicator, UserStatusIndicator } from "@/components/ui/status-indicator";
 import { MobileNavBar } from "@/components/ui/mobile-nav-bar";
+import { KeywordsTab } from "@/components/KeywordsTab";
+import { UserBrandInfoSection } from "@/components/UserBrandInfoSection";
 
 interface User {
   id: string;
@@ -787,13 +789,13 @@ export function ModeratorPanel() {
             <Users className="h-4 w-4" />
             Users ({users.length})
           </TabsTrigger>
+          <TabsTrigger value="keywords" className="flex items-center gap-2">
+            <SettingsIcon className="h-4 w-4" />
+            Keywords
+          </TabsTrigger>
           <TabsTrigger value="mentions" className="flex items-center gap-2">
             <Flag className="h-4 w-4" />
             Flagged Mentions ({flaggedMentions.length})
-          </TabsTrigger>
-          <TabsTrigger value="brands" className="flex items-center gap-2">
-            <SettingsIcon className="h-4 w-4" />
-            Brand Management ({userKeywords.length})
           </TabsTrigger>
         </TabsList>
 
@@ -926,65 +928,8 @@ export function ModeratorPanel() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="brands" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Global Settings</CardTitle>
-              <CardDescription>
-                Configure global application settings that affect all users
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-medium">Allow users to change brand names</Label>
-                    <p className="text-sm text-muted-foreground">
-                      When disabled, basic users cannot modify their brand names or variants
-                    </p>
-                  </div>
-                  <GlobalSettingSwitch 
-                    settingKey="usersCanChangeBrandName"
-                    onUpdate={fetchData}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Brand Management</CardTitle>
-              <CardDescription>
-                Manage user brand configurations and Google Alert integrations
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {userKeywords.map((keyword) => {
-                  const user = users.find(u => u.id === keyword.user_id);
-                  if (!user) {
-                    console.warn(`User not found for keyword ${keyword.id}, user_id: ${keyword.user_id}`);
-                    return null;
-                  }
-                  return (
-                    <BrandEditor 
-                      key={keyword.id} 
-                      keyword={keyword} 
-                      user={user}
-                      onUpdate={updateUserBrand}
-                      onUpdateProfile={updateUserProfileBrand}
-                    />
-                  );
-                })}
-                {userKeywords.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No brand configurations found
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="keywords" className="space-y-4">
+          <KeywordsTab />
         </TabsContent>
       </Tabs>
 
@@ -1138,6 +1083,14 @@ export function ModeratorPanel() {
                       </p>
                     </div>
                   </div>
+                  
+                  {/* Brand Information Section */}
+                  <UserBrandInfoSection 
+                    userId={selectedUser.id} 
+                    userFullName={selectedUser.full_name}
+                    onUpdate={fetchData}
+                  />
+                  
                    <div className="flex flex-col sm:flex-row justify-end gap-2">
                      <Button variant="outline" onClick={() => setUserDetailOpen(false)} className="w-full sm:w-auto">
                        Close
