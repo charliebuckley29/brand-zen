@@ -305,6 +305,12 @@ export function QueueErrorMonitoring() {
           }
         }));
         setErrorLogs(enhancedLogs);
+        
+        // Log success for debugging
+        console.log(`✅ Loaded ${enhancedLogs.length} error logs from backend`);
+      } else {
+        console.error('❌ Failed to load error logs:', logsResult.error);
+        setErrorLogs([]);
       }
 
       if (analyticsResult.success) {
@@ -830,7 +836,20 @@ export function QueueErrorMonitoring() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredErrorLogs.slice(0, 50).map((log) => (
+                    {filteredErrorLogs.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8">
+                          <div className="flex flex-col items-center space-y-2">
+                            <CheckCircle className="h-12 w-12 text-green-500" />
+                            <h3 className="text-lg font-semibold">No Errors Found</h3>
+                            <p className="text-muted-foreground">
+                              System is running smoothly with no errors in the last {timeRange}.
+                            </p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredErrorLogs.slice(0, 50).map((log) => (
                       <TableRow key={log.id}>
                         <TableCell className="text-sm">
                           {formatTimeAgo(log.timestamp)}
@@ -887,14 +906,10 @@ export function QueueErrorMonitoring() {
                           </DropdownMenu>
                         </TableCell>
                       </TableRow>
-                    ))}
+                      ))
+                    )}
                   </TableBody>
                 </Table>
-                {filteredErrorLogs.length === 0 && (
-                  <div className="p-8 text-center text-muted-foreground">
-                    No error logs found matching your filters.
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
