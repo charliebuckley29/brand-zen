@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
-import { Search, Edit, Globe, AlertCircle, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import { Search, Edit, Globe, AlertCircle, CheckCircle, XCircle, RefreshCw, Youtube, MessageSquare, Rss, Play, Pause, Settings } from "lucide-react";
 
 interface KeywordManagement {
   id: string;
@@ -139,6 +139,89 @@ export function KeywordsTab() {
     }
   };
 
+  // Get API source status icons
+  const getApiSourceIcons = (keyword: KeywordManagement) => {
+    const sources = [];
+    
+    if (keyword.google_alerts_enabled) {
+      sources.push(
+        <div key="google" className="flex items-center gap-1" title="Google Alerts">
+          <Globe className="h-4 w-4 text-blue-600" />
+          <span className="text-xs text-blue-600">GA</span>
+        </div>
+      );
+    }
+    
+    if (keyword.youtube_enabled) {
+      sources.push(
+        <div key="youtube" className="flex items-center gap-1" title="YouTube">
+          <Youtube className="h-4 w-4 text-red-600" />
+          <span className="text-xs text-red-600">YT</span>
+        </div>
+      );
+    }
+    
+    if (keyword.x_enabled) {
+      sources.push(
+        <div key="x" className="flex items-center gap-1" title="X (Twitter)">
+          <MessageSquare className="h-4 w-4 text-black" />
+          <span className="text-xs text-black">X</span>
+        </div>
+      );
+    }
+    
+    if (keyword.reddit_enabled) {
+      sources.push(
+        <div key="reddit" className="flex items-center gap-1" title="Reddit">
+          <MessageSquare className="h-4 w-4 text-orange-600" />
+          <span className="text-xs text-orange-600">RD</span>
+        </div>
+      );
+    }
+    
+    if (keyword.rss_news_enabled) {
+      sources.push(
+        <div key="rss" className="flex items-center gap-1" title="RSS News">
+          <Rss className="h-4 w-4 text-green-600" />
+          <span className="text-xs text-green-600">RSS</span>
+        </div>
+      );
+    }
+    
+    return sources.length > 0 ? (
+      <div className="flex items-center gap-2 flex-wrap">
+        {sources}
+      </div>
+    ) : (
+      <div className="flex items-center gap-1 text-muted-foreground" title="No API sources enabled">
+        <XCircle className="h-4 w-4" />
+        <span className="text-xs">None</span>
+      </div>
+    );
+  };
+
+  // Get automation status icon
+  const getAutomationStatus = (keyword: KeywordManagement) => {
+    const hasAnyEnabled = keyword.google_alerts_enabled || keyword.youtube_enabled || 
+                         keyword.x_enabled || keyword.reddit_enabled || keyword.rss_news_enabled;
+    
+    if (hasAnyEnabled) {
+      return (
+        <div className="flex items-center gap-1 text-green-600" title="Automated fetching enabled">
+          <Play className="h-4 w-4" />
+          <span className="text-xs">Auto</span>
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex items-center gap-1 text-muted-foreground" title="Automated fetching disabled">
+          <Pause className="h-4 w-4" />
+          <span className="text-xs">Manual</span>
+        </div>
+      );
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -200,6 +283,8 @@ export function KeywordsTab() {
                   <TableHead>Type</TableHead>
                   <TableHead>User</TableHead>
                   <TableHead>Brand</TableHead>
+                  <TableHead>API Sources</TableHead>
+                  <TableHead>Automation</TableHead>
                   <TableHead>RSS URL Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -217,6 +302,12 @@ export function KeywordsTab() {
                     </TableCell>
                     <TableCell>{keyword.user_full_name}</TableCell>
                     <TableCell>{keyword.user_brand_name}</TableCell>
+                    <TableCell>
+                      {getApiSourceIcons(keyword)}
+                    </TableCell>
+                    <TableCell>
+                      {getAutomationStatus(keyword)}
+                    </TableCell>
                     <TableCell>{getStatusBadge(keyword)}</TableCell>
                     <TableCell>
                       <Button
@@ -287,7 +378,7 @@ function KeywordEditForm({ keyword, onUpdate, onCancel, isUpdating }: KeywordEdi
     if (!url || url.trim() === '') return true;
     try {
       const parsedUrl = new URL(url);
-      return parsedUrl.hostname.includes('google.com') && 
+      return (parsedUrl.hostname.includes('google.com') || parsedUrl.hostname.includes('google.co.uk')) && 
              parsedUrl.pathname.includes('/alerts/feeds/');
     } catch {
       return false;
@@ -347,7 +438,7 @@ function KeywordEditForm({ keyword, onUpdate, onCancel, isUpdating }: KeywordEdi
               id="google-alerts-rss"
               value={rssUrl}
               onChange={(e) => setRssUrl(e.target.value)}
-              placeholder="https://www.google.com/alerts/feeds/..."
+              placeholder="https://www.google.com/alerts/feeds/... or https://www.google.co.uk/alerts/feeds/..."
               rows={3}
               className={!validateRssUrl(rssUrl) && rssUrl ? 'border-red-500' : ''}
             />
