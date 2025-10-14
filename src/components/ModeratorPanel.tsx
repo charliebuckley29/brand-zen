@@ -1384,6 +1384,18 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
   const [socialMediaLinks, setSocialMediaLinks] = useState<Record<string, string>>(user?.social_media_links || {});
   const [isEditing, setIsEditing] = useState(false);
 
+  // RSS URL validation function
+  const validateRssUrl = (url: string): boolean => {
+    if (!url || url.trim() === '') return true; // Empty is valid (optional field)
+    try {
+      const parsedUrl = new URL(url);
+      return parsedUrl.hostname.includes('google.com') && 
+             parsedUrl.pathname.includes('/alerts/feeds/');
+    } catch {
+      return false;
+    }
+  };
+
   const handleSave = () => {
     // Update keywords (brand name, variants, RSS URL)
     onUpdate(keyword.id, brandName, variants, rssUrl);
@@ -1498,7 +1510,17 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
               onChange={(e) => setRssUrl(e.target.value)}
               placeholder="https://www.google.com/alerts/feeds/..."
               rows={3}
+              className={!validateRssUrl(rssUrl) && rssUrl ? 'border-red-500' : ''}
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              💡 <strong>Tip:</strong> You can use the same RSS URL for multiple keywords if they're related. 
+              The system will automatically deduplicate processing for better performance.
+            </p>
+            {!validateRssUrl(rssUrl) && rssUrl && (
+              <p className="text-xs text-red-600 mt-1">
+                ⚠️ Please enter a valid Google Alerts RSS URL (should contain "google.com/alerts/feeds/")
+              </p>
+            )}
           </div>
         </div>
       ) : (
