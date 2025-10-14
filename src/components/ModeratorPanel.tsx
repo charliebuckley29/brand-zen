@@ -1155,7 +1155,7 @@ export function ModeratorPanel() {
                         id="edit-rss"
                         value={editingProfile.google_alert_rss_url}
                         onChange={(e) => setEditingProfile(prev => ({ ...prev, google_alert_rss_url: e.target.value }))}
-                        placeholder="https://www.google.com/alerts/feeds/..."
+                        placeholder="https://www.google.com/alerts/feeds/... or https://www.google.co.uk/alerts/feeds/..."
                         rows={3}
                       />
                     </div>
@@ -1342,7 +1342,7 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
     if (!url || url.trim() === '') return true; // Empty is valid (optional field)
     try {
       const parsedUrl = new URL(url);
-      return parsedUrl.hostname.includes('google.com') && 
+      return (parsedUrl.hostname.includes('google.com') || parsedUrl.hostname.includes('google.co.uk')) && 
              parsedUrl.pathname.includes('/alerts/feeds/');
     } catch {
       return false;
@@ -1461,7 +1461,7 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
               id={`rss-${keyword.id}`}
               value={rssUrl}
               onChange={(e) => setRssUrl(e.target.value)}
-              placeholder="https://www.google.com/alerts/feeds/..."
+              placeholder="https://www.google.com/alerts/feeds/... or https://www.google.co.uk/alerts/feeds/..."
               rows={3}
               className={!validateRssUrl(rssUrl) && rssUrl ? 'border-red-500' : ''}
             />
@@ -1471,7 +1471,7 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
             </p>
             {!validateRssUrl(rssUrl) && rssUrl && (
               <p className="text-xs text-red-600 mt-1">
-                ⚠️ Please enter a valid Google Alerts RSS URL (should contain "google.com/alerts/feeds/")
+                ⚠️ Please enter a valid Google Alerts RSS URL (should contain "google.com" or "google.co.uk" and "/alerts/feeds/")
               </p>
             )}
           </div>

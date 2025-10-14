@@ -121,7 +121,7 @@ export function KeywordsTab() {
     if (!url || url.trim() === '') return true; // Empty is valid (optional field)
     try {
       const parsedUrl = new URL(url);
-      return parsedUrl.hostname.includes('google.com') && 
+      return (parsedUrl.hostname.includes('google.com') || parsedUrl.hostname.includes('google.co.uk')) && 
              parsedUrl.pathname.includes('/alerts/feeds/');
     } catch {
       return false;
@@ -357,7 +357,7 @@ function KeywordEditForm({ keyword, onUpdate, onCancel, isUpdating }: KeywordEdi
             </p>
             {!validateRssUrl(rssUrl) && rssUrl && (
               <p className="text-xs text-red-600 mt-1">
-                ⚠️ Please enter a valid Google Alerts RSS URL (should contain "google.com/alerts/feeds/")
+                ⚠️ Please enter a valid Google Alerts RSS URL (should contain "google.com" or "google.co.uk" and "/alerts/feeds/")
               </p>
             )}
           </div>
