@@ -8,8 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { createApiUrl } from "@/lib/api";
-import { Search, Edit, Globe, AlertCircle, CheckCircle, XCircle } from "lucide-react";
+import { apiFetch } from "@/lib/api";
+import { Search, Edit, Globe, AlertCircle, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 
 interface KeywordManagement {
   id: string;
@@ -43,7 +43,7 @@ export function KeywordsTab() {
   const fetchKeywords = async () => {
     try {
       setLoading(true);
-      const response = await fetch(createApiUrl('/api/admin/keywords-management?include_all=true'));
+      const response = await apiFetch('/admin/keywords-management?include_all=true');
       const data = await response.json();
       
       if (data.success) {
@@ -81,9 +81,8 @@ export function KeywordsTab() {
   const updateKeyword = async (keywordId: string, updates: Partial<KeywordManagement>) => {
     try {
       setIsUpdating(true);
-      const response = await fetch(createApiUrl('/api/admin/keywords-management'), {
+      const response = await apiFetch('/admin/keywords-management', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ keywordId, updates })
       });
       

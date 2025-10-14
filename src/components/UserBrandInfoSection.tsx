@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { createApiUrl } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { SocialMediaLinks } from "@/components/SocialMediaLinks";
 import { Edit, Save, X, Building2, Globe, FileText } from "lucide-react";
 
@@ -49,7 +49,7 @@ export function UserBrandInfoSection({ userId, userFullName, onUpdate }: UserBra
   const fetchBrandInfo = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(createApiUrl(`/api/admin/user-brand-info?user_id=${userId}`));
+      const response = await apiFetch(`/admin/user-brand-info?user_id=${userId}`);
       const data = await response.json();
       
       if (data.success) {
@@ -95,9 +95,8 @@ export function UserBrandInfoSection({ userId, userFullName, onUpdate }: UserBra
         .map(v => v.trim())
         .filter(v => v.length > 0);
 
-      const response = await fetch(createApiUrl('/api/admin/user-brand-info'), {
+      const response = await apiFetch('/admin/user-brand-info', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
           brandInfo: {
