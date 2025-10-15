@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { cleanHtmlContent } from "@/lib/contentUtils";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Flag, Settings as SettingsIcon, AlertTriangle, Eye, Mail, MailCheck, Globe, Building2, Trash2, RefreshCw } from "lucide-react";
+import { Users, Flag, Settings, Settings as SettingsIcon, AlertTriangle, Eye, Mail, MailCheck, Globe, Building2, Trash2, RefreshCw } from "lucide-react";
 import { SocialMediaLinks } from "@/components/SocialMediaLinks";
 import type { UserType } from "@/hooks/use-user-role";
 import { GlobalSettingSwitch } from "@/components/GlobalSettingSwitch";
