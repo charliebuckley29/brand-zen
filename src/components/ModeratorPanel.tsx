@@ -1594,17 +1594,43 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
             selectedUser: selectedUser,
             dialogState: keywordSourceDialogOpen
           })}
-          {selectedUser && (
-            <KeywordSourceManagement
-              userId={selectedUser.id}
-              userName={selectedUser.full_name}
-              open={keywordSourceDialogOpen}
-              onClose={() => {
-                console.log('🔧 [MODERATOR] Dialog close requested');
-                setKeywordSourceDialogOpen(false);
-              }}
-            />
-          )}
+          
+          {/* Simple debug dialog to test if Dialog component works */}
+          <Dialog open={keywordSourceDialogOpen} onOpenChange={setKeywordSourceDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Debug Dialog</DialogTitle>
+                <DialogDescription>
+                  This is a test dialog to see if Dialog component works.
+                  User: {selectedUser?.full_name}
+                  Open: {keywordSourceDialogOpen ? 'true' : 'false'}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="p-4">
+                <p>If you can see this, the Dialog component is working!</p>
+                <Button onClick={() => setKeywordSourceDialogOpen(false)}>Close</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          
+          {(() => {
+            try {
+              return selectedUser && (
+                <KeywordSourceManagement
+                  userId={selectedUser.id}
+                  userName={selectedUser.full_name}
+                  open={keywordSourceDialogOpen}
+                  onClose={() => {
+                    console.log('🔧 [MODERATOR] Dialog close requested');
+                    setKeywordSourceDialogOpen(false);
+                  }}
+                />
+              );
+            } catch (error) {
+              console.error('🔧 [MODERATOR] Error rendering KeywordSourceManagement:', error);
+              return <div>Error rendering dialog: {String(error)}</div>;
+            }
+          })()}
         </>
       )}
     </div>
