@@ -1640,12 +1640,13 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
         </div>
       )}
 
-      {/* Test Dialog */}
-      {selectedUser && keywordSourceDialogOpen && (
+      {/* Test Dialog - Always show if dialogOpen is true */}
+      {keywordSourceDialogOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%' }}>
             <h2>TEST DIALOG - Keyword Source Management</h2>
-            <p>User: {selectedUser.full_name} ({selectedUser.id})</p>
+            <p>Dialog is open! selectedUser: {selectedUser?.id || 'undefined'}</p>
+            <p>keywordSourceDialogOpen: {keywordSourceDialogOpen.toString()}</p>
             <p>This is a test dialog to verify the state is working.</p>
             <button onClick={() => setKeywordSourceDialogOpen(false)} style={{ padding: '8px 16px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
               Close Test Dialog
