@@ -250,11 +250,8 @@ export const useDataStore = create<DataState>()(
           if (!user) throw new Error('User not authenticated');
           
           // Use the new keyword-source preferences API
-          const response = await fetch(`/api/keyword-source-preferences?userId=${user.id}`, {
-            headers: {
-              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-            }
-          });
+          const { apiFetch } = await import('@/lib/api');
+          const response = await apiFetch(`/keyword-source-preferences?userId=${user.id}`);
           
           if (!response.ok) throw new Error('Failed to fetch source preferences');
           

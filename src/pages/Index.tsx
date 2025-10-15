@@ -86,10 +86,8 @@ const IndexContent = () => {
 
       // Try new API endpoint first, fallback to old endpoint
       try {
-        const { createApiUrl, getAuthHeaders } = await import('@/lib/api');
-        const response = await fetch(`${createApiUrl('/admin/keywords-management')}?user_id=${user.id}`, {
-          headers: await getAuthHeaders()
-        });
+        const { apiFetch } = await import('@/lib/api');
+        const response = await apiFetch(`/admin/keywords-management?user_id=${user.id}`);
 
         if (response.ok) {
           const result = await response.json();

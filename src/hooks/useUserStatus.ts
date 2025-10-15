@@ -55,10 +55,8 @@ export function useUserStatus() {
         let keywords = null;
 
         try {
-          const { createApiUrl, getAuthHeaders } = await import('@/lib/api');
-          const keywordsResponse = await fetch(`${createApiUrl('/admin/keywords-management')}?user_id=${user.id}`, {
-            headers: await getAuthHeaders()
-          });
+              const { apiFetch } = await import('@/lib/api');
+              const keywordsResponse = await apiFetch(`/admin/keywords-management?user_id=${user.id}`);
 
           if (keywordsResponse.ok) {
             const keywordsResult = await keywordsResponse.json();
