@@ -100,6 +100,7 @@ const SOURCE_CONFIG = {
 };
 
 export function KeywordSourceManagement({ userId, userName, open, onClose }: KeywordSourceManagementProps) {
+  console.log('🔧 KeywordSourceManagement rendered with:', { userId, userName, open });
   
   const [keywords, setKeywords] = useState<UserKeyword[]>([]);
   const [preferences, setPreferences] = useState<KeywordSourcePreference[]>([]);
