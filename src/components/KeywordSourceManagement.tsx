@@ -102,6 +102,11 @@ const SOURCE_CONFIG = {
 export function KeywordSourceManagement({ userId, userName, open, onClose }: KeywordSourceManagementProps) {
   console.log('🔧 KeywordSourceManagement rendered with:', { userId, userName, open });
   
+  // Test if dialog should be visible
+  if (open) {
+    console.log('🔧 [DIALOG] Dialog should be open!', { userId, userName });
+  }
+  
   const [keywords, setKeywords] = useState<UserKeyword[]>([]);
   const [preferences, setPreferences] = useState<KeywordSourcePreference[]>([]);
   const [loading, setLoading] = useState(true);
@@ -298,6 +303,13 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
             Configure automation and display preferences for each keyword and source combination
           </DialogDescription>
         </DialogHeader>
+        
+        {/* Debug info */}
+        <div className="bg-blue-50 p-4 rounded-lg mb-4">
+          <p className="text-sm text-blue-800">
+            🔧 Debug: Dialog is open for user {userId} ({userName})
+          </p>
+        </div>
 
         <div className="space-y-6">
           {/* Search */}
