@@ -104,7 +104,7 @@ export function ModeratorPanel() {
   // Debug render counter
   const renderCount = useRef(0);
   renderCount.current += 1;
-  console.log('🔧 ModeratorPanel render #', renderCount.current, 'selectedUser:', selectedUser?.id, 'dialogOpen:', keywordSourceDialogOpen);
+  console.log('🔧 ModeratorPanel render #', renderCount.current, 'at', new Date().toISOString(), 'selectedUser:', selectedUser?.id, 'dialogOpen:', keywordSourceDialogOpen);
 
   // Helper function to check if a user can be edited by moderators
   const canEditUser = (userType: UserType) => {
@@ -974,6 +974,10 @@ export function ModeratorPanel() {
                           setSelectedUser(user);
                           setKeywordSourceDialogOpen(true);
                           console.log('🔧 After state update calls - should trigger re-render');
+                          // Force a re-render to test
+                          setTimeout(() => {
+                            console.log('🔧 TIMEOUT CHECK - selectedUser:', selectedUser?.id, 'dialogOpen:', keywordSourceDialogOpen);
+                          }, 100);
                         }}
                       >
                         <div className="flex items-center gap-3">
@@ -1633,6 +1637,20 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Test Dialog */}
+      {selectedUser && keywordSourceDialogOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%' }}>
+            <h2>TEST DIALOG - Keyword Source Management</h2>
+            <p>User: {selectedUser.full_name} ({selectedUser.id})</p>
+            <p>This is a test dialog to verify the state is working.</p>
+            <button onClick={() => setKeywordSourceDialogOpen(false)} style={{ padding: '8px 16px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+              Close Test Dialog
+            </button>
+          </div>
         </div>
       )}
 
