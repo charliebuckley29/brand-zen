@@ -175,8 +175,15 @@ export function useSourcePreferences() {
         throw new Error('No keywords found');
       }
 
+      // Check if user has keywords
+      if (!keywordsResult.data || keywordsResult.data.length === 0) {
+        throw new Error('User has no keywords configured');
+      }
+
       // Update all keyword-source combinations for this source type
       const updatePromises = keywordsResult.data.map(async (keywordData: any) => {
+        console.log('🔧 [SOURCE_PREFS] setAllForSource - keywordData:', keywordData);
+        
         const preferences = {
           show_in_mentions: value,
           show_in_analytics: value,
