@@ -919,8 +919,10 @@ export function ModeratorPanel() {
                         key={user.id}
                         className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                         onClick={() => {
+                          console.log('🔧 [MODERATOR] User clicked:', user);
                           setSelectedUser(user);
                           setKeywordSourceDialogOpen(true);
+                          console.log('🔧 [MODERATOR] Dialog state should be set to true');
                         }}
                       >
                         <div className="flex items-center gap-3">
@@ -1120,7 +1122,9 @@ export function ModeratorPanel() {
                      <Button 
                        variant="default" 
                        onClick={() => {
+                         console.log('🔧 [MODERATOR] Configure Automation button clicked');
                          setKeywordSourceDialogOpen(true);
+                         console.log('🔧 [MODERATOR] Dialog state should be set to true');
                        }}
                        className="w-full sm:w-auto"
                      >
@@ -1583,17 +1587,24 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
       {/* Keyword Source Management Dialog */}
       {selectedUser && (
         <>
-          {console.log('🔧 Rendering KeywordSourceManagement with:', {
-            userId: selectedUser.id,
-            userName: selectedUser.full_name,
-            open: keywordSourceDialogOpen
+          {console.log('🔧 [MODERATOR] Rendering KeywordSourceManagement with:', {
+            userId: selectedUser?.id,
+            userName: selectedUser?.full_name,
+            open: keywordSourceDialogOpen,
+            selectedUser: selectedUser,
+            dialogState: keywordSourceDialogOpen
           })}
-          <KeywordSourceManagement
-            userId={selectedUser.id}
-            userName={selectedUser.full_name}
-            open={keywordSourceDialogOpen}
-            onClose={() => setKeywordSourceDialogOpen(false)}
-          />
+          {selectedUser && (
+            <KeywordSourceManagement
+              userId={selectedUser.id}
+              userName={selectedUser.full_name}
+              open={keywordSourceDialogOpen}
+              onClose={() => {
+                console.log('🔧 [MODERATOR] Dialog close requested');
+                setKeywordSourceDialogOpen(false);
+              }}
+            />
+          )}
         </>
       )}
     </div>
