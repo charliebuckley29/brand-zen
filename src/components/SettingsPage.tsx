@@ -80,17 +80,17 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   
   // Brand management state
   const [brandData, setBrandData] = useState<{ id: string; brand_name: string; variants: string[] } | null>(null);
-  const [newBrandName, setNewBrandName] = useState("");
+  const [newBrandName, setNewBrandName] = useState<string>("");
   const [newVariants, setNewVariants] = useState<string[]>([]);
-  const [currentVariant, setCurrentVariant] = useState("");
+  const [currentVariant, setCurrentVariant] = useState<string>("");
   const [isUpdatingBrand, setIsUpdatingBrand] = useState(false);
   const [brandDialogOpen, setBrandDialogOpen] = useState(false);
   const [variantsDialogOpen, setVariantsDialogOpen] = useState(false);
   // Setup dialog state
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
-  const [setupBrandName, setSetupBrandName] = useState("");
+  const [setupBrandName, setSetupBrandName] = useState<string>("");
   const [setupVariants, setSetupVariants] = useState<string[]>([]);
-  const [setupCurrentVariant, setSetupCurrentVariant] = useState("");
+  const [setupCurrentVariant, setSetupCurrentVariant] = useState<string>("");
   const [isCreatingBrand, setIsCreatingBrand] = useState(false);
   
   const { toast } = useToast();
@@ -196,7 +196,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
 
   const handleBrandNameUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBrandName.trim() || !brandData) return;
+    if (!newBrandName?.trim() || !brandData) return;
 
     setIsUpdatingBrand(true);
     try {
@@ -208,7 +208,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
         method: 'PUT',
         body: JSON.stringify({
           id: brandData.id,
-          brand_name: newBrandName.trim(),
+          brand_name: newBrandName?.trim() || "",
           user_id: user.id
         })
       });
@@ -218,7 +218,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
         throw new Error(errorResult.error || 'Failed to update brand name');
       }
 
-      setBrandData({ ...brandData, brand_name: newBrandName.trim() });
+      setBrandData({ ...brandData, brand_name: newBrandName?.trim() || "" });
       setBrandDialogOpen(false);
       
       toast({
@@ -279,7 +279,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   };
 
   const addVariant = () => {
-    if (currentVariant.trim() && !newVariants.includes(currentVariant.trim())) {
+    if (currentVariant?.trim() && !newVariants.includes(currentVariant.trim())) {
       setNewVariants([...newVariants, currentVariant.trim()]);
       setCurrentVariant("");
     }
@@ -328,7 +328,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
 
   // Team emails management functions
   const addTeamEmail = () => {
-    if (newTeamEmail.trim() && !teamEmails.includes(newTeamEmail.trim())) {
+    if (newTeamEmail?.trim() && !teamEmails.includes(newTeamEmail.trim())) {
       const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
       if (emailRegex.test(newTeamEmail.trim())) {
         setTeamEmails([...teamEmails, newTeamEmail.trim()]);
@@ -381,7 +381,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
 
   // Setup dialog helpers
   const addSetupVariant = () => {
-    if (setupCurrentVariant.trim() && !setupVariants.includes(setupCurrentVariant.trim())) {
+    if (setupCurrentVariant?.trim() && !setupVariants.includes(setupCurrentVariant.trim())) {
       setSetupVariants([...setupVariants, setupCurrentVariant.trim()]);
       setSetupCurrentVariant("");
     }
@@ -393,7 +393,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
 
   const handleCreateBrand = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!setupBrandName.trim()) return;
+    if (!setupBrandName?.trim()) return;
     setIsCreatingBrand(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -405,7 +405,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
         method: 'PUT',
         body: JSON.stringify({
           user_id: user.id,
-          brand_name: setupBrandName.trim(),
+          brand_name: setupBrandName?.trim() || "",
           variants: setupVariants,
         })
       });
@@ -532,7 +532,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profileFullName.trim()) {
+    if (!profileFullName?.trim()) {
       toast({
         title: "Name required",
         description: "Please enter your full name.",
@@ -792,7 +792,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                              <Button
                                type="button"
                                onClick={addTeamEmail}
-                               disabled={!newTeamEmail.trim() || teamEmails.includes(newTeamEmail.trim())}
+                               disabled={!newTeamEmail?.trim() || teamEmails.includes(newTeamEmail?.trim() || "")}
                              >
                                Add
                              </Button>
@@ -839,7 +839,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                            </Button>
                           <Button 
                             type="submit" 
-                            disabled={isUpdatingProfile || !profileFullName.trim()}
+                            disabled={isUpdatingProfile || !profileFullName?.trim()}
                           >
                             {isUpdatingProfile ? "Updating..." : "Update Profile"}
                           </Button>
@@ -1045,7 +1045,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="text-sm font-medium">Brand Name</h4>
-                        <p className="text-sm text-muted-foreground">{brandData.brand_name}</p>
+                        <p className="text-sm text-muted-foreground">{brandData?.brand_name || 'Not set'}</p>
                       </div>
                       <Dialog open={brandDialogOpen} onOpenChange={setBrandDialogOpen}>
                         <DialogTrigger asChild>
@@ -1087,7 +1087,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                               </Button>
                               <Button 
                                 type="submit" 
-                                disabled={isUpdatingBrand || !newBrandName.trim()}
+                                disabled={isUpdatingBrand || !newBrandName?.trim()}
                               >
                                 {isUpdatingBrand ? "Updating..." : "Update Brand"}
                               </Button>
@@ -1104,7 +1104,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                       <div className="flex-1">
                         <h4 className="text-sm font-medium">Brand Variants</h4>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {brandData.variants && brandData.variants.length > 0 ? (
+                          {brandData?.variants && brandData.variants.length > 0 ? (
                             brandData.variants.map((variant, index) => (
                               <Badge key={index} variant="secondary">
                                 {variant}
@@ -1146,7 +1146,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                                   type="button"
                                   size="sm"
                                   onClick={addVariant}
-                                  disabled={!currentVariant.trim()}
+                                  disabled={!currentVariant?.trim()}
                                 >
                                   <Plus className="h-4 w-4" />
                                 </Button>
@@ -1225,7 +1225,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                                 type="button"
                                 size="sm"
                                 onClick={addSetupVariant}
-                                disabled={!setupCurrentVariant.trim()}
+                                disabled={!setupCurrentVariant?.trim()}
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
@@ -1257,7 +1257,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                             </Button>
                             <Button 
                               type="submit" 
-                              disabled={isCreatingBrand || !setupBrandName.trim()}
+                              disabled={isCreatingBrand || !setupBrandName?.trim()}
                             >
                               {isCreatingBrand ? "Setting up..." : "Create Brand"}
                             </Button>
