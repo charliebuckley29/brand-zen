@@ -6,7 +6,7 @@ import { SettingsPage } from "@/components/SettingsPage";
 import { BrandSetup } from "@/components/BrandSetup";
 import { EnhancedNavigation } from "@/components/ui/enhanced-navigation";
 import { Footer } from "@/components/Footer";
-import { ModeratorPanel } from "@/components/ModeratorPanel";
+import { ModeratorPanelSimple as ModeratorPanel } from "@/components/ModeratorPanelSimple";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";

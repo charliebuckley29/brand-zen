@@ -15,7 +15,7 @@ import {
   Activity,
   Pause,
   Play,
-  Stop
+  Square
 } from "lucide-react";
 
 interface StatusConfig {
@@ -112,7 +112,7 @@ const statusConfigs: Record<string, StatusConfig> = {
     description: "Temporarily paused"
   },
   stopped: {
-    icon: Stop,
+    icon: Square,
     color: "text-danger-600 bg-danger-50 border-danger-200",
     label: "Stopped",
     description: "Currently stopped"

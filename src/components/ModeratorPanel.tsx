@@ -1450,7 +1450,7 @@ interface BrandEditorProps {
   onUpdateProfile: (userId: string, profileData: { brand_website?: string; brand_description?: string; social_media_links?: Record<string, string> }) => void;
 }
 
-function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorProps) {
+export function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorProps) {
   const [brandName, setBrandName] = useState(keyword.brand_name);
   const [variants, setVariants] = useState(keyword.variants?.join(', ') || '');
   const [rssUrl, setRssUrl] = useState(keyword.google_alert_rss_url || '');
@@ -1673,3 +1673,5 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
     </>
   );
 }
+
+// BrandEditor function ends here
