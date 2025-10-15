@@ -126,7 +126,7 @@ export function useSourcePreferences() {
 
         const requestBody = {
           userId,
-          keyword: keywordData.brand_name,
+          keyword: keywordData.keyword_text,
           sourceType: source,
           preferences
         };
@@ -139,7 +139,7 @@ export function useSourcePreferences() {
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to update preference for keyword: ${keywordData.brand_name}`);
+          throw new Error(`Failed to update preference for keyword: ${keywordData.keyword_text}`);
         }
       });
 
@@ -194,14 +194,14 @@ export function useSourcePreferences() {
           method: 'PUT',
           body: JSON.stringify({
             userId,
-            keyword: keywordData.brand_name,
+            keyword: keywordData.keyword_text,
             sourceType: source,
             preferences
           })
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to update preference for keyword: ${keywordData.brand_name}`);
+          throw new Error(`Failed to update preference for keyword: ${keywordData.keyword_text}`);
         }
       });
 
