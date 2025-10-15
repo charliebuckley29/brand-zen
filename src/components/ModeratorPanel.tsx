@@ -1623,10 +1623,11 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
       )}
 
       {/* Keyword Source Management Dialog */}
-      {selectedUser && keywordSourceDialogOpen && (
+      {selectedUser && (
         <KeywordSourceManagement
           userId={selectedUser.id}
           userName={selectedUser.full_name}
+          open={keywordSourceDialogOpen}
           onClose={() => setKeywordSourceDialogOpen(false)}
         />
       )}

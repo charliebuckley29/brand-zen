@@ -62,6 +62,7 @@ interface UserKeyword {
 interface KeywordSourceManagementProps {
   userId: string;
   userName: string;
+  open: boolean;
   onClose: () => void;
 }
 
@@ -98,7 +99,7 @@ const SOURCE_CONFIG = {
   }
 };
 
-export function KeywordSourceManagement({ userId, userName, onClose }: KeywordSourceManagementProps) {
+export function KeywordSourceManagement({ userId, userName, open, onClose }: KeywordSourceManagementProps) {
   
   const [keywords, setKeywords] = useState<UserKeyword[]>([]);
   const [preferences, setPreferences] = useState<KeywordSourcePreference[]>([]);
@@ -268,7 +269,7 @@ export function KeywordSourceManagement({ userId, userName, onClose }: KeywordSo
 
   if (loading) {
     return (
-      <Dialog open={true} onOpenChange={onClose}>
+      <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Loading keyword-source preferences...</DialogTitle>
@@ -282,7 +283,7 @@ export function KeywordSourceManagement({ userId, userName, onClose }: KeywordSo
   }
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
