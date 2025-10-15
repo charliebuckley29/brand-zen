@@ -20,7 +20,6 @@ import { API_ENDPOINTS, createApiUrl } from "@/lib/api";
 import { EnhancedUserCard } from "@/components/ui/enhanced-user-card";
 import { StatusIndicator, EmailStatusIndicator, UserStatusIndicator } from "@/components/ui/status-indicator";
 import { MobileNavBar } from "@/components/ui/mobile-nav-bar";
-import { KeywordsTab } from "@/components/KeywordsTab";
 import { UserBrandInfoSection } from "@/components/UserBrandInfoSection";
 import { KeywordSourceManagement } from "@/components/KeywordSourceManagement";
 
@@ -931,7 +930,38 @@ export function ModeratorPanel() {
         </TabsContent>
 
         <TabsContent value="keywords" className="space-y-4">
-          <KeywordsTab />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Keyword × Source Management
+              </CardTitle>
+              <CardDescription>
+                Configure automation and display preferences for each user's keywords and sources
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <div className="mb-4">
+                  <Settings className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Use the New Keyword-Source Management System</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Click on any user above, then use the "Configure Automation" button to access the new 
+                    granular keyword × source management interface.
+                  </p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                  <h4 className="font-semibold text-blue-900 mb-2">New Features:</h4>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Configure automation per keyword × source combination</li>
+                    <li>• Set display preferences (mentions, analytics, reports)</li>
+                    <li>• Visual status indicators for automation state</li>
+                    <li>• Real-time updates and comprehensive statistics</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
