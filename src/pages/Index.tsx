@@ -84,17 +84,34 @@ const IndexContent = () => {
         return;
       }
 
-      const response = await fetch(`/api/admin/keywords-management?user_id=${user.id}`, {
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        }
-      });
+      // Try new API endpoint first, fallback to old endpoint
+      try {
+        const { createApiUrl, getAuthHeaders } = await import('@/lib/api');
+        const response = await fetch(`${createApiUrl('/admin/keywords-management')}?user_id=${user.id}`, {
+          headers: await getAuthHeaders()
+        });
 
-      if (response.ok) {
-        const result = await response.json();
-        setHasKeywords(result.success && result.data && result.data.length > 0);
-      } else {
+        if (response.ok) {
+          const result = await response.json();
+          setHasKeywords(result.success && result.data && result.data.length > 0);
+          return;
+        }
+      } catch (newApiError) {
+        console.log("New API endpoint not available, falling back to old endpoint");
+      }
+
+      // Fallback to old direct Supabase query
+      const { data: keywords, error } = await supabase
+        .from('keywords')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (error) {
+        console.error("Error checking keywords:", error);
         setHasKeywords(false);
+      } else {
+        setHasKeywords(keywords && keywords.length > 0);
       }
     } catch (error) {
       console.error("Error checking keywords:", error);

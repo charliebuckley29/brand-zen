@@ -50,18 +50,37 @@ export function useUserStatus() {
           return;
         }
 
-        // Get user keywords to check for RSS URL using new API
-        const keywordsResponse = await fetch(`/api/admin/keywords-management?user_id=${user.id}`, {
-          headers: {
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-          }
-        });
-
+        // Get user keywords to check for RSS URL - try new API first, fallback to old
         let hasRssUrl = false;
-        if (keywordsResponse.ok) {
-          const keywordsResult = await keywordsResponse.json();
-          if (keywordsResult.success && keywordsResult.data) {
-            hasRssUrl = keywordsResult.data.some((k: any) => k.google_alert_rss_url && k.google_alert_rss_url.trim() !== '');
+        let keywords = null;
+
+        try {
+          const { createApiUrl, getAuthHeaders } = await import('@/lib/api');
+          const keywordsResponse = await fetch(`${createApiUrl('/admin/keywords-management')}?user_id=${user.id}`, {
+            headers: await getAuthHeaders()
+          });
+
+          if (keywordsResponse.ok) {
+            const keywordsResult = await keywordsResponse.json();
+            if (keywordsResult.success && keywordsResult.data) {
+              keywords = keywordsResult.data;
+              hasRssUrl = keywordsResult.data.some((k: any) => k.google_alert_rss_url && k.google_alert_rss_url.trim() !== '');
+            }
+          }
+        } catch (newApiError) {
+          console.log("New API endpoint not available, falling back to old endpoint");
+        }
+
+        // Fallback to old direct Supabase query
+        if (keywords === null) {
+          const { data: keywordsData, error: keywordsError } = await supabase
+            .from('keywords')
+            .select('*')
+            .eq('user_id', user.id);
+
+          if (!keywordsError && keywordsData) {
+            keywords = keywordsData;
+            hasRssUrl = keywordsData.some((k: any) => k.google_alert_rss_url && k.google_alert_rss_url.trim() !== '');
           }
         }
 
