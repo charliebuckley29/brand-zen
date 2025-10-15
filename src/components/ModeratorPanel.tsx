@@ -937,29 +937,62 @@ export function ModeratorPanel() {
                 Keyword × Source Management
               </CardTitle>
               <CardDescription>
-                Configure automation and display preferences for each user's keywords and sources
+                Select a user to configure automation and display preferences for their keywords and sources
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <div className="mb-4">
-                  <Settings className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Use the New Keyword-Source Management System</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Click on any user above, then use the "Configure Automation" button to access the new 
-                    granular keyword × source management interface.
-                  </p>
+              {users.length === 0 ? (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Users Found</h3>
+                  <p className="text-muted-foreground">No users available for keyword-source configuration.</p>
                 </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
-                  <h4 className="font-semibold text-blue-900 mb-2">New Features:</h4>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Configure automation per keyword × source combination</li>
-                    <li>• Set display preferences (mentions, analytics, reports)</li>
-                    <li>• Visual status indicators for automation state</li>
-                    <li>• Real-time updates and comprehensive statistics</li>
-                  </ul>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-sm text-muted-foreground mb-4">
+                    Click on a user below to configure their keyword × source automation settings:
+                  </div>
+                  
+                  <div className="grid gap-3">
+                    {users.map((user) => (
+                      <div
+                        key={user.id}
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setKeywordSourceDialogOpen(true);
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <Users className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <div className="font-medium">{user.full_name}</div>
+                            <div className="text-sm text-muted-foreground">{user.email}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={user.user_type === 'moderator' ? 'default' : 'secondary'}>
+                            {user.user_type.replace('_', ' ')}
+                          </Badge>
+                          <Settings className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                    <h4 className="font-semibold text-blue-900 mb-2">Configuration Features:</h4>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>• Configure automation per keyword × source combination</li>
+                      <li>• Set display preferences (mentions, analytics, reports)</li>
+                      <li>• Visual status indicators for automation state</li>
+                      <li>• Real-time updates and comprehensive statistics</li>
+                    </ul>
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
