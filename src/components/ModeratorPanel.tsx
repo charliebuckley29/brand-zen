@@ -1599,36 +1599,55 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
         </div>
       )}
 
-      {/* Simple debug dialog - always render to test Dialog component */}
+      {/* Simple visible test element to bypass Dialog component issues */}
       {(() => {
         try {
-          console.log('🔧 [MODERATOR] About to render Dialog with:', {
+          console.log('🔧 [MODERATOR] About to render test element with:', {
             open: keywordSourceDialogOpen,
             selectedUser: selectedUser?.id,
             selectedUserName: selectedUser?.full_name
           });
           
-          return (
-            <Dialog open={keywordSourceDialogOpen} onOpenChange={setKeywordSourceDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Debug Dialog</DialogTitle>
-                  <DialogDescription>
-                    This is a test dialog to see if Dialog component works.
-                    User: {selectedUser?.full_name || 'No user selected'}
-                    Open: {keywordSourceDialogOpen ? 'true' : 'false'}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="p-4">
-                  <p>If you can see this, the Dialog component is working!</p>
-                  <Button onClick={() => setKeywordSourceDialogOpen(false)}>Close</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          );
+          if (keywordSourceDialogOpen && selectedUser) {
+            return (
+              <div 
+                style={{
+                  position: 'fixed',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  backgroundColor: 'white',
+                  border: '2px solid red',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  zIndex: 9999,
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                  minWidth: '300px'
+                }}
+              >
+                <h3 style={{ color: 'red', marginBottom: '10px' }}>TEST DIALOG</h3>
+                <p>User: {selectedUser.full_name}</p>
+                <p>Open: {keywordSourceDialogOpen ? 'true' : 'false'}</p>
+                <button 
+                  onClick={() => setKeywordSourceDialogOpen(false)}
+                  style={{
+                    backgroundColor: 'red',
+                    color: 'white',
+                    padding: '8px 16px',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            );
+          }
+          return null;
         } catch (error) {
-          console.error('🔧 [MODERATOR] Error rendering Dialog:', error);
-          return <div>Error rendering dialog: {String(error)}</div>;
+          console.error('🔧 [MODERATOR] Error rendering test element:', error);
+          return <div>Error rendering test element: {String(error)}</div>;
         }
       })()}
     </div>
