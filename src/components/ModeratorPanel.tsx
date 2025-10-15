@@ -1668,41 +1668,6 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
           </div>
         </div>
       )}
-      
-      {keywordSourceDialogOpen && selectedUser && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            backgroundColor: 'white',
-            border: '2px solid red',
-            padding: '20px',
-            borderRadius: '8px',
-            zIndex: 9999,
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            minWidth: '300px'
-          }}
-        >
-          <h3 style={{ color: 'red', marginBottom: '10px' }}>TEST DIALOG</h3>
-          <p>User: {selectedUser.full_name}</p>
-          <p>Open: {keywordSourceDialogOpen ? 'true' : 'false'}</p>
-          <button 
-            onClick={() => setKeywordSourceDialogOpen(false)}
-            style={{
-              backgroundColor: 'red',
-              color: 'white',
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Close
-          </button>
-        </div>
-      )}
     </div>
   );
 }
