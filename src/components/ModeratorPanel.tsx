@@ -96,6 +96,11 @@ export function ModeratorPanel() {
   const [keywordSourceDialogOpen, setKeywordSourceDialogOpen] = useState(false);
   const { toast } = useToast();
 
+  // Debug effect to track state changes
+  useEffect(() => {
+    console.log('🔧 State changed - selectedUser:', selectedUser?.id, 'keywordSourceDialogOpen:', keywordSourceDialogOpen);
+  }, [selectedUser, keywordSourceDialogOpen]);
+
   // Helper function to check if a user can be edited by moderators
   const canEditUser = (userType: UserType) => {
     return userType === 'basic_user';
@@ -960,8 +965,10 @@ export function ModeratorPanel() {
                         className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                         onClick={() => {
                           console.log('🔧 Opening keyword-source dialog for user:', user);
+                          console.log('🔧 Before state update - selectedUser:', selectedUser?.id, 'dialogOpen:', keywordSourceDialogOpen);
                           setSelectedUser(user);
                           setKeywordSourceDialogOpen(true);
+                          console.log('🔧 After state update calls - should trigger re-render');
                         }}
                       >
                         <div className="flex items-center gap-3">
@@ -1162,7 +1169,9 @@ export function ModeratorPanel() {
                        variant="default" 
                        onClick={() => {
                          console.log('🔧 Configure Automation button clicked for user:', selectedUser);
+                         console.log('🔧 Before state update - selectedUser:', selectedUser?.id, 'dialogOpen:', keywordSourceDialogOpen);
                          setKeywordSourceDialogOpen(true);
+                         console.log('🔧 After state update call - should trigger re-render');
                        }}
                        className="w-full sm:w-auto"
                      >
