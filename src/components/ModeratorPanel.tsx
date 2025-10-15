@@ -1623,6 +1623,12 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
       )}
 
       {/* Keyword Source Management Dialog */}
+      {console.log('🔧 ModeratorPanel render check:', { 
+        selectedUser: selectedUser?.id, 
+        keywordSourceDialogOpen,
+        selectedUserExists: !!selectedUser,
+        dialogOpen: keywordSourceDialogOpen
+      })}
       {selectedUser && keywordSourceDialogOpen && (
         <>
           {console.log('🔧 Rendering KeywordSourceManagement dialog with:', { 
