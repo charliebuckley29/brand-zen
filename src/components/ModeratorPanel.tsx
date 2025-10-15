@@ -96,21 +96,7 @@ export function ModeratorPanel() {
   const [keywordSourceDialogOpen, setKeywordSourceDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  // Debug effect to track state changes
-  useEffect(() => {
-    console.log('🔧 State changed - selectedUser:', selectedUser?.id, 'keywordSourceDialogOpen:', keywordSourceDialogOpen);
-  }, [selectedUser, keywordSourceDialogOpen]);
 
-  // Debug render counter
-  const renderCount = useRef(0);
-  renderCount.current += 1;
-  console.log('🔧 ModeratorPanel render #', renderCount.current, 'at', new Date().toISOString(), 'selectedUser:', selectedUser?.id, 'dialogOpen:', keywordSourceDialogOpen);
-  
-  // Test conditional rendering directly in render function
-  if (keywordSourceDialogOpen) {
-    console.log('🔧 DIRECT CONDITIONAL TEST: keywordSourceDialogOpen is true!');
-    alert('DIRECT CONDITIONAL TEST - DIALOG SHOULD BE RENDERING!');
-  }
 
   // Helper function to check if a user can be edited by moderators
   const canEditUser = (userType: UserType) => {
@@ -975,15 +961,8 @@ export function ModeratorPanel() {
                         key={user.id}
                         className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                         onClick={() => {
-                          console.log('🔧 Opening keyword-source dialog for user:', user);
-                          console.log('🔧 Before state update - selectedUser:', selectedUser?.id, 'dialogOpen:', keywordSourceDialogOpen);
                           setSelectedUser(user);
                           setKeywordSourceDialogOpen(true);
-                          console.log('🔧 After state update calls - should trigger re-render');
-                          // Force a re-render to test
-                          setTimeout(() => {
-                            console.log('🔧 TIMEOUT CHECK - selectedUser:', selectedUser?.id, 'dialogOpen:', keywordSourceDialogOpen);
-                          }, 100);
                         }}
                       >
                         <div className="flex items-center gap-3">
@@ -1183,10 +1162,7 @@ export function ModeratorPanel() {
                      <Button 
                        variant="default" 
                        onClick={() => {
-                         console.log('🔧 Configure Automation button clicked for user:', selectedUser);
-                         console.log('🔧 Before state update - selectedUser:', selectedUser?.id, 'dialogOpen:', keywordSourceDialogOpen);
                          setKeywordSourceDialogOpen(true);
-                         console.log('🔧 After state update call - should trigger re-render');
                        }}
                        className="w-full sm:w-auto"
                      >
@@ -1646,47 +1622,13 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
         </div>
       )}
 
-      {/* Test Dialog - Always show if dialogOpen is true */}
-      {keywordSourceDialogOpen && (() => {
-        console.log('🔧 CONDITIONAL RENDERING: keywordSourceDialogOpen is true, rendering dialog');
-        alert('DIALOG SHOULD BE RENDERING NOW!');
-        return true;
-      })() && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,0,0,0.9)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ backgroundColor: 'yellow', padding: '30px', borderRadius: '8px', maxWidth: '600px', width: '90%', border: '10px solid red', fontSize: '18px' }}>
-            <h2 style={{ color: 'red', fontSize: '24px', fontWeight: 'bold' }}>🚨 TEST DIALOG IS WORKING! 🚨</h2>
-            <p style={{ color: 'black', fontWeight: 'bold' }}>Dialog is open! selectedUser: {selectedUser?.id || 'undefined'}</p>
-            <p style={{ color: 'black', fontWeight: 'bold' }}>keywordSourceDialogOpen: {keywordSourceDialogOpen.toString()}</p>
-            <p style={{ color: 'black' }}>This is a test dialog to verify the state is working.</p>
-            <button onClick={() => setKeywordSourceDialogOpen(false)} style={{ padding: '12px 24px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}>
-              Close Test Dialog
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Keyword Source Management Dialog */}
-      {console.log('🔧 ModeratorPanel render check:', { 
-        selectedUser: selectedUser?.id, 
-        keywordSourceDialogOpen,
-        selectedUserExists: !!selectedUser,
-        dialogOpen: keywordSourceDialogOpen
-      })}
       {selectedUser && keywordSourceDialogOpen && (
-        <>
-          {console.log('🔧 Rendering KeywordSourceManagement dialog with:', { 
-            selectedUser: selectedUser?.id, 
-            keywordSourceDialogOpen 
-          })}
-          <KeywordSourceManagement
-            userId={selectedUser.id}
-            userName={selectedUser.full_name}
-            onClose={() => {
-              console.log('🔧 Closing keyword-source dialog');
-              setKeywordSourceDialogOpen(false);
-            }}
-          />
-        </>
+        <KeywordSourceManagement
+          userId={selectedUser.id}
+          userName={selectedUser.full_name}
+          onClose={() => setKeywordSourceDialogOpen(false)}
+        />
       )}
     </div>
   );
