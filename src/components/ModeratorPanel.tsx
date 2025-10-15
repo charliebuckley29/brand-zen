@@ -105,6 +105,12 @@ export function ModeratorPanel() {
   const renderCount = useRef(0);
   renderCount.current += 1;
   console.log('🔧 ModeratorPanel render #', renderCount.current, 'at', new Date().toISOString(), 'selectedUser:', selectedUser?.id, 'dialogOpen:', keywordSourceDialogOpen);
+  
+  // Test conditional rendering directly in render function
+  if (keywordSourceDialogOpen) {
+    console.log('🔧 DIRECT CONDITIONAL TEST: keywordSourceDialogOpen is true!');
+    alert('DIRECT CONDITIONAL TEST - DIALOG SHOULD BE RENDERING!');
+  }
 
   // Helper function to check if a user can be edited by moderators
   const canEditUser = (userType: UserType) => {
