@@ -1642,13 +1642,13 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
 
       {/* Test Dialog - Always show if dialogOpen is true */}
       {keywordSourceDialogOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%' }}>
-            <h2>TEST DIALOG - Keyword Source Management</h2>
-            <p>Dialog is open! selectedUser: {selectedUser?.id || 'undefined'}</p>
-            <p>keywordSourceDialogOpen: {keywordSourceDialogOpen.toString()}</p>
-            <p>This is a test dialog to verify the state is working.</p>
-            <button onClick={() => setKeywordSourceDialogOpen(false)} style={{ padding: '8px 16px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,0,0,0.9)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: 'yellow', padding: '30px', borderRadius: '8px', maxWidth: '600px', width: '90%', border: '10px solid red', fontSize: '18px' }}>
+            <h2 style={{ color: 'red', fontSize: '24px', fontWeight: 'bold' }}>🚨 TEST DIALOG IS WORKING! 🚨</h2>
+            <p style={{ color: 'black', fontWeight: 'bold' }}>Dialog is open! selectedUser: {selectedUser?.id || 'undefined'}</p>
+            <p style={{ color: 'black', fontWeight: 'bold' }}>keywordSourceDialogOpen: {keywordSourceDialogOpen.toString()}</p>
+            <p style={{ color: 'black' }}>This is a test dialog to verify the state is working.</p>
+            <button onClick={() => setKeywordSourceDialogOpen(false)} style={{ padding: '12px 24px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}>
               Close Test Dialog
             </button>
           </div>
