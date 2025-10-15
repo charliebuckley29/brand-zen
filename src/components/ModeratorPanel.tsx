@@ -929,11 +929,13 @@ export function ModeratorPanel() {
                           setKeywordSourceDialogOpen(true);
                           console.log('🔧 [MODERATOR] Dialog state should be set to true');
                           
-                          // Test if state actually changed
+                          // Test if state actually changed - use refs to avoid closure issues
+                          const currentUser = user;
+                          const currentDialogState = true;
                           setTimeout(() => {
                             console.log('🔧 [MODERATOR] State after timeout:', {
-                              selectedUser: selectedUser?.id,
-                              dialogOpen: keywordSourceDialogOpen
+                              selectedUser: currentUser?.id,
+                              dialogOpen: currentDialogState
                             });
                           }, 100);
                         }}
@@ -1597,55 +1599,29 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
         </div>
       )}
 
-      {/* Keyword Source Management Dialog */}
-      {selectedUser && (
-        <>
-          {console.log('🔧 [MODERATOR] Rendering KeywordSourceManagement with:', {
-            userId: selectedUser?.id,
-            userName: selectedUser?.full_name,
-            open: keywordSourceDialogOpen,
-            selectedUser: selectedUser,
-            dialogState: keywordSourceDialogOpen
-          })}
-          
-          {/* Simple debug dialog to test if Dialog component works */}
-          <Dialog open={keywordSourceDialogOpen} onOpenChange={setKeywordSourceDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Debug Dialog</DialogTitle>
-                <DialogDescription>
-                  This is a test dialog to see if Dialog component works.
-                  User: {selectedUser?.full_name}
-                  Open: {keywordSourceDialogOpen ? 'true' : 'false'}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="p-4">
-                <p>If you can see this, the Dialog component is working!</p>
-                <Button onClick={() => setKeywordSourceDialogOpen(false)}>Close</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-          
-          {(() => {
-            try {
-              return selectedUser && (
-                <KeywordSourceManagement
-                  userId={selectedUser.id}
-                  userName={selectedUser.full_name}
-                  open={keywordSourceDialogOpen}
-                  onClose={() => {
-                    console.log('🔧 [MODERATOR] Dialog close requested');
-                    setKeywordSourceDialogOpen(false);
-                  }}
-                />
-              );
-            } catch (error) {
-              console.error('🔧 [MODERATOR] Error rendering KeywordSourceManagement:', error);
-              return <div>Error rendering dialog: {String(error)}</div>;
-            }
-          })()}
-        </>
-      )}
+      {/* Simple debug dialog - always render to test Dialog component */}
+      {console.log('🔧 [MODERATOR] About to render Dialog with:', {
+        open: keywordSourceDialogOpen,
+        selectedUser: selectedUser?.id,
+        selectedUserName: selectedUser?.full_name
+      })}
+      
+      <Dialog open={keywordSourceDialogOpen} onOpenChange={setKeywordSourceDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Debug Dialog</DialogTitle>
+            <DialogDescription>
+              This is a test dialog to see if Dialog component works.
+              User: {selectedUser?.full_name || 'No user selected'}
+              Open: {keywordSourceDialogOpen ? 'true' : 'false'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4">
+            <p>If you can see this, the Dialog component is working!</p>
+            <Button onClick={() => setKeywordSourceDialogOpen(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
