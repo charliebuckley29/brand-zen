@@ -98,7 +98,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const { getSetting, loading: globalSettingsLoading } = useGlobalSettings();
   const { profileData, loading: profileLoading, updateProfile, updateTeamEmails, updateBrandInformation, updateNotificationPreferences } = useProfileCompletion();
 
-  const { loading: prefsLoading, prefs, setPref, setAllForSource } = useSourcePreferences();
+  const { loading: prefsLoading, updating: prefsUpdating, prefs, setPref, setAllForSource } = useSourcePreferences();
   const [googleAlertsEnabled, setGoogleAlertsEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('google_alerts_enabled') !== 'false' : true));
   
   // Quota management
@@ -1458,6 +1458,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                         </span>
                         <Switch
                           checked={isEnabled}
+                          disabled={prefsUpdating}
                           onCheckedChange={async (v) => {
                             try { 
                               await setAllForSource(sourceId as SourceType, v); 

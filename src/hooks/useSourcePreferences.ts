@@ -16,6 +16,7 @@ const ALL_SOURCES: SourceType[] = Object.keys(SOURCES) as SourceType[];
 
 export function useSourcePreferences() {
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [prefs, setPrefs] = useState<Record<SourceType, PrefRecord | null>>(() => {
     const initialPrefs = {} as Record<SourceType, PrefRecord | null>;
@@ -91,7 +92,9 @@ export function useSourcePreferences() {
     field: keyof Pick<PrefRecord, "show_in_mentions" | "show_in_analytics" | "show_in_reports">,
     value: boolean
   ) => {
-    if (!userId) return;
+    if (!userId || updating) return;
+    
+    setUpdating(true);
     
     // optimistic update
     setPrefs((prev) => {
@@ -145,11 +148,15 @@ export function useSourcePreferences() {
       // revert on error
       setPrefs((prev) => ({ ...prev }));
       throw error;
+    } finally {
+      setUpdating(false);
     }
-  }, [userId, prefs]);
+  }, [userId, prefs, updating]);
 
   const setAllForSource = useCallback(async (source: SourceType, value: boolean) => {
-    if (!userId) return;
+    if (!userId || updating) return;
+    
+    setUpdating(true);
     
     // optimistic update
     setPrefs((prev) => {
@@ -196,11 +203,14 @@ export function useSourcePreferences() {
       // revert on error
       setPrefs((prev) => ({ ...prev }));
       throw error;
+    } finally {
+      setUpdating(false);
     }
-  }, [userId]);
+  }, [userId, updating]);
 
   return {
     loading,
+    updating,
     prefs,
     enabledMentions,
     enabledAnalytics,
