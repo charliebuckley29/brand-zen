@@ -92,10 +92,9 @@ export function ModeratorPanelSimple() {
   const [currentTab, setCurrentTab] = useState<string>('users');
   const [keywordSourceDialogOpen, setKeywordSourceDialogOpen] = useState(false);
   
-  // Debug render counter
+  // Debug render counter (can be removed once everything is working)
   const renderCount = useRef(0);
   renderCount.current += 1;
-  console.log('🔧 [MODERATOR] Render #', renderCount.current, 'selectedUser:', selectedUser?.id, 'dialogOpen:', keywordSourceDialogOpen);
   const { toast } = useToast();
 
   // Helper function to check if a user can be edited by moderators
@@ -178,53 +177,14 @@ export function ModeratorPanelSimple() {
         DEBUG: dialogOpen={keywordSourceDialogOpen ? 'true' : 'false'}, selectedUser={selectedUser?.id || 'none'}
       </div>
       
-      {/* Simple test dialog without Dialog component */}
-      {keywordSourceDialogOpen && selectedUser && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: '0',
-            left: '0',
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            zIndex: 100000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <div 
-            style={{
-              backgroundColor: 'white',
-              border: '3px solid red',
-              padding: '30px',
-              borderRadius: '8px',
-              maxWidth: '500px',
-              textAlign: 'center'
-            }}
-          >
-            <h2 style={{ color: 'red', marginBottom: '20px' }}>TEST DIALOG - NO COMPONENT LIBRARY</h2>
-            <p><strong>User:</strong> {selectedUser.full_name}</p>
-            <p><strong>Email:</strong> {selectedUser.email}</p>
-            <p><strong>Dialog Open:</strong> {keywordSourceDialogOpen ? 'true' : 'false'}</p>
-            <button 
-              onClick={() => setKeywordSourceDialogOpen(false)}
-              style={{
-                backgroundColor: 'red',
-                color: 'white',
-                padding: '10px 20px',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '16px',
-                marginTop: '20px'
-              }}
-            >
-              Close Dialog
-            </button>
-          </div>
-        </div>
+      {/* Keyword Source Management Dialog */}
+      {selectedUser && (
+        <KeywordSourceManagement
+          userId={selectedUser.id}
+          userName={selectedUser.full_name}
+          open={keywordSourceDialogOpen}
+          onClose={() => setKeywordSourceDialogOpen(false)}
+        />
       )}
       
       <div className="space-y-6 pb-20 md:pb-6">
@@ -273,20 +233,8 @@ export function ModeratorPanelSimple() {
                     key={user.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                     onClick={() => {
-                      console.log('🔧 [MODERATOR] User clicked:', user);
                       setSelectedUser(user);
                       setKeywordSourceDialogOpen(true);
-                      console.log('🔧 [MODERATOR] Dialog state should be set to true');
-                      
-                      // Test if state actually changed - use refs to avoid closure issues
-                      const currentUser = user;
-                      const currentDialogState = true;
-                      setTimeout(() => {
-                        console.log('🔧 [MODERATOR] State after timeout:', {
-                          selectedUser: currentUser?.id,
-                          dialogOpen: currentDialogState
-                        });
-                      }, 100);
                     }}
                   >
                     <div className="flex items-center gap-3">
@@ -310,9 +258,8 @@ export function ModeratorPanelSimple() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          console.log('🔧 [MODERATOR] Configure Automation button clicked');
+                          setSelectedUser(user);
                           setKeywordSourceDialogOpen(true);
-                          console.log('🔧 [MODERATOR] Dialog state should be set to true');
                         }}
                         className="w-full sm:w-auto"
                       >
