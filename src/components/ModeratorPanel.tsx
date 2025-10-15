@@ -959,6 +959,7 @@ export function ModeratorPanel() {
                         key={user.id}
                         className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                         onClick={() => {
+                          console.log('🔧 Opening keyword-source dialog for user:', user);
                           setSelectedUser(user);
                           setKeywordSourceDialogOpen(true);
                         }}
@@ -1159,7 +1160,10 @@ export function ModeratorPanel() {
                    <div className="flex flex-col sm:flex-row justify-end gap-2">
                      <Button 
                        variant="default" 
-                       onClick={() => setKeywordSourceDialogOpen(true)}
+                       onClick={() => {
+                         console.log('🔧 Configure Automation button clicked for user:', selectedUser);
+                         setKeywordSourceDialogOpen(true);
+                       }}
                        className="w-full sm:w-auto"
                      >
                        <Settings className="h-4 w-4 mr-2" />
@@ -1620,11 +1624,20 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
 
       {/* Keyword Source Management Dialog */}
       {selectedUser && keywordSourceDialogOpen && (
-        <KeywordSourceManagement
-          userId={selectedUser.id}
-          userName={selectedUser.full_name}
-          onClose={() => setKeywordSourceDialogOpen(false)}
-        />
+        <>
+          {console.log('🔧 Rendering KeywordSourceManagement dialog with:', { 
+            selectedUser: selectedUser?.id, 
+            keywordSourceDialogOpen 
+          })}
+          <KeywordSourceManagement
+            userId={selectedUser.id}
+            userName={selectedUser.full_name}
+            onClose={() => {
+              console.log('🔧 Closing keyword-source dialog');
+              setKeywordSourceDialogOpen(false);
+            }}
+          />
+        </>
       )}
     </div>
   );

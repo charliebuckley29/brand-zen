@@ -99,6 +99,8 @@ const SOURCE_CONFIG = {
 };
 
 export function KeywordSourceManagement({ userId, userName, onClose }: KeywordSourceManagementProps) {
+  console.log('🔧 KeywordSourceManagement component rendered with:', { userId, userName });
+  
   const [keywords, setKeywords] = useState<UserKeyword[]>([]);
   const [preferences, setPreferences] = useState<KeywordSourcePreference[]>([]);
   const [loading, setLoading] = useState(true);
@@ -283,6 +285,10 @@ export function KeywordSourceManagement({ userId, userName, onClose }: KeywordSo
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        {/* Debug indicator */}
+        <div className="bg-green-100 border border-green-300 text-green-800 p-2 mb-4 rounded">
+          🟢 KeywordSourceManagement Dialog is OPEN for user: {userName} (ID: {userId})
+        </div>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
