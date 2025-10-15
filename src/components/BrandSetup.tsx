@@ -39,12 +39,9 @@ export function BrandSetup({ onComplete }: BrandSetupProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const response = await fetch(`/api/admin/keywords-management`, {
+      const { apiFetch } = await import('@/lib/api');
+      const response = await apiFetch(`/admin/keywords-management`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
         body: JSON.stringify({
           user_id: user.id,
           brand_name: brandName.trim(),

@@ -228,11 +228,8 @@ export const useDataStore = create<DataState>()(
           if (!user) throw new Error('User not authenticated');
           
           // Use the new keywords management API
-          const response = await fetch(`/api/admin/keywords-management?user_id=${user.id}`, {
-            headers: {
-              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-            }
-          });
+          const { apiFetch } = await import('@/lib/api');
+          const response = await apiFetch(`/admin/keywords-management?user_id=${user.id}`);
           
           if (!response.ok) throw new Error('Failed to fetch keywords');
           

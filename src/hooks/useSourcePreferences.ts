@@ -121,7 +121,6 @@ export function useSourcePreferences() {
 
         const response = await apiFetch('/keyword-source-preferences', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId,
             keyword: keywordData.brand_name,
@@ -173,7 +172,6 @@ export function useSourcePreferences() {
 
         const response = await apiFetch('/keyword-source-preferences', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId,
             keyword: keywordData.brand_name,

@@ -166,11 +166,8 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       if (!user) return;
 
       // Use the new keywords management API
-      const response = await fetch(`/api/admin/keywords-management?user_id=${user.id}`, {
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        }
-      });
+      const { apiFetch } = await import('@/lib/api');
+      const response = await apiFetch(`/admin/keywords-management?user_id=${user.id}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch keywords');
@@ -206,12 +203,9 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const response = await fetch(`/api/admin/keywords-management`, {
+      const { apiFetch } = await import('@/lib/api');
+      const response = await apiFetch(`/admin/keywords-management`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
         body: JSON.stringify({
           id: brandData.id,
           brand_name: newBrandName.trim(),
@@ -251,12 +245,9 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const response = await fetch(`/api/admin/keywords-management`, {
+      const { apiFetch } = await import('@/lib/api');
+      const response = await apiFetch(`/admin/keywords-management`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
         body: JSON.stringify({
           id: brandData.id,
           variants: newVariants,
@@ -409,12 +400,9 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       if (!user) throw new Error("Not authenticated");
 
       // Use the new keywords management API to create/update keywords
-      const response = await fetch(`/api/admin/keywords-management`, {
+      const { apiFetch } = await import('@/lib/api');
+      const response = await apiFetch(`/admin/keywords-management`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
         body: JSON.stringify({
           user_id: user.id,
           brand_name: setupBrandName.trim(),
