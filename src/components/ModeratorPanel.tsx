@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -100,6 +100,11 @@ export function ModeratorPanel() {
   useEffect(() => {
     console.log('🔧 State changed - selectedUser:', selectedUser?.id, 'keywordSourceDialogOpen:', keywordSourceDialogOpen);
   }, [selectedUser, keywordSourceDialogOpen]);
+
+  // Debug render counter
+  const renderCount = useRef(0);
+  renderCount.current += 1;
+  console.log('🔧 ModeratorPanel render #', renderCount.current, 'selectedUser:', selectedUser?.id, 'dialogOpen:', keywordSourceDialogOpen);
 
   // Helper function to check if a user can be edited by moderators
   const canEditUser = (userType: UserType) => {
