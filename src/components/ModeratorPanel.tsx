@@ -94,6 +94,11 @@ export function ModeratorPanel() {
   const [approvalStatusFilter, setApprovalStatusFilter] = useState<string>('all');
   const [currentTab, setCurrentTab] = useState<string>('users');
   const [keywordSourceDialogOpen, setKeywordSourceDialogOpen] = useState(false);
+  
+  // Debug render counter
+  const renderCount = useRef(0);
+  renderCount.current += 1;
+  console.log('🔧 [MODERATOR] Render #', renderCount.current, 'selectedUser:', selectedUser?.id, 'dialogOpen:', keywordSourceDialogOpen);
   const { toast } = useToast();
 
 
@@ -923,6 +928,14 @@ export function ModeratorPanel() {
                           setSelectedUser(user);
                           setKeywordSourceDialogOpen(true);
                           console.log('🔧 [MODERATOR] Dialog state should be set to true');
+                          
+                          // Test if state actually changed
+                          setTimeout(() => {
+                            console.log('🔧 [MODERATOR] State after timeout:', {
+                              selectedUser: selectedUser?.id,
+                              dialogOpen: keywordSourceDialogOpen
+                            });
+                          }, 100);
                         }}
                       >
                         <div className="flex items-center gap-3">
