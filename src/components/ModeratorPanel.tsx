@@ -1599,57 +1599,43 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
         </div>
       )}
 
-      {/* Simple visible test element to bypass Dialog component issues */}
-      {(() => {
-        try {
-          console.log('🔧 [MODERATOR] About to render test element with:', {
-            open: keywordSourceDialogOpen,
-            selectedUser: selectedUser?.id,
-            selectedUserName: selectedUser?.full_name
-          });
-          
-          if (keywordSourceDialogOpen && selectedUser) {
-            return (
-              <div 
-                style={{
-                  position: 'fixed',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  backgroundColor: 'white',
-                  border: '2px solid red',
-                  padding: '20px',
-                  borderRadius: '8px',
-                  zIndex: 9999,
-                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                  minWidth: '300px'
-                }}
-              >
-                <h3 style={{ color: 'red', marginBottom: '10px' }}>TEST DIALOG</h3>
-                <p>User: {selectedUser.full_name}</p>
-                <p>Open: {keywordSourceDialogOpen ? 'true' : 'false'}</p>
-                <button 
-                  onClick={() => setKeywordSourceDialogOpen(false)}
-                  style={{
-                    backgroundColor: 'red',
-                    color: 'white',
-                    padding: '8px 16px',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Close
-                </button>
-              </div>
-            );
-          }
-          return null;
-        } catch (error) {
-          console.error('🔧 [MODERATOR] Error rendering test element:', error);
-          return <div>Error rendering test element: {String(error)}</div>;
-        }
-      })()}
+      {/* Simple visible test element - always render to test */}
+      {console.log('🔧 [MODERATOR] Always render test - dialogOpen:', keywordSourceDialogOpen, 'selectedUser:', selectedUser?.id)}
+      
+      {keywordSourceDialogOpen && selectedUser && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'white',
+            border: '2px solid red',
+            padding: '20px',
+            borderRadius: '8px',
+            zIndex: 9999,
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            minWidth: '300px'
+          }}
+        >
+          <h3 style={{ color: 'red', marginBottom: '10px' }}>TEST DIALOG</h3>
+          <p>User: {selectedUser.full_name}</p>
+          <p>Open: {keywordSourceDialogOpen ? 'true' : 'false'}</p>
+          <button 
+            onClick={() => setKeywordSourceDialogOpen(false)}
+            style={{
+              backgroundColor: 'red',
+              color: 'white',
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Close
+          </button>
+        </div>
+      )}
     </div>
   );
 }
