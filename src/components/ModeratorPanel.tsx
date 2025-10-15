@@ -1602,6 +1602,73 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
       {/* Simple visible test element - always render to test */}
       {console.log('🔧 [MODERATOR] Always render test - dialogOpen:', keywordSourceDialogOpen, 'selectedUser:', selectedUser?.id)}
       
+      {/* Always visible test element */}
+      <div 
+        style={{
+          position: 'fixed',
+          top: '10px',
+          right: '10px',
+          backgroundColor: 'yellow',
+          border: '2px solid red',
+          padding: '10px',
+          borderRadius: '4px',
+          zIndex: 9999,
+          fontSize: '12px',
+          color: 'black'
+        }}
+      >
+        DEBUG: dialogOpen={keywordSourceDialogOpen ? 'true' : 'false'}, selectedUser={selectedUser?.id || 'none'}
+      </div>
+      
+      {/* Simple test dialog without Dialog component */}
+      {keywordSourceDialogOpen && selectedUser && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              border: '3px solid red',
+              padding: '30px',
+              borderRadius: '8px',
+              maxWidth: '500px',
+              textAlign: 'center'
+            }}
+          >
+            <h2 style={{ color: 'red', marginBottom: '20px' }}>TEST DIALOG - NO COMPONENT LIBRARY</h2>
+            <p><strong>User:</strong> {selectedUser.full_name}</p>
+            <p><strong>Email:</strong> {selectedUser.email}</p>
+            <p><strong>Dialog Open:</strong> {keywordSourceDialogOpen ? 'true' : 'false'}</p>
+            <button 
+              onClick={() => setKeywordSourceDialogOpen(false)}
+              style={{
+                backgroundColor: 'red',
+                color: 'white',
+                padding: '10px 20px',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                marginTop: '20px'
+              }}
+            >
+              Close Dialog
+            </button>
+          </div>
+        </div>
+      )}
+      
       {keywordSourceDialogOpen && selectedUser && (
         <div 
           style={{
