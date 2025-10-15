@@ -1600,28 +1600,37 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
       )}
 
       {/* Simple debug dialog - always render to test Dialog component */}
-      {console.log('🔧 [MODERATOR] About to render Dialog with:', {
-        open: keywordSourceDialogOpen,
-        selectedUser: selectedUser?.id,
-        selectedUserName: selectedUser?.full_name
-      })}
-      
-      <Dialog open={keywordSourceDialogOpen} onOpenChange={setKeywordSourceDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Debug Dialog</DialogTitle>
-            <DialogDescription>
-              This is a test dialog to see if Dialog component works.
-              User: {selectedUser?.full_name || 'No user selected'}
-              Open: {keywordSourceDialogOpen ? 'true' : 'false'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="p-4">
-            <p>If you can see this, the Dialog component is working!</p>
-            <Button onClick={() => setKeywordSourceDialogOpen(false)}>Close</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {(() => {
+        try {
+          console.log('🔧 [MODERATOR] About to render Dialog with:', {
+            open: keywordSourceDialogOpen,
+            selectedUser: selectedUser?.id,
+            selectedUserName: selectedUser?.full_name
+          });
+          
+          return (
+            <Dialog open={keywordSourceDialogOpen} onOpenChange={setKeywordSourceDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Debug Dialog</DialogTitle>
+                  <DialogDescription>
+                    This is a test dialog to see if Dialog component works.
+                    User: {selectedUser?.full_name || 'No user selected'}
+                    Open: {keywordSourceDialogOpen ? 'true' : 'false'}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="p-4">
+                  <p>If you can see this, the Dialog component is working!</p>
+                  <Button onClick={() => setKeywordSourceDialogOpen(false)}>Close</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          );
+        } catch (error) {
+          console.error('🔧 [MODERATOR] Error rendering Dialog:', error);
+          return <div>Error rendering dialog: {String(error)}</div>;
+        }
+      })()}
     </div>
   );
 }
