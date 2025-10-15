@@ -1641,7 +1641,11 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
       )}
 
       {/* Test Dialog - Always show if dialogOpen is true */}
-      {keywordSourceDialogOpen && (
+      {keywordSourceDialogOpen && (() => {
+        console.log('🔧 CONDITIONAL RENDERING: keywordSourceDialogOpen is true, rendering dialog');
+        alert('DIALOG SHOULD BE RENDERING NOW!');
+        return true;
+      })() && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,0,0,0.9)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ backgroundColor: 'yellow', padding: '30px', borderRadius: '8px', maxWidth: '600px', width: '90%', border: '10px solid red', fontSize: '18px' }}>
             <h2 style={{ color: 'red', fontSize: '24px', fontWeight: 'bold' }}>🚨 TEST DIALOG IS WORKING! 🚨</h2>
