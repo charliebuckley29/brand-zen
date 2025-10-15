@@ -16,7 +16,7 @@ import { Users, Flag, Settings, Settings as SettingsIcon, AlertTriangle, Eye, Ma
 import { SocialMediaLinks } from "@/components/SocialMediaLinks";
 import type { UserType } from "@/hooks/use-user-role";
 import { GlobalSettingSwitch } from "@/components/GlobalSettingSwitch";
-import { API_ENDPOINTS, createApiUrl } from "@/lib/api";
+import { API_ENDPOINTS, createApiUrl, apiFetch } from "@/lib/api";
 import { EnhancedUserCard } from "@/components/ui/enhanced-user-card";
 import { StatusIndicator, EmailStatusIndicator, UserStatusIndicator } from "@/components/ui/status-indicator";
 import { MobileNavBar } from "@/components/ui/mobile-nav-bar";
@@ -154,12 +154,7 @@ export function ModeratorPanel() {
       setLoading(true);
       
       // Fetch all users with their roles and profiles using authenticated backend API
-      const response = await fetch(createApiUrl('/admin/users-with-roles?include_inactive=false'), {
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiFetch('/admin/users-with-roles?include_inactive=false');
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -204,12 +199,7 @@ export function ModeratorPanel() {
       });
 
       // Fetch user keywords using authenticated backend endpoint
-      const keywordsResponse = await fetch(createApiUrl('/admin/user-keywords?include_all=true'), {
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const keywordsResponse = await apiFetch('/admin/user-keywords?include_all=true');
       const keywordsResult = await keywordsResponse.json();
       
       const formattedKeywords: UserKeywords[] = keywordsResult.success ? keywordsResult.data : [];
@@ -227,12 +217,7 @@ export function ModeratorPanel() {
       });
 
       // Fetch flagged mentions using authenticated backend endpoint
-      const mentionsResponse = await fetch(createApiUrl('/admin/flagged-mentions?flagged=true&limit=50'), {
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const mentionsResponse = await apiFetch('/admin/flagged-mentions?flagged=true&limit=50');
       const mentionsResult = await mentionsResponse.json();
 
       const formattedMentions: FlaggedMention[] = mentionsResult.success ? mentionsResult.data : [];
@@ -254,11 +239,8 @@ export function ModeratorPanel() {
 
   const updateUserRole = async (userId: string, newRole: UserType) => {
     try {
-      const response = await fetch(createApiUrl(`/admin/user-roles/${userId}`), {
+      const response = await apiFetch(`/admin/user-roles/${userId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ user_type: newRole }),
       });
 
@@ -302,12 +284,8 @@ export function ModeratorPanel() {
       }
 
       // Use the backend API to update profile brand information
-      const response = await fetch(createApiUrl('/admin/update-user-profile-complete'), {
+      const response = await apiFetch('/admin/update-user-profile-complete', {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${session.session.access_token}`,
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           userId,
           brandWebsite: profileData.brand_website,
@@ -377,12 +355,8 @@ export function ModeratorPanel() {
       console.log("🔍 [MODERATOR PANEL] Current profile data:", currentProfile);
 
       // Use the backend API to update keywords/brand information
-      const response = await fetch(createApiUrl('/admin/update-user-profile-complete'), {
+      const response = await apiFetch('/admin/update-user-profile-complete', {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${session.session.access_token}`,
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           userId: keyword.user_id,
           fullName: currentProfile?.full_name || 'Unknown User', // Preserve existing full_name
@@ -470,12 +444,8 @@ export function ModeratorPanel() {
       console.log("📤 [MODERATOR PANEL] Request body:", requestBody);
 
       // Use authenticated backend API for complete profile update
-      const response = await fetch(createApiUrl('/admin/update-user-profile-complete'), {
+      const response = await apiFetch('/admin/update-user-profile-complete', {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${session?.session?.access_token}`,
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(requestBody),
       });
 
@@ -555,12 +525,8 @@ export function ModeratorPanel() {
     try {
       setResendingEmails(prev => new Set(prev).add(userId));
 
-      const response = await fetch(createApiUrl(API_ENDPOINTS.RESEND_EMAIL_CONFIRMATION), {
+      const response = await apiFetch(API_ENDPOINTS.RESEND_EMAIL_CONFIRMATION, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ userId, email }),
       });
 
@@ -620,12 +586,8 @@ export function ModeratorPanel() {
         throw new Error('No valid session found. Please sign in again.');
       }
 
-      const response = await fetch(createApiUrl(API_ENDPOINTS.SEND_PASSWORD_RESET), {
+      const response = await apiFetch(API_ENDPOINTS.SEND_PASSWORD_RESET, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.data.session.access_token}`,
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ userId, email }),
       });
 
@@ -685,12 +647,8 @@ export function ModeratorPanel() {
         throw new Error('No valid session found. Please sign in again.');
       }
 
-      const response = await fetch(createApiUrl(`${API_ENDPOINTS.DELETE_USER}-manual/${userId}`), {
+      const response = await apiFetch(`${API_ENDPOINTS.DELETE_USER}-manual/${userId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${session.data.session.access_token}`,
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ 
           confirmDelete: true,
           reason: reason || 'No reason provided'
