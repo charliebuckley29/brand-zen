@@ -115,10 +115,14 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
   const fetchData = async () => {
     try {
       setLoading(true);
+      console.log('🔧 [MODERATOR] Fetching data for user:', userId);
       
       // Fetch user keywords
       const keywordsResponse = await apiFetch(`/admin/keywords-management?user_id=${userId}`);
+      console.log('🔧 [MODERATOR] Keywords response status:', keywordsResponse.status);
+      
       const keywordsData = await keywordsResponse.json();
+      console.log('🔧 [MODERATOR] Keywords data:', keywordsData);
       
       if (keywordsData.success) {
         setKeywords(keywordsData.data);
@@ -128,7 +132,7 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
         
         for (const keyword of keywordsData.data) {
           // Get preferences for brand name using admin endpoint
-          const brandPrefsResponse = await apiFetch(`/admin/keyword-source-preferences?userId=${userId}&keyword=${encodeURIComponent(keyword.brand_name)}`);
+          const brandPrefsResponse = await apiFetch(`/admin/keyword-source-preferences?userId=${userId}&keyword=${encodeURIComponent(keyword.keyword_text)}`);
           const brandPrefsData = await brandPrefsResponse.json();
           
           if (brandPrefsData.success && brandPrefsData.data) {
