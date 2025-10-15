@@ -127,8 +127,8 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
         const allPreferences: KeywordSourcePreference[] = [];
         
         for (const keyword of keywordsData.data) {
-          // Get preferences for brand name
-          const brandPrefsResponse = await apiFetch(`/keyword-source-preferences?userId=${userId}&keyword=${encodeURIComponent(keyword.brand_name)}`);
+          // Get preferences for brand name using admin endpoint
+          const brandPrefsResponse = await apiFetch(`/admin/keyword-source-preferences?userId=${userId}&keyword=${encodeURIComponent(keyword.brand_name)}`);
           const brandPrefsData = await brandPrefsResponse.json();
           
           if (brandPrefsData.success && brandPrefsData.data) {
@@ -138,7 +138,7 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
           // Get preferences for variants
           if (keyword.variants && keyword.variants.length > 0) {
             for (const variant of keyword.variants) {
-              const variantPrefsResponse = await apiFetch(`/keyword-source-preferences?userId=${userId}&keyword=${encodeURIComponent(variant)}`);
+              const variantPrefsResponse = await apiFetch(`/admin/keyword-source-preferences?userId=${userId}&keyword=${encodeURIComponent(variant)}`);
               const variantPrefsData = await variantPrefsResponse.json();
               
               if (variantPrefsData.success && variantPrefsData.data) {
@@ -208,9 +208,8 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
         [field]: value
       };
 
-      const response = await apiFetch('/keyword-source-preferences', {
+      const response = await apiFetch('/admin/keyword-source-preferences', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
           keyword,

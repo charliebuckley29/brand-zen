@@ -112,6 +112,8 @@ export function useSourcePreferences() {
 
       // Update all keyword-source combinations for this source type
       const updatePromises = keywordsResult.data.map(async (keywordData: any) => {
+        console.log('🔧 [SOURCE_PREFS] Updating preference for keyword:', keywordData);
+        
         const preferences = {
           show_in_mentions: prefs[source]?.show_in_mentions ?? true,
           show_in_analytics: prefs[source]?.show_in_analytics ?? true,
@@ -119,14 +121,18 @@ export function useSourcePreferences() {
         };
         preferences[field] = value;
 
+        const requestBody = {
+          userId,
+          keyword: keywordData.brand_name,
+          sourceType: source,
+          preferences
+        };
+        
+        console.log('🔧 [SOURCE_PREFS] Sending request body:', requestBody);
+
         const response = await apiFetch('/keyword-source-preferences', {
           method: 'PUT',
-          body: JSON.stringify({
-            userId,
-            keyword: keywordData.brand_name,
-            sourceType: source,
-            preferences
-          })
+          body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
