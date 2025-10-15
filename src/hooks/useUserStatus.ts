@@ -50,13 +50,20 @@ export function useUserStatus() {
           return;
         }
 
-        // Get user keywords to check for RSS URL
-        const { data: keywords, error: keywordsError } = await supabase
-          .from('keywords')
-          .select('id, google_alert_rss_url, google_alerts_enabled')
-          .eq('user_id', user.id);
+        // Get user keywords to check for RSS URL using new API
+        const keywordsResponse = await fetch(`/api/admin/keywords-management?user_id=${user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          }
+        });
 
-        const hasRssUrl = keywords?.some(k => k.google_alert_rss_url && k.google_alert_rss_url.trim() !== '') || false;
+        let hasRssUrl = false;
+        if (keywordsResponse.ok) {
+          const keywordsResult = await keywordsResponse.json();
+          if (keywordsResult.success && keywordsResult.data) {
+            hasRssUrl = keywordsResult.data.some((k: any) => k.google_alert_rss_url && k.google_alert_rss_url.trim() !== '');
+          }
+        }
 
         // Determine user status based on profile status and RSS URL
         let status: UserStatus = 'approved'; // Default to approved

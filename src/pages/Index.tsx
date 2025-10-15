@@ -77,14 +77,25 @@ const IndexContent = () => {
 
   const checkKeywords = async () => {
     try {
-      const { data, error } = await supabase
-        .from("keywords")
-        .select("id")
-        .limit(1);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setHasKeywords(false);
+        setIsLoading(false);
+        return;
+      }
 
-      if (error) throw error;
+      const response = await fetch(`/api/admin/keywords-management?user_id=${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        }
+      });
 
-      setHasKeywords(data && data.length > 0);
+      if (response.ok) {
+        const result = await response.json();
+        setHasKeywords(result.success && result.data && result.data.length > 0);
+      } else {
+        setHasKeywords(false);
+      }
     } catch (error) {
       console.error("Error checking keywords:", error);
       setHasKeywords(false);

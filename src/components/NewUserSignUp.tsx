@@ -199,6 +199,19 @@ export function NewUserSignUp() {
         });
       }
 
+      // Also check if keyword_source_preferences were created
+      const { data: preferencesData, error: preferencesError } = await supabase
+        .from('keyword_source_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .limit(5);
+
+      if (preferencesError) {
+        console.error("❌ [SIGNUP] Keyword-source preferences check failed:", preferencesError);
+      } else {
+        console.log("✅ [SIGNUP] Keyword-source preferences found:", preferencesData?.length || 0, "records");
+      }
+
       console.log("🔧 [SIGNUP] Profile and keywords creation completed (or failed)");
 
       setIsSuccess(true);

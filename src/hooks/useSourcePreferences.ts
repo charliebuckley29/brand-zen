@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SOURCES, type SourceType } from "@/config/sources";
+import { apiFetch } from "@/lib/api";
 
 type PrefRecord = {
   id?: string;
@@ -35,16 +36,40 @@ export function useSourcePreferences() {
       }
       setUserId(user.id);
 
-      const { data, error } = await (supabase as any)
-        .from("source_preferences")
-        .select("id, user_id, source_type, show_in_mentions, show_in_analytics, show_in_reports");
-      if (!error && data) {
-        const next = { ...prefs } as Record<SourceType, PrefRecord | null>;
-        for (const s of ALL_SOURCES) next[s] = null; // reset
-        for (const rec of (data as unknown as PrefRecord[])) {
-          next[rec.source_type] = rec;
+      try {
+        // Fetch keyword-source preferences from new API
+        const response = await apiFetch(`/keyword-source-preferences?userId=${user.id}`);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            // Convert keyword-source preferences to source-level preferences
+            // Group by source_type and take the first preference for each source
+            const sourcePrefs = new Map<SourceType, PrefRecord>();
+            
+            for (const pref of result.data) {
+              const sourceType = pref.source_type as SourceType;
+              if (!sourcePrefs.has(sourceType)) {
+                sourcePrefs.set(sourceType, {
+                  id: pref.id,
+                  user_id: pref.user_id,
+                  source_type: sourceType,
+                  show_in_mentions: pref.show_in_mentions,
+                  show_in_analytics: pref.show_in_analytics,
+                  show_in_reports: pref.show_in_reports
+                });
+              }
+            }
+            
+            const next = { ...prefs } as Record<SourceType, PrefRecord | null>;
+            for (const s of ALL_SOURCES) next[s] = null; // reset
+            for (const [sourceType, pref] of sourcePrefs) {
+              next[sourceType] = pref;
+            }
+            setPrefs(next);
+          }
         }
-        setPrefs(next);
+      } catch (error) {
+        console.error('Failed to fetch source preferences:', error);
       }
       setLoading(false);
     };
@@ -67,6 +92,7 @@ export function useSourcePreferences() {
     value: boolean
   ) => {
     if (!userId) return;
+    
     // optimistic update
     setPrefs((prev) => {
       const current = prev[source] || { user_id: userId, source_type: source, show_in_mentions: true, show_in_analytics: true, show_in_reports: true };
@@ -74,19 +100,43 @@ export function useSourcePreferences() {
       return { ...prev, [source]: updated } as typeof prev;
     });
 
-    const payload: PrefRecord = {
-      user_id: userId,
-      source_type: source,
-      show_in_mentions: prefs[source]?.show_in_mentions ?? true,
-      show_in_analytics: prefs[source]?.show_in_analytics ?? true,
-      show_in_reports: prefs[source]?.show_in_reports ?? true,
-    } as PrefRecord;
-    (payload as any)[field] = value;
+    try {
+      // Get all keywords for this user
+      const keywordsResponse = await apiFetch(`/admin/keywords-management?user_id=${userId}`);
+      if (!keywordsResponse.ok) throw new Error('Failed to fetch keywords');
+      
+      const keywordsResult = await keywordsResponse.json();
+      if (!keywordsResult.success || !keywordsResult.data) {
+        throw new Error('No keywords found');
+      }
 
-    const { error } = await (supabase as any)
-      .from("source_preferences")
-      .upsert(payload as any, { onConflict: "user_id,source_type" });
-    if (error) {
+      // Update all keyword-source combinations for this source type
+      const updatePromises = keywordsResult.data.map(async (keywordData: any) => {
+        const preferences = {
+          show_in_mentions: prefs[source]?.show_in_mentions ?? true,
+          show_in_analytics: prefs[source]?.show_in_analytics ?? true,
+          show_in_reports: prefs[source]?.show_in_reports ?? true,
+        };
+        preferences[field] = value;
+
+        const response = await apiFetch('/keyword-source-preferences', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            keyword: keywordData.brand_name,
+            sourceType: source,
+            preferences
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to update preference for keyword: ${keywordData.brand_name}`);
+        }
+      });
+
+      await Promise.all(updatePromises);
+    } catch (error) {
       // revert on error
       setPrefs((prev) => ({ ...prev }));
       throw error;
@@ -95,6 +145,7 @@ export function useSourcePreferences() {
 
   const setAllForSource = useCallback(async (source: SourceType, value: boolean) => {
     if (!userId) return;
+    
     // optimistic update
     setPrefs((prev) => {
       const current = prev[source] || { user_id: userId, source_type: source, show_in_mentions: true, show_in_analytics: true, show_in_reports: true };
@@ -102,18 +153,43 @@ export function useSourcePreferences() {
       return { ...prev, [source]: updated } as typeof prev;
     });
 
-    const payload: PrefRecord = {
-      user_id: userId,
-      source_type: source,
-      show_in_mentions: value,
-      show_in_analytics: value,
-      show_in_reports: value,
-    };
+    try {
+      // Get all keywords for this user
+      const keywordsResponse = await apiFetch(`/admin/keywords-management?user_id=${userId}`);
+      if (!keywordsResponse.ok) throw new Error('Failed to fetch keywords');
+      
+      const keywordsResult = await keywordsResponse.json();
+      if (!keywordsResult.success || !keywordsResult.data) {
+        throw new Error('No keywords found');
+      }
 
-    const { error } = await (supabase as any)
-      .from("source_preferences")
-      .upsert(payload as any, { onConflict: "user_id,source_type" });
-    if (error) {
+      // Update all keyword-source combinations for this source type
+      const updatePromises = keywordsResult.data.map(async (keywordData: any) => {
+        const preferences = {
+          show_in_mentions: value,
+          show_in_analytics: value,
+          show_in_reports: value,
+        };
+
+        const response = await apiFetch('/keyword-source-preferences', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            keyword: keywordData.brand_name,
+            sourceType: source,
+            preferences
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to update preference for keyword: ${keywordData.brand_name}`);
+        }
+      });
+
+      await Promise.all(updatePromises);
+    } catch (error) {
+      // revert on error
       setPrefs((prev) => ({ ...prev }));
       throw error;
     }

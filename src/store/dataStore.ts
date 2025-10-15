@@ -227,14 +227,19 @@ export const useDataStore = create<DataState>()(
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) throw new Error('User not authenticated');
           
-          const { data, error } = await supabase
-            .from("keywords")
-            .select("*")
-            .eq('user_id', user.id)
-            .eq('is_active', true);
+          // Use the new keywords management API
+          const response = await fetch(`/api/admin/keywords-management?user_id=${user.id}`, {
+            headers: {
+              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+            }
+          });
           
-          if (error) throw error;
-          return data || [];
+          if (!response.ok) throw new Error('Failed to fetch keywords');
+          
+          const result = await response.json();
+          if (!result.success) throw new Error(result.error || 'Failed to fetch keywords');
+          
+          return result.data || [];
         } catch (error) {
           logger.error('Error fetching keywords:', error);
           throw error;
@@ -247,13 +252,19 @@ export const useDataStore = create<DataState>()(
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) throw new Error('User not authenticated');
           
-          const { data, error } = await supabase
-            .from("source_preferences")
-            .select("*")
-            .eq('user_id', user.id);
+          // Use the new keyword-source preferences API
+          const response = await fetch(`/api/keyword-source-preferences?userId=${user.id}`, {
+            headers: {
+              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+            }
+          });
           
-          if (error) throw error;
-          return data || [];
+          if (!response.ok) throw new Error('Failed to fetch source preferences');
+          
+          const result = await response.json();
+          if (!result.success) throw new Error(result.error || 'Failed to fetch source preferences');
+          
+          return result.data || [];
         } catch (error) {
           logger.error('Error fetching source preferences:', error);
           throw error;

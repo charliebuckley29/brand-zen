@@ -165,17 +165,25 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from("keywords")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      // Use the new keywords management API
+      const response = await fetch(`/api/admin/keywords-management?user_id=${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        }
+      });
 
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        throw new Error('Failed to fetch keywords');
       }
 
-      if (data) {
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch keywords');
+      }
+
+      // Take the first keyword record (should be the user's main brand)
+      if (result.data && result.data.length > 0) {
+        const data = result.data[0];
         setBrandData(data);
         setNewBrandName(data.brand_name);
         setNewVariants(data.variants || []);
@@ -195,12 +203,26 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
 
     setIsUpdatingBrand(true);
     try {
-      const { error } = await supabase
-        .from("keywords")
-        .update({ brand_name: newBrandName.trim() })
-        .eq("id", brandData.id);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
 
-      if (error) throw error;
+      const response = await fetch(`/api/admin/keywords-management`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          id: brandData.id,
+          brand_name: newBrandName.trim(),
+          user_id: user.id
+        })
+      });
+
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw new Error(errorResult.error || 'Failed to update brand name');
+      }
 
       setBrandData({ ...brandData, brand_name: newBrandName.trim() });
       setBrandDialogOpen(false);
@@ -226,12 +248,26 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
 
     setIsUpdatingBrand(true);
     try {
-      const { error } = await supabase
-        .from("keywords")
-        .update({ variants: newVariants })
-        .eq("id", brandData.id);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
 
-      if (error) throw error;
+      const response = await fetch(`/api/admin/keywords-management`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          id: brandData.id,
+          variants: newVariants,
+          user_id: user.id
+        })
+      });
+
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw new Error(errorResult.error || 'Failed to update variants');
+      }
 
       setBrandData({ ...brandData, variants: newVariants });
       setVariantsDialogOpen(false);
@@ -372,24 +408,31 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Remove any previous brand for this user before creating a new one
-      const { error: deleteError } = await supabase
-        .from("keywords")
-        .delete()
-        .eq("user_id", user.id);
-      if (deleteError) throw deleteError;
-
-      const { data: keyword, error: insertError } = await supabase
-        .from("keywords")
-        .insert({
+      // Use the new keywords management API to create/update keywords
+      const response = await fetch(`/api/admin/keywords-management`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
           user_id: user.id,
           brand_name: setupBrandName.trim(),
           variants: setupVariants,
         })
-        .select()
-        .maybeSingle();
+      });
 
-      if (insertError) throw insertError;
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw new Error(errorResult.error || 'Failed to create brand');
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create brand');
+      }
+
+      const keyword = result.data;
 
       if (keyword) {
         setBrandData(keyword as any);

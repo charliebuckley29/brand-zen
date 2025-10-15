@@ -39,17 +39,30 @@ export function BrandSetup({ onComplete }: BrandSetupProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data: keyword, error } = await supabase
-        .from("keywords")
-        .insert({
+      const response = await fetch(`/api/admin/keywords-management`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
           user_id: user.id,
           brand_name: brandName.trim(),
           variants: variants
         })
-        .select()
-        .single();
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw new Error(errorResult.error || 'Failed to create brand');
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create brand');
+      }
+
+      const keyword = result.data;
 
       // Monitoring is handled automatically by backend queue system
 
