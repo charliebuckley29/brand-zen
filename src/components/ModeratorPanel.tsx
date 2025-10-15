@@ -22,6 +22,7 @@ import { StatusIndicator, EmailStatusIndicator, UserStatusIndicator } from "@/co
 import { MobileNavBar } from "@/components/ui/mobile-nav-bar";
 import { KeywordsTab } from "@/components/KeywordsTab";
 import { UserBrandInfoSection } from "@/components/UserBrandInfoSection";
+import { KeywordSourceManagement } from "@/components/KeywordSourceManagement";
 
 interface User {
   id: string;
@@ -93,6 +94,7 @@ export function ModeratorPanel() {
   const [deleteReason, setDeleteReason] = useState('');
   const [approvalStatusFilter, setApprovalStatusFilter] = useState<string>('all');
   const [currentTab, setCurrentTab] = useState<string>('users');
+  const [keywordSourceDialogOpen, setKeywordSourceDialogOpen] = useState(false);
   const { toast } = useToast();
 
   // Helper function to check if a user can be edited by moderators
@@ -1092,6 +1094,14 @@ export function ModeratorPanel() {
                   />
                   
                    <div className="flex flex-col sm:flex-row justify-end gap-2">
+                     <Button 
+                       variant="default" 
+                       onClick={() => setKeywordSourceDialogOpen(true)}
+                       className="w-full sm:w-auto"
+                     >
+                       <Settings className="h-4 w-4 mr-2" />
+                       Configure Automation
+                     </Button>
                      <Button variant="outline" onClick={() => setUserDetailOpen(false)} className="w-full sm:w-auto">
                        Close
                      </Button>
@@ -1543,6 +1553,15 @@ function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandEditorPr
             </div>
           )}
         </div>
+      )}
+
+      {/* Keyword Source Management Dialog */}
+      {selectedUser && keywordSourceDialogOpen && (
+        <KeywordSourceManagement
+          userId={selectedUser.id}
+          userName={selectedUser.full_name}
+          onClose={() => setKeywordSourceDialogOpen(false)}
+        />
       )}
     </div>
   );
