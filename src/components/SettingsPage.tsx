@@ -19,6 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import { useSourcePreferences } from "@/hooks/useSourcePreferences";
 import { useGlobalSettings } from "@/hooks/useGlobalSettings";
 import { useUserRole } from "@/hooks/use-user-role";
+import { extractBrandInfo, type StandardizedKeyword } from "@/lib/keywordUtils";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PhoneInputWithCountry } from "@/components/ui/phone-input-with-country";
@@ -78,8 +79,8 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const [isUpdatingBrandInfo, setIsUpdatingBrandInfo] = useState(false);
   const [isEditingBrandInfo, setIsEditingBrandInfo] = useState(false);
   
-  // Brand management state
-  const [brandData, setBrandData] = useState<{ id: string; brand_name: string; variants: string[] } | null>(null);
+  // Brand management state - using standardized keyword format
+  const [brandData, setBrandData] = useState<StandardizedKeyword[] | null>(null);
   const [newBrandName, setNewBrandName] = useState<string>("");
   const [newVariants, setNewVariants] = useState<string[]>([]);
   const [currentVariant, setCurrentVariant] = useState<string>("");
@@ -177,12 +178,12 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
         throw new Error(result.error || 'Failed to fetch keywords');
       }
 
-      // Take the first keyword record (should be the user's main brand)
+      // Use standardized keyword format
       if (result.data && result.data.length > 0) {
-        const data = result.data[0];
-        setBrandData(data);
-        setNewBrandName(data.brand_name);
-        setNewVariants(data.variants || []);
+        setBrandData(result.data);
+        const brandInfo = extractBrandInfo(result.data);
+        setNewBrandName(brandInfo.brand_name);
+        setNewVariants(brandInfo.variants);
       } else {
         setBrandData(null);
         setNewBrandName("");
@@ -206,9 +207,9 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       const response = await apiFetch(`/admin/keywords-management`, {
         method: 'PUT',
         body: JSON.stringify({
-          id: brandData.id,
+          user_id: user.id,
           brand_name: newBrandName?.trim() || "",
-          user_id: user.id
+          variants: newVariants
         })
       });
 
@@ -217,7 +218,8 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
         throw new Error(errorResult.error || 'Failed to update brand name');
       }
 
-      setBrandData({ ...brandData, brand_name: newBrandName?.trim() || "" });
+      // Refresh brand data after update
+      await fetchBrandData();
       setBrandDialogOpen(false);
       
       toast({
@@ -248,9 +250,9 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       const response = await apiFetch(`/admin/keywords-management`, {
         method: 'PUT',
         body: JSON.stringify({
-          id: brandData.id,
-          variants: newVariants,
-          user_id: user.id
+          user_id: user.id,
+          brand_name: newBrandName,
+          variants: newVariants
         })
       });
 
@@ -259,7 +261,8 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
         throw new Error(errorResult.error || 'Failed to update variants');
       }
 
-      setBrandData({ ...brandData, variants: newVariants });
+      // Refresh brand data after update
+      await fetchBrandData();
       setVariantsDialogOpen(false);
       
       toast({
@@ -1044,7 +1047,9 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="text-sm font-medium">Brand Name</h4>
-                        <p className="text-sm text-muted-foreground">{brandData?.brand_name || 'Not set'}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {brandData ? extractBrandInfo(brandData).brand_name || 'Not set' : 'Not set'}
+                        </p>
                       </div>
                       <Dialog open={brandDialogOpen} onOpenChange={setBrandDialogOpen}>
                         <DialogTrigger asChild>
@@ -1103,8 +1108,8 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                       <div className="flex-1">
                         <h4 className="text-sm font-medium">Brand Variants</h4>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {brandData?.variants && brandData.variants.length > 0 ? (
-                            brandData.variants.map((variant, index) => (
+                          {brandData && extractBrandInfo(brandData).variants.length > 0 ? (
+                            extractBrandInfo(brandData).variants.map((variant, index) => (
                               <Badge key={index} variant="secondary">
                                 {variant}
                               </Badge>

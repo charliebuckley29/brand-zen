@@ -23,6 +23,7 @@ import { MobileNavBar } from "@/components/ui/mobile-nav-bar";
 import { UserBrandInfoSection } from "@/components/UserBrandInfoSection";
 import { KeywordSourceManagement } from "@/components/KeywordSourceManagement";
 import { BrandEditor } from "@/components/BrandEditor";
+import { extractBrandInfo, type StandardizedKeyword } from "@/lib/keywordUtils";
 
 interface User {
   id: string;
@@ -59,15 +60,8 @@ interface User {
   };
 }
 
-interface UserKeywords {
-  id: string;
-  user_id: string;
-  brand_name: string;
-  variants: string[] | null;
-  google_alert_rss_url: string | null;
-  google_alerts_enabled: boolean;
-  user_full_name: string;
-}
+// Use the standardized keyword interface
+type UserKeywords = StandardizedKeyword;
 
 interface FlaggedMention {
   id: string;
@@ -249,13 +243,14 @@ export function ModeratorPanelSimple() {
                 {users.map((user) => {
                   const handleEdit = () => {
                     setSelectedUser(user);
-                    const userKeyword = userKeywords.find(k => k.user_id === user.id);
+                    const userKeywordsList = userKeywords.filter(k => k.user_id === user.id);
+                    const brandInfo = extractBrandInfo(userKeywordsList);
                     setEditingProfile({
                       full_name: user.full_name || user.profile?.full_name || '',
                       email: user.email,
                       phone_number: user.phone_number || user.profile?.phone_number || '',
-                      brand_name: userKeyword?.brand_name || '',
-                      variants: userKeyword?.variants?.join(', ') || '',
+                      brand_name: brandInfo.brand_name,
+                      variants: brandInfo.variants.join(', '),
                       rss_url: '',
                       brand_website: user.brand_website || user.profile?.brand_website || '',
                       brand_description: user.brand_description || user.profile?.brand_description || '',
@@ -575,17 +570,18 @@ export function ModeratorPanelSimple() {
                       </div>
                       
                       {(() => {
-                        const userKeyword = userKeywords.find(k => k.user_id === selectedUser.id);
-                        return userKeyword ? (
+                        const userKeywordsList = userKeywords.filter(k => k.user_id === selectedUser.id);
+                        const brandInfo = extractBrandInfo(userKeywordsList);
+                        return brandInfo.brand_name ? (
                           <div className="grid gap-3">
                             <div>
                               <Label className="text-sm font-medium">Brand Name</Label>
-                              <p className="text-sm text-muted-foreground">{userKeyword.brand_name || 'Not set'}</p>
+                              <p className="text-sm text-muted-foreground">{brandInfo.brand_name}</p>
                             </div>
                             <div>
                               <Label className="text-sm font-medium">Brand Variants</Label>
                               <p className="text-sm text-muted-foreground">
-                                {userKeyword.variants?.join(', ') || 'None'}
+                                {brandInfo.variants.length > 0 ? brandInfo.variants.join(', ') : 'None'}
                               </p>
                             </div>
                             {selectedUser.brand_website && (
