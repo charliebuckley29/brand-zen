@@ -203,12 +203,60 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // Extract current brand name from brandData
+      const currentBrandInfo = extractBrandInfo(brandData);
+      const oldBrandName = currentBrandInfo.brand_name;
+      const newBrandNameTrimmed = newBrandName?.trim() || "";
+
+      // If brand name changed, we need to update keywords across all tables
+      if (oldBrandName !== newBrandNameTrimmed) {
+        // Step 1: Validate the keyword update
+        const { apiFetch } = await import('@/lib/api');
+        const validationResponse = await apiFetch(`/admin/update-keyword-cascade`, {
+          method: 'POST',
+          body: JSON.stringify({
+            userId: user.id,
+            oldKeyword: oldBrandName,
+            newKeyword: newBrandNameTrimmed,
+            validateOnly: true
+          })
+        });
+
+        if (!validationResponse.ok) {
+          const errorResult = await validationResponse.json();
+          if (errorResult.conflicts && errorResult.conflicts.length > 0) {
+            throw new Error(`Cannot update brand name: conflicts detected. ${errorResult.conflicts.map((c: any) => `${c.table}: ${c.existing_keyword}`).join(', ')}`);
+          }
+          throw new Error(errorResult.error || 'Validation failed');
+        }
+
+        // Step 2: Perform the keyword cascade update
+        const cascadeResponse = await apiFetch(`/admin/update-keyword-cascade`, {
+          method: 'POST',
+          body: JSON.stringify({
+            userId: user.id,
+            oldKeyword: oldBrandName,
+            newKeyword: newBrandNameTrimmed,
+            dryRun: false
+          })
+        });
+
+        if (!cascadeResponse.ok) {
+          const errorResult = await cascadeResponse.json();
+          throw new Error(errorResult.error || 'Failed to update keywords across system');
+        }
+
+        const cascadeResult = await cascadeResponse.json();
+        console.log('Keyword cascade update completed:', cascadeResult);
+      }
+
+      // Step 3: Update the main keyword data
       const { apiFetch } = await import('@/lib/api');
       const response = await apiFetch(`/admin/keywords-management`, {
         method: 'PUT',
         body: JSON.stringify({
           user_id: user.id,
-          brand_name: newBrandName?.trim() || "",
+          brand_name: newBrandNameTrimmed,
           variants: newVariants
         })
       });
@@ -224,7 +272,7 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       
       toast({
         title: "Brand name updated",
-        description: "Your brand name has been successfully updated.",
+        description: "Your brand name has been successfully updated across all systems.",
       });
     } catch (error: any) {
       toast({
@@ -246,6 +294,44 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // Extract current variants from brandData
+      const currentBrandInfo = extractBrandInfo(brandData);
+      const oldVariants = currentBrandInfo.variants;
+      
+      // Check if variants changed
+      const variantsChanged = JSON.stringify(oldVariants.sort()) !== JSON.stringify(newVariants.sort());
+      
+      if (variantsChanged) {
+        // Create keyword update array for variants
+        const keywordUpdates: Array<{old: string, new: string | null}> = [];
+        
+        // Find removed variants (need to update/remove from system)
+        const removedVariants = oldVariants.filter(variant => !newVariants.includes(variant));
+        for (const removedVariant of removedVariants) {
+          keywordUpdates.push({
+            old: removedVariant,
+            new: null // This will need special handling in the backend
+          });
+        }
+        
+        // Find added variants (need to create new entries)
+        const addedVariants = newVariants.filter(variant => !oldVariants.includes(variant));
+        for (const addedVariant of addedVariants) {
+          // For new variants, we don't need cascade updates since they're new
+          // But we should validate they don't conflict
+        }
+        
+        // If there are variant changes that need cascade updates
+        if (keywordUpdates.length > 0) {
+          const { apiFetch } = await import('@/lib/api');
+          
+          // For now, we'll handle variant updates through the main keyword management endpoint
+          // In the future, we could implement bulk variant cascade updates
+          console.log('Variant changes detected:', { removedVariants, addedVariants });
+        }
+      }
+
+      // Update the main keyword data
       const { apiFetch } = await import('@/lib/api');
       const response = await apiFetch(`/admin/keywords-management`, {
         method: 'PUT',
