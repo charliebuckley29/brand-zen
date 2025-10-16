@@ -146,6 +146,9 @@ export function UserBugReportsModal({ open, onOpenChange }: UserBugReportsModalP
   };
 
   const formatStatus = (status: string) => {
+    if (!status || typeof status !== 'string') {
+      return 'Unknown';
+    }
     return status.split('_').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');

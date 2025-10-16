@@ -56,6 +56,9 @@ export function EnhancedUserCard({
 }: EnhancedUserCardProps) {
 
   const getInitials = (name: string) => {
+    if (!name || typeof name !== 'string') {
+      return '??';
+    }
     return name
       .split(' ')
       .map(n => n[0])

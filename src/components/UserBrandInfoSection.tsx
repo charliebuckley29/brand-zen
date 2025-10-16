@@ -90,7 +90,7 @@ export function UserBrandInfoSection({ userId, userFullName, onUpdate }: UserBra
     try {
       setIsSaving(true);
       
-      const variantsArray = formData.variants
+      const variantsArray = (formData.variants || '')
         .split(',')
         .map(v => v.trim())
         .filter(v => v.length > 0);
