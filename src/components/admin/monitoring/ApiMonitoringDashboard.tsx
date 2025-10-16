@@ -7,6 +7,7 @@ import { apiSources, getSourceConfig } from "../../../lib/api-monitoring-utils";
 import { SourceMonitoringCard } from "./SourceMonitoringCard";
 import { SystemOverviewCard } from "./SystemOverviewCard";
 import { AlertsAndRecommendationsCard } from "./AlertsAndRecommendationsCard";
+import { LiveApiAnalysis } from "./LiveApiAnalysis";
 
 export function ApiMonitoringDashboard() {
   const { dashboardData, loading, refreshing, refetch } = useApiMonitoring();
@@ -103,6 +104,9 @@ export function ApiMonitoringDashboard() {
 
       {/* Overall System Overview */}
       <SystemOverviewCard dashboardData={dashboardData} />
+
+      {/* Live API Analysis */}
+      <LiveApiAnalysis />
     </div>
   );
 }
