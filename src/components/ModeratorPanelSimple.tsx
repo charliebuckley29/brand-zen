@@ -199,7 +199,7 @@ export function ModeratorPanelSimple() {
       {selectedUser && (
         <KeywordSourceManagement
           userId={selectedUser.id}
-          userName={selectedUser.full_name}
+          userName={selectedUser.full_name || selectedUser.profile?.full_name || selectedUser.email || 'Unknown User'}
           open={keywordSourceDialogOpen}
           onClose={() => setKeywordSourceDialogOpen(false)}
         />
