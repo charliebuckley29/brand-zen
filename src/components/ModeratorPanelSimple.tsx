@@ -135,6 +135,14 @@ export function ModeratorPanelSimple() {
       if (keywordsResult.success && keywordsResult.data) {
         setUserKeywords(keywordsResult.data);
         console.log('🔑 [MODERATOR PANEL] Loaded keywords data:', { totalKeywords: keywordsResult.data.length, keywords: keywordsResult.data });
+        
+        // Debug: Check what data we have for Rusty Kate specifically
+        const rustyKateKeywords = keywordsResult.data.filter((k: any) => k.user_id === '291db40f-ff62-4667-9c32-d5f802f7bfd0');
+        console.log('🔍 [DEBUG] Rusty Kate keywords from backend:', rustyKateKeywords);
+        if (rustyKateKeywords.length > 0) {
+          const brandInfo = extractBrandInfo(rustyKateKeywords);
+          console.log('🔍 [DEBUG] Extracted brand info for Rusty Kate:', brandInfo);
+        }
       }
 
       // Fetch flagged mentions
