@@ -115,7 +115,8 @@ export function ModeratorPanelSimple() {
 
   // Helper function to check if a user can be edited by moderators
   const canEditUser = (user: User): boolean => {
-    return user.user_status !== 'suspended' && user.user_type !== 'admin';
+    const userStatus = user.user_status || user.profile?.user_status;
+    return userStatus !== 'suspended' && user.user_type !== 'admin';
   };
 
   const fetchData = async () => {
@@ -429,6 +430,8 @@ export function ModeratorPanelSimple() {
                       onRoleChange={(role: UserType) => updateUserRole(user.id, role)}
                       onFrequencyChange={(frequency: number) => updateUserFetchFrequency(user.id, frequency)}
                       loadingStates={loadingStates}
+                      canEdit={canEditUser(user)}
+                      canDelete={canEditUser(user)}
                     />
                   );
                 })}
