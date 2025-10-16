@@ -625,7 +625,7 @@ export default function ApiHealthMonitoringPage() {
                           <span className="ml-2 font-medium">{source.results.noResultsCalls}</span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">High Results (>10):</span>
+                          <span className="text-muted-foreground">High Results (&gt;10):</span>
                           <span className="ml-2 font-medium">{source.results.highResultCalls}</span>
                         </div>
                         <div>
