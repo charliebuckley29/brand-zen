@@ -180,9 +180,11 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
     const allKeywords: string[] = [];
     
     keywords.forEach(keyword => {
-      allKeywords.push(keyword.brand_name);
-      if (keyword.variants) {
-        allKeywords.push(...keyword.variants);
+      if (keyword.brand_name) {
+        allKeywords.push(keyword.brand_name);
+      }
+      if (keyword.variants && Array.isArray(keyword.variants)) {
+        allKeywords.push(...keyword.variants.filter(variant => variant && typeof variant === 'string'));
       }
     });
     
@@ -191,6 +193,9 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
 
   // Get preferences for a specific keyword
   const getPreferencesForKeyword = (keywordText: string) => {
+    if (!keywordText || typeof keywordText !== 'string') {
+      return [];
+    }
     return preferences.filter(pref => pref.keyword === keywordText);
   };
 
@@ -273,7 +278,7 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
   };
 
   const filteredKeywords = getAllKeywords().filter(keyword =>
-    keyword.toLowerCase().includes(searchTerm.toLowerCase())
+    (keyword || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {

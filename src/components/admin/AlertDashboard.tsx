@@ -177,9 +177,9 @@ export function AlertDashboard() {
   };
 
   const filteredAlerts = alertData?.alerts.filter(alert => {
-    const matchesSearch = alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         alert.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         alert.alert_type.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (alert.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (alert.message || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (alert.alert_type || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSeverity = severityFilter === 'all' || alert.severity === severityFilter;
     const matchesStatus = statusFilter === 'all' || alert.status === statusFilter;
     return matchesSearch && matchesSeverity && matchesStatus;

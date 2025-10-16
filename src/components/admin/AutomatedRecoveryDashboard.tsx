@@ -188,9 +188,9 @@ export function AutomatedRecoveryDashboard() {
   };
 
   const filteredActions = recoveryActions?.actions.filter(action => {
-    const matchesSearch = action.action_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         action.target_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         action.target_id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (action.action_type || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (action.target_type || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (action.target_id || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || action.status === statusFilter;
     return matchesSearch && matchesStatus;
   }) || [];
