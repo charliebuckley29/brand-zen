@@ -49,8 +49,17 @@ export function UserBrandInfoSection({ userId, userFullName, onUpdate }: UserBra
   const fetchBrandInfo = async () => {
     try {
       setIsLoading(true);
+      console.log('🔧 [BRAND_INFO] Fetching brand info for user:', userId);
+      
+      // Check authentication first
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔧 [BRAND_INFO] Auth session:', session ? 'exists' : 'none', session?.access_token ? 'token exists' : 'no token');
+      
       const response = await apiFetch(`/admin/keywords-management?user_id=${userId}`);
+      console.log('🔧 [BRAND_INFO] Response status:', response.status, response.ok);
       const data = await response.json();
+      console.log('🔧 [BRAND_INFO] Response data:', data);
       
       if (data.success && data.data && data.data.length > 0) {
         // Get the first keyword record (should be the main brand)
@@ -102,7 +111,12 @@ export function UserBrandInfoSection({ userId, userFullName, onUpdate }: UserBra
         });
       }
     } catch (error: any) {
-      console.error('Error fetching brand info:', error);
+      console.error('🔧 [BRAND_INFO] Error fetching brand info:', error);
+      console.error('🔧 [BRAND_INFO] Error details:', {
+        message: error.message,
+        status: error.status,
+        response: error.response
+      });
       toast({
         title: "Error",
         description: error.message || "Failed to fetch brand information",
