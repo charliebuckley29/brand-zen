@@ -174,6 +174,10 @@ export function ModeratorPanel() {
         firstUserStatus: result.data?.[0]?.profile?.user_status
       });
       
+      // More prominent debugging
+      console.warn("🚨 [DEBUG] FIRST USER STATUS:", result.data?.[0]?.profile?.user_status);
+      console.warn("🚨 [DEBUG] ALL USER STATUSES:", result.data?.map((u: any) => u.profile?.user_status));
+      
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch users');
       }
