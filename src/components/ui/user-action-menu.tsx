@@ -108,7 +108,8 @@ export function UserActionMenu({
         size="sm"
         variant={primaryAction.variant}
         onClick={() => {
-          console.log('🔧 [USER_ACTION_MENU] Primary action clicked:', primaryAction.label, 'for user:', user.full_name);
+          console.log('🔧 [USER_ACTION_MENU] Primary action clicked:', primaryAction.label, 'for user:', user);
+          console.log('🔧 [USER_ACTION_MENU] User properties:', Object.keys(user));
           primaryAction.action();
         }}
         disabled={primaryAction.loading || !canEdit}

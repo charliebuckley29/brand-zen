@@ -879,6 +879,7 @@ export function ModeratorPanel() {
 
                   const handleEdit = () => {
                     console.log('🔧 [MODERATOR] handleEdit called for user:', user.id, user.full_name);
+                    console.log('🔧 [MODERATOR] handleEdit - user object:', user);
                     setSelectedUser(user);
                     const userKeyword = userKeywords.find(k => k.user_id === user.id);
                     setSelectedUserKeywords(userKeyword || null);
