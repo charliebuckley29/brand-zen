@@ -125,6 +125,8 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
     keywordId: string;
     currentRssUrl?: string | null;
   } | null>(null);
+  const [masterAutomationEnabled, setMasterAutomationEnabled] = useState<boolean>(false);
+  const [isUpdatingMasterAutomation, setIsUpdatingMasterAutomation] = useState(false);
   const { toast } = useToast();
 
   // Fetch user keywords and their source preferences
@@ -132,6 +134,17 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
     try {
       setLoading(true);
       console.log('🔧 [MODERATOR] Fetching data for user:', userId);
+      
+      // Fetch user's master automation status
+      const profileResponse = await apiFetch(`/admin/users-with-roles?user_id=${userId}`);
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        if (profileData.success && profileData.data && profileData.data.length > 0) {
+          const userProfile = profileData.data[0];
+          setMasterAutomationEnabled(userProfile.automation_enabled || false);
+          console.log('🔧 [MODERATOR] Master automation status:', userProfile.automation_enabled);
+        }
+      }
       
       // Fetch user keywords with cache busting
       const timestamp = Date.now();
@@ -433,6 +446,44 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
     );
   };
 
+  // Handle master automation toggle
+  const handleMasterAutomationToggle = async (enabled: boolean) => {
+    setIsUpdatingMasterAutomation(true);
+    try {
+      const response = await apiFetch('/user/preferences', {
+        method: 'PUT',
+        body: JSON.stringify({
+          userId: userId,
+          automation_enabled: enabled
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setMasterAutomationEnabled(enabled);
+        toast({
+          title: "Success",
+          description: `Master automation ${enabled ? 'enabled' : 'disabled'} for ${userName}`,
+        });
+        
+        // Refresh data to sync with any queue changes
+        await fetchData();
+      } else {
+        throw new Error(data.error || 'Failed to update master automation');
+      }
+    } catch (error: any) {
+      console.error('Error updating master automation:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update master automation",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdatingMasterAutomation(false);
+    }
+  };
+
   const filteredKeywords = getAllKeywords().filter(keyword =>
     (keyword || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -498,12 +549,64 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
             </Button>
           </div>
 
-          {/* Keywords and Sources Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Keyword × Source Configuration</CardTitle>
+          {/* Master Automation Toggle */}
+          <Card className="border-2 border-blue-200 bg-blue-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Zap className="h-5 w-5 text-blue-600" />
+                Master Automation Control
+              </CardTitle>
               <CardDescription>
-                {filteredKeywords.length} keywords found. Toggle fetching on/off for each keyword-source combination.
+                This controls the user's main automation switch. When disabled, no sources will be processed regardless of individual keyword-source settings below.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Automation Status:</span>
+                    <Badge variant={masterAutomationEnabled ? "default" : "secondary"}>
+                      {masterAutomationEnabled ? "Enabled" : "Disabled"}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {masterAutomationEnabled 
+                      ? "User's mentions will be fetched automatically based on the settings below"
+                      : "All automation is disabled - no mentions will be fetched automatically"
+                    }
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={masterAutomationEnabled}
+                    onCheckedChange={handleMasterAutomationToggle}
+                    disabled={isUpdatingMasterAutomation}
+                    className="data-[state=checked]:bg-green-600"
+                  />
+                  {isUpdatingMasterAutomation && (
+                    <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Keywords and Sources Table */}
+          <Card className={masterAutomationEnabled ? "" : "opacity-60"}>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                Keyword × Source Configuration
+                {!masterAutomationEnabled && (
+                  <Badge variant="destructive" className="text-xs">
+                    Master Automation Disabled
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription>
+                {masterAutomationEnabled 
+                  ? `${filteredKeywords.length} keywords found. Toggle fetching on/off for each keyword-source combination.`
+                  : "Individual source settings are disabled while master automation is off"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -596,7 +699,7 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
                                   onCheckedChange={(checked) => 
                                     toggleKeywordSource(keyword, sourceType, checked)
                                   }
-                                  disabled={isUpdating}
+                                  disabled={isUpdating || !masterAutomationEnabled}
                                   className="data-[state=checked]:bg-green-600"
                                 />
                                 <div className="text-xs text-gray-500">
@@ -619,6 +722,7 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
                               variant="outline"
                               size="sm"
                               onClick={() => handleConfigureRssUrl(keyword)}
+                              disabled={!masterAutomationEnabled}
                               className="flex items-center gap-2"
                             >
                               {getRssUrlIcon(keyword)}
