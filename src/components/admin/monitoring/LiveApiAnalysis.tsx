@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { EnhancedCard, EnhancedCardContent, EnhancedCardHeader, EnhancedCardTitle } from '../../ui/enhanced-card';
+import { createApiUrl } from '../../../lib/api';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs';
@@ -108,7 +109,7 @@ export function LiveApiAnalysis({ className = "" }: LiveApiAnalysisProps) {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/api-source-live-analysis?timeframe_hours=${timeframe}&limit=100`);
+      const response = await fetch(createApiUrl(`/api/admin/api-source-live-analysis?timeframe_hours=${timeframe}&limit=100`));
       const result = await response.json();
       
       if (!result.success) {
