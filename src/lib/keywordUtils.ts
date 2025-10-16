@@ -37,7 +37,10 @@ export interface ExtractedBrandInfo {
  * @returns Object with brand_name, variants array, and all_keywords flat list
  */
 export function extractBrandInfo(keywords: StandardizedKeyword[]): ExtractedBrandInfo {
+  console.log('🔍 [extractBrandInfo] Input keywords:', keywords);
+  
   if (!keywords || keywords.length === 0) {
+    console.log('🔍 [extractBrandInfo] No keywords provided, returning empty');
     return {
       brand_name: '',
       variants: [],
@@ -47,10 +50,13 @@ export function extractBrandInfo(keywords: StandardizedKeyword[]): ExtractedBran
 
   // Sort by keyword_order to ensure correct order
   const sortedKeywords = [...keywords].sort((a, b) => a.keyword_order - b.keyword_order);
+  console.log('🔍 [extractBrandInfo] Sorted keywords:', sortedKeywords);
   
   // Extract brand name (first item, order 0)
   const brandKeyword = sortedKeywords.find(k => k.keyword_order === 0);
+  console.log('🔍 [extractBrandInfo] Brand keyword (order 0):', brandKeyword);
   const brand_name = brandKeyword?.keyword_text || '';
+  console.log('🔍 [extractBrandInfo] Extracted brand_name:', brand_name);
   
   // Extract variants (remaining items, order 1+)
   const variantKeywords = sortedKeywords.filter(k => k.keyword_order > 0);
@@ -59,11 +65,14 @@ export function extractBrandInfo(keywords: StandardizedKeyword[]): ExtractedBran
   // Create flat list of all keywords
   const all_keywords = sortedKeywords.map(k => k.keyword_text);
 
-  return {
+  const result = {
     brand_name,
     variants,
     all_keywords
   };
+  
+  console.log('🔍 [extractBrandInfo] Final result:', result);
+  return result;
 }
 
 /**

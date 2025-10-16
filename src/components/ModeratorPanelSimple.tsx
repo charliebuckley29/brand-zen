@@ -140,6 +140,13 @@ export function ModeratorPanelSimple() {
         const rustyKateKeywords = keywordsResult.data.filter((k: any) => k.user_id === '291db40f-ff62-4667-9c32-d5f802f7bfd0');
         console.log('🔍 [DEBUG] Rusty Kate keywords from backend:', rustyKateKeywords);
         if (rustyKateKeywords.length > 0) {
+          console.log('🔍 [DEBUG] First keyword structure:', {
+            id: rustyKateKeywords[0].id,
+            keyword_text: rustyKateKeywords[0].keyword_text,
+            keyword_type: rustyKateKeywords[0].keyword_type,
+            keyword_order: rustyKateKeywords[0].keyword_order,
+            user_id: rustyKateKeywords[0].user_id
+          });
           const brandInfo = extractBrandInfo(rustyKateKeywords);
           console.log('🔍 [DEBUG] Extracted brand info for Rusty Kate:', brandInfo);
         }
