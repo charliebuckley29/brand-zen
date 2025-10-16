@@ -50,6 +50,12 @@ export function useSourcePreferences() {
             
             for (const pref of result.data) {
               const sourceType = pref.source_type as SourceType;
+              console.log(`🔧 [USER_SETTINGS] Processing preference for ${sourceType}:`, {
+                keyword: pref.keyword,
+                show_in_mentions: pref.show_in_mentions,
+                show_in_analytics: pref.show_in_analytics,
+                show_in_reports: pref.show_in_reports
+              });
               
               if (!sourcePrefs.has(sourceType)) {
                 // First preference for this source type
@@ -61,15 +67,22 @@ export function useSourcePreferences() {
                   show_in_analytics: pref.show_in_analytics,
                   show_in_reports: pref.show_in_reports
                 });
+                console.log(`🔧 [USER_SETTINGS] Set initial preference for ${sourceType}:`, pref.show_in_mentions);
               } else {
                 // Aggregate with existing preference
                 // If ANY keyword has this source enabled, show as enabled
                 const existing = sourcePrefs.get(sourceType)!;
-                sourcePrefs.set(sourceType, {
+                const newAggregated = {
                   ...existing,
                   show_in_mentions: existing.show_in_mentions || pref.show_in_mentions,
                   show_in_analytics: existing.show_in_analytics || pref.show_in_analytics,
                   show_in_reports: existing.show_in_reports || pref.show_in_reports
+                };
+                sourcePrefs.set(sourceType, newAggregated);
+                console.log(`🔧 [USER_SETTINGS] Aggregated ${sourceType}:`, {
+                  existing: existing.show_in_mentions,
+                  new: pref.show_in_mentions,
+                  result: newAggregated.show_in_mentions
                 });
               }
             }
@@ -131,12 +144,13 @@ export function useSourcePreferences() {
       const updatePromises = keywordsResult.data.map(async (keywordData: any) => {
         console.log('🔧 [SOURCE_PREFS] Updating preference for keyword:', keywordData);
         
+        // When user changes a source setting, apply it to ALL fields for ALL keywords
+        // This ensures consistent behavior: user turns off Reddit = Reddit off for all keywords
         const preferences = {
-          show_in_mentions: prefs[source]?.show_in_mentions ?? true,
-          show_in_analytics: prefs[source]?.show_in_analytics ?? true,
-          show_in_reports: prefs[source]?.show_in_reports ?? true,
+          show_in_mentions: value,
+          show_in_analytics: value,
+          show_in_reports: value,
         };
-        preferences[field] = value;
 
         const requestBody = {
           userId,
