@@ -142,15 +142,21 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
         const profileData = await profileResponse.json();
         console.log('🔧 [MODERATOR] Profile response data:', profileData);
         if (profileData.success && profileData.data && profileData.data.length > 0) {
-          const userProfile = profileData.data[0];
-          console.log('🔧 [MODERATOR] User profile object:', userProfile);
-          console.log('🔧 [MODERATOR] User profile.profile object:', userProfile.profile);
-          // The automation_enabled field is nested under profile
-          const automationEnabled = userProfile.profile?.automation_enabled || false;
-          console.log('🔧 [MODERATOR] Extracted automation_enabled:', automationEnabled);
-          console.log('🔧 [MODERATOR] Raw automation_enabled value:', userProfile.profile?.automation_enabled);
-          setMasterAutomationEnabled(automationEnabled);
-          console.log('🔧 [MODERATOR] Set masterAutomationEnabled to:', automationEnabled);
+          // Find the specific user instead of just taking the first one
+          const userProfile = profileData.data.find(user => user.id === userId);
+          if (userProfile) {
+            console.log('🔧 [MODERATOR] User profile object:', userProfile);
+            console.log('🔧 [MODERATOR] User profile.profile object:', userProfile.profile);
+            // The automation_enabled field is nested under profile
+            const automationEnabled = userProfile.profile?.automation_enabled || false;
+            console.log('🔧 [MODERATOR] Extracted automation_enabled:', automationEnabled);
+            console.log('🔧 [MODERATOR] Raw automation_enabled value:', userProfile.profile?.automation_enabled);
+            setMasterAutomationEnabled(automationEnabled);
+            console.log('🔧 [MODERATOR] Set masterAutomationEnabled to:', automationEnabled);
+          } else {
+            console.log('🔧 [MODERATOR] User not found in response data for userId:', userId);
+            console.log('🔧 [MODERATOR] Available user IDs:', profileData.data.map(u => u.id));
+          }
         } else {
           console.log('🔧 [MODERATOR] No user profile data found in response');
         }
