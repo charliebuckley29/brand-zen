@@ -118,6 +118,16 @@ export default function MonitoringOverview() {
       features: ['System Overview', 'API Monitoring', 'User Monitoring', 'Alert Monitoring']
     },
     {
+      id: 'api-health',
+      title: 'API Health Monitoring',
+      description: 'Real-time API source health, performance, and analytics',
+      icon: Wifi,
+      color: 'bg-emerald-100 text-emerald-600',
+      href: '/admin/monitoring/api-health',
+      status: 'implemented',
+      features: ['Health Checks', 'Performance Analytics', 'Error Tracking', 'Smart Alerts']
+    },
+    {
       id: 'queues',
       title: 'Queue Monitoring',
       description: 'Monitor queue health, errors, and retry patterns',

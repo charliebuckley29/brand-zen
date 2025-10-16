@@ -50,6 +50,7 @@ import AdminApiLimitsPanel from "./pages/AdminApiLimitsPanel";
 import AdminTestDebugTools from "./pages/AdminTestDebugTools";
 import AdminEmailDeliveryMonitoring from "./pages/AdminEmailDeliveryMonitoring";
 import QueueErrorMonitoringPage from "./pages/QueueErrorMonitoringPage";
+import ApiHealthMonitoringPage from "./pages/admin/monitoring/ApiHealthMonitoringPage";
 import AutomatedRecoveryPage from "./pages/admin/monitoring/AutomatedRecoveryPage";
 import SystemAlertsPage from "./pages/SystemAlertsPage";
 import EnhancedAnalyticsPage from "./pages/admin/monitoring/EnhancedAnalyticsPage";
@@ -148,6 +149,7 @@ const App = () => {
                   {/* Monitoring Section */}
                   <Route path="/admin/monitoring" element={<MonitoringOverview />} />
                   <Route path="/admin/monitoring/overview" element={<AdminUnifiedMonitoring />} />
+                  <Route path="/admin/monitoring/api-health" element={<ApiHealthMonitoringPage />} />
                   <Route path="/admin/monitoring/queues" element={<QueueErrorMonitoringPage />} />
                   <Route path="/admin/monitoring/alerts" element={<SystemAlertsPage />} />
                   <Route path="/admin/monitoring/analytics" element={<EnhancedAnalyticsPage />} />
