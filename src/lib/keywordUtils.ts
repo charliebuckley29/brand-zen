@@ -48,18 +48,29 @@ export function extractBrandInfo(keywords: StandardizedKeyword[]): ExtractedBran
     };
   }
 
-  // Sort by keyword_order to ensure correct order
-  const sortedKeywords = [...keywords].sort((a, b) => a.keyword_order - b.keyword_order);
+  // Sort by keyword_order to ensure correct order (handle undefined values)
+  const sortedKeywords = [...keywords].sort((a, b) => {
+    const orderA = a.keyword_order ?? (a.keyword_type === 'brand_name' ? 0 : 1);
+    const orderB = b.keyword_order ?? (b.keyword_type === 'brand_name' ? 0 : 1);
+    return orderA - orderB;
+  });
   console.log('🔍 [extractBrandInfo] Sorted keywords:', sortedKeywords);
   
   // Extract brand name (first item, order 0)
-  const brandKeyword = sortedKeywords.find(k => k.keyword_order === 0);
+  // Handle case where keyword_order is undefined (fallback to keyword_type)
+  const brandKeyword = sortedKeywords.find(k => 
+    k.keyword_order === 0 || 
+    (k.keyword_order === undefined && k.keyword_type === 'brand_name')
+  );
   console.log('🔍 [extractBrandInfo] Brand keyword (order 0):', brandKeyword);
   const brand_name = brandKeyword?.keyword_text || '';
   console.log('🔍 [extractBrandInfo] Extracted brand_name:', brand_name);
   
-  // Extract variants (remaining items, order 1+)
-  const variantKeywords = sortedKeywords.filter(k => k.keyword_order > 0);
+  // Extract variants (remaining items, order 1+ or keyword_type 'variant')
+  const variantKeywords = sortedKeywords.filter(k => 
+    k.keyword_order > 0 || 
+    (k.keyword_order === undefined && k.keyword_type === 'variant')
+  );
   const variants = variantKeywords.map(k => k.keyword_text);
   
   // Create flat list of all keywords
