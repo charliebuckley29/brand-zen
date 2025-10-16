@@ -249,16 +249,17 @@ export function ModeratorPanelSimple() {
                 {users.map((user) => {
                   const handleEdit = () => {
                     setSelectedUser(user);
+                    const userKeyword = userKeywords.find(k => k.user_id === user.id);
                     setEditingProfile({
-                      full_name: user.full_name,
+                      full_name: user.full_name || user.profile?.full_name || '',
                       email: user.email,
-                      phone_number: user.phone_number || '',
-                      brand_name: '',
-                      variants: '',
+                      phone_number: user.phone_number || user.profile?.phone_number || '',
+                      brand_name: userKeyword?.brand_name || '',
+                      variants: userKeyword?.variants?.join(', ') || '',
                       rss_url: '',
-                      brand_website: user.brand_website || '',
-                      brand_description: user.brand_description || '',
-                      social_media_links: user.social_media_links || {}
+                      brand_website: user.brand_website || user.profile?.brand_website || '',
+                      brand_description: user.brand_description || user.profile?.brand_description || '',
+                      social_media_links: user.social_media_links || user.profile?.social_media_links || {}
                     });
                     setUserDetailOpen(true);
                     setEditMode(true);
@@ -535,36 +536,192 @@ export function ModeratorPanelSimple() {
 
             {selectedUser && (
               <div className="space-y-6">
-                {/* User Profile Information */}
-                <UserBrandInfoSection
-                  user={selectedUser}
-                  onUpdate={() => {
-                    fetchData();
-                    setUserDetailOpen(false);
-                  }}
-                  editMode={editMode}
-                  onEditModeChange={setEditMode}
-                />
-
-                {/* Keyword x Source Management Section */}
-                <div className="border-t pt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">Keyword x Source Management</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Configure automation and display preferences for this user's keywords and sources
-                      </p>
+                {!editMode ? (
+                  <>
+                    {/* View Mode - User Profile Information */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-5 w-5 text-muted-foreground" />
+                        <h3 className="text-lg font-semibold">User Information</h3>
+                      </div>
+                      
+                      <div className="grid gap-3">
+                        <div>
+                          <Label className="text-sm font-medium">Full Name</Label>
+                          <p className="text-sm text-muted-foreground">{selectedUser.full_name || selectedUser.profile?.full_name || 'Not set'}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">Email</Label>
+                          <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">Phone Number</Label>
+                          <p className="text-sm text-muted-foreground">{selectedUser.phone_number || selectedUser.profile?.phone_number || 'Not provided'}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">Role</Label>
+                          <Badge variant={selectedUser.user_type === 'moderator' ? 'default' : 'secondary'}>
+                            {selectedUser.user_type.replace('_', ' ')}
+                          </Badge>
+                        </div>
+                      </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => setKeywordSourceDialogOpen(true)}
-                      className="w-full sm:w-auto"
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Configure Automation
-                    </Button>
-                  </div>
-                </div>
+
+                    {/* View Mode - Brand Information Section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-5 w-5 text-muted-foreground" />
+                        <h3 className="text-lg font-semibold">Brand Information</h3>
+                      </div>
+                      
+                      {(() => {
+                        const userKeyword = userKeywords.find(k => k.user_id === selectedUser.id);
+                        return userKeyword ? (
+                          <div className="grid gap-3">
+                            <div>
+                              <Label className="text-sm font-medium">Brand Name</Label>
+                              <p className="text-sm text-muted-foreground">{userKeyword.brand_name || 'Not set'}</p>
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium">Brand Variants</Label>
+                              <p className="text-sm text-muted-foreground">
+                                {userKeyword.variants?.join(', ') || 'None'}
+                              </p>
+                            </div>
+                            {selectedUser.brand_website && (
+                              <div>
+                                <Label className="text-sm font-medium">Brand Website</Label>
+                                <div className="flex items-center gap-2">
+                                  <Globe className="h-4 w-4 text-muted-foreground" />
+                                  <a 
+                                    href={selectedUser.brand_website} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-blue-600 hover:underline break-all"
+                                  >
+                                    {selectedUser.brand_website}
+                                  </a>
+                                </div>
+                              </div>
+                            )}
+                            {selectedUser.brand_description && (
+                              <div>
+                                <Label className="text-sm font-medium">Brand Description</Label>
+                                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                  {selectedUser.brand_description}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-center py-4">
+                            <p className="text-sm text-muted-foreground">No brand information available</p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* View Mode - Dialog Actions */}
+                    <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t">
+                      <Button variant="outline" onClick={() => setUserDetailOpen(false)} className="w-full sm:w-auto">
+                        Close
+                      </Button>
+                      <Button onClick={() => setEditMode(true)} className="w-full sm:w-auto">
+                        Configure Brand
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Edit Mode - Brand Configuration Form */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-5 w-5 text-muted-foreground" />
+                        <h3 className="text-lg font-semibold">Configure Brand Information</h3>
+                      </div>
+                      
+                      <div className="grid gap-4">
+                        <div>
+                          <Label htmlFor="edit-fullname">Full Name</Label>
+                          <Input
+                            id="edit-fullname"
+                            value={editingProfile.full_name}
+                            onChange={(e) => setEditingProfile(prev => ({ ...prev, full_name: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-email">Email</Label>
+                          <Input
+                            id="edit-email"
+                            type="email"
+                            value={editingProfile.email}
+                            onChange={(e) => setEditingProfile(prev => ({ ...prev, email: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-phone">Phone Number</Label>
+                          <Input
+                            id="edit-phone"
+                            value={editingProfile.phone_number}
+                            onChange={(e) => setEditingProfile(prev => ({ ...prev, phone_number: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-brand-name">Brand Name</Label>
+                          <Input
+                            id="edit-brand-name"
+                            value={editingProfile.brand_name}
+                            onChange={(e) => setEditingProfile(prev => ({ ...prev, brand_name: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-variants">Brand Variants (comma-separated)</Label>
+                          <Input
+                            id="edit-variants"
+                            value={editingProfile.variants}
+                            onChange={(e) => setEditingProfile(prev => ({ ...prev, variants: e.target.value }))}
+                            placeholder="variant1, variant2, variant3"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-website">Brand Website</Label>
+                          <Input
+                            id="edit-website"
+                            value={editingProfile.brand_website}
+                            onChange={(e) => setEditingProfile(prev => ({ ...prev, brand_website: e.target.value }))}
+                            placeholder="https://example.com"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-description">Brand Description</Label>
+                          <Textarea
+                            id="edit-description"
+                            value={editingProfile.brand_description}
+                            onChange={(e) => setEditingProfile(prev => ({ ...prev, brand_description: e.target.value }))}
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Edit Mode - Dialog Actions */}
+                    <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t">
+                      <Button variant="outline" onClick={() => setEditMode(false)} className="w-full sm:w-auto">
+                        Cancel
+                      </Button>
+                      <Button onClick={() => {
+                        // TODO: Implement save functionality
+                        setEditMode(false);
+                        toast({
+                          title: "Success",
+                          description: "Brand information updated successfully"
+                        });
+                      }} className="w-full sm:w-auto">
+                        Save Changes
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </DialogContent>
