@@ -579,7 +579,11 @@ export function ModeratorPanelSimple() {
                       
                       {(() => {
                         const userKeywordsList = userKeywords.filter(k => k.user_id === selectedUser.id);
+                        console.log('🔍 [DEBUG] Filtering keywords for user:', selectedUser.id);
+                        console.log('🔍 [DEBUG] All userKeywords:', userKeywords);
+                        console.log('🔍 [DEBUG] Filtered userKeywordsList:', userKeywordsList);
                         const brandInfo = extractBrandInfo(userKeywordsList);
+                        console.log('🔍 [DEBUG] Extracted brandInfo:', brandInfo);
                         return brandInfo.brand_name ? (
                           <div className="grid gap-3">
                             <div>
