@@ -316,14 +316,14 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
         p.keyword === keyword && p.source_type === sourceType
       );
       
-      // When toggling on: set all display booleans to true
-      // When toggling off: set all display booleans to false
+      // Moderator controls automation (fetching), not user display preferences
       const updatedPreferences = {
         automation_enabled: enabled,
         automation_configured: enabled, // If we're enabling, mark as configured
-        show_in_mentions: enabled,
-        show_in_analytics: enabled,
-        show_in_reports: enabled,
+        // Keep existing display preferences unchanged
+        show_in_mentions: existingPref?.show_in_mentions ?? true,
+        show_in_analytics: existingPref?.show_in_analytics ?? true,
+        show_in_reports: existingPref?.show_in_reports ?? true,
         source_url: existingPref?.source_url || null
       };
 
@@ -460,8 +460,37 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
+                    {/* User Display Settings Row */}
+                    <TableRow className="bg-blue-50">
+                      <TableHead className="font-semibold text-blue-800">User Display Settings</TableHead>
+                      {Object.entries(SOURCE_CONFIG).map(([sourceType, config]) => {
+                        const IconComponent = config.icon;
+                        // Get user's display preference for this source (check if any keyword has this source visible)
+                        const hasAnyDisplayEnabled = preferences.some(p => 
+                          p.source_type === sourceType && 
+                          (p.show_in_mentions || p.show_in_analytics || p.show_in_reports)
+                        );
+                        
+                        return (
+                          <TableHead key={sourceType} className="text-center">
+                            <div className="flex flex-col items-center gap-1">
+                              <div className={`p-1 rounded ${config.color}`}>
+                                <IconComponent className="h-4 w-4" />
+                              </div>
+                              <div className="text-xs font-medium">{config.name}</div>
+                              <div className={`text-xs font-medium ${
+                                hasAnyDisplayEnabled ? 'text-green-600' : 'text-gray-400'
+                              }`}>
+                                {hasAnyDisplayEnabled ? 'Visible' : 'Hidden'}
+                              </div>
+                            </div>
+                          </TableHead>
+                        );
+                      })}
+                    </TableRow>
+                    {/* Automation Headers Row */}
                     <TableRow>
-                      <TableHead className="font-semibold">Keyword</TableHead>
+                      <TableHead className="font-semibold">Keyword Automation</TableHead>
                       {Object.entries(SOURCE_CONFIG).map(([sourceType, config]) => {
                         const IconComponent = config.icon;
                         return (
@@ -471,6 +500,7 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
                                 <IconComponent className="h-4 w-4" />
                               </div>
                               <div className="text-xs font-medium">{config.name}</div>
+                              <div className="text-xs text-gray-500">Fetching</div>
                             </div>
                           </TableHead>
                         );
@@ -487,10 +517,11 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
                           const preference = getPreferencesForKeyword(keyword).find(p => p.source_type === sourceType);
                           const isEnabled = preference?.automation_enabled ?? false;
                           const isConfigured = preference?.automation_configured ?? false;
+                          // Check if automation is active (fetching is enabled and configured)
                           const isActive = isEnabled && isConfigured;
 
                           return (
-                            <TableCell key={`${keyword}-${sourceType}`} className="text-center">
+                            <TableCell key={sourceType} className="text-center">
                               <div className="flex flex-col items-center gap-2">
                                 <Switch
                                   checked={isActive}
@@ -502,7 +533,7 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
                                 />
                                 <div className="text-xs text-gray-500">
                                   {isActive ? (
-                                    <span className="text-green-600 font-medium">Active</span>
+                                    <span className="text-green-600 font-medium">Fetching</span>
                                   ) : isConfigured ? (
                                     <span className="text-yellow-600 font-medium">Configured</span>
                                   ) : (
