@@ -83,7 +83,7 @@ export function EnhancedUserCard({
           {/* Avatar */}
           <Avatar className="h-12 w-12 flex-shrink-0">
             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-              {getInitials(user.full_name)}
+              {getInitials(user.full_name || user.profile?.full_name || user.email)}
             </AvatarFallback>
           </Avatar>
 
@@ -92,7 +92,7 @@ export function EnhancedUserCard({
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <h3 className="font-semibold text-base truncate">
-                  {user.full_name}
+                  {user.full_name || user.profile?.full_name || user.email}
                 </h3>
                 <p className="text-sm text-muted-foreground truncate">
                   {user.email}

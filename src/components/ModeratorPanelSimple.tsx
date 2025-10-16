@@ -27,11 +27,11 @@ import { BrandEditor } from "@/components/BrandEditor";
 interface User {
   id: string;
   email: string;
-  full_name: string;
-  phone_number: string | null;
+  full_name?: string; // This might be undefined if it's in profile
+  phone_number?: string | null;
   user_type: UserType;
   created_at: string;
-  fetch_frequency_minutes: number;
+  fetch_frequency_minutes?: number; // This might be in profile
   email_confirmed?: boolean;
   email_confirmed_at?: string | null;
   brand_website?: string | null;
@@ -41,6 +41,22 @@ interface User {
   approved_at?: string | null;
   approved_by?: string | null;
   rejection_reason?: string | null;
+  profile?: {
+    full_name?: string;
+    phone_number?: string | null;
+    fetch_frequency_minutes?: number;
+    automation_enabled?: boolean;
+    timezone?: string;
+    user_status?: 'pending_approval' | 'approved' | 'rejected' | 'suspended';
+    approved_at?: string | null;
+    approved_by?: string | null;
+    rejection_reason?: string | null;
+    created_by_staff?: boolean;
+    notification_preferences?: any;
+    brand_website?: string | null;
+    brand_description?: string | null;
+    social_media_links?: Record<string, string>;
+  };
 }
 
 interface UserKeywords {

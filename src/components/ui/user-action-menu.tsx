@@ -28,12 +28,16 @@ import type { UserType } from "@/hooks/use-user-role";
 interface UserActionMenuProps {
   user: {
     id: string;
-    full_name: string;
+    full_name?: string;
     email: string;
     user_type: UserType;
     email_confirmed?: boolean;
     user_status?: string;
-    fetch_frequency_minutes: number;
+    fetch_frequency_minutes?: number;
+    profile?: {
+      full_name?: string;
+      fetch_frequency_minutes?: number;
+    };
   };
   onEdit: () => void;
   onDelete: () => void;
@@ -176,7 +180,7 @@ export function UserActionMenu({
               <span className="text-sm font-medium">Frequency</span>
             </div>
             <Select 
-              value={(user.fetch_frequency_minutes || 60).toString()} 
+              value={(user.fetch_frequency_minutes || user.profile?.fetch_frequency_minutes || 60).toString()} 
               onValueChange={(value: string) => onFrequencyChange(parseInt(value))}
               disabled={!canEdit}
             >
