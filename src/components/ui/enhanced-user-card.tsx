@@ -106,7 +106,10 @@ export function EnhancedUserCard({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={onConfigureAutomation}
+                  onClick={() => {
+                    console.log('🔧 [ENHANCED_USER_CARD] Automation button clicked for user:', user.id, user.full_name);
+                    onConfigureAutomation();
+                  }}
                   className="min-w-[44px] min-h-[44px] md:min-w-auto md:min-h-auto"
                 >
                   <Settings className="h-4 w-4 mr-1" />

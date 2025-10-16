@@ -1666,6 +1666,16 @@ export function BrandEditor({ keyword, user, onUpdate, onUpdateProfile }: BrandE
         </div>
       )}
 
+      {/* Keyword Source Management Dialog */}
+      {selectedUser && (
+        <KeywordSourceManagement
+          userId={selectedUser.id}
+          userName={selectedUser.profile?.full_name || selectedUser.full_name}
+          open={keywordSourceDialogOpen}
+          onClose={() => setKeywordSourceDialogOpen(false)}
+        />
+      )}
+
       {/* Console log for debugging */}
       {console.log('🔧 [MODERATOR] Always render test - dialogOpen:', keywordSourceDialogOpen, 'selectedUser:', selectedUser?.id)}
       </div>
