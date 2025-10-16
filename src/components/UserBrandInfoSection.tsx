@@ -160,13 +160,13 @@ export function UserBrandInfoSection({ userId, userFullName, onUpdate }: UserBra
       }
 
       // Update user profile (website, description, social media)
-      const profileResponse = await apiFetch('/admin/update-user-profile', {
+      const profileResponse = await apiFetch('/admin/update-user-profile-complete', {
         method: 'PUT',
         body: JSON.stringify({
-          user_id: userId,
-          brand_website: formData.brand_website,
-          brand_description: formData.brand_description,
-          social_media_links: formData.social_media_links
+          userId: userId,
+          brandWebsite: formData.brand_website,
+          brandDescription: formData.brand_description,
+          socialMediaLinks: formData.social_media_links
         })
       });
       

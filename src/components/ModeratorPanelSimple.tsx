@@ -627,6 +627,24 @@ export function ModeratorPanelSimple() {
                                 </p>
                               </div>
                             )}
+                            {selectedUser.social_media_links && Object.keys(selectedUser.social_media_links).length > 0 && (
+                              <div>
+                                <Label className="text-sm font-medium">Social Media Links</Label>
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  {Object.entries(selectedUser.social_media_links).map(([platform, url]) => (
+                                    <a
+                                      key={platform}
+                                      href={url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+                                    >
+                                      {platform}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="text-center py-4">
@@ -716,6 +734,13 @@ export function ModeratorPanelSimple() {
                             rows={3}
                           />
                         </div>
+                        <div>
+                          <Label>Social Media Links</Label>
+                          <SocialMediaLinks
+                            value={editingProfile.social_media_links}
+                            onChange={(links) => setEditingProfile(prev => ({ ...prev, social_media_links: links }))}
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -724,13 +749,62 @@ export function ModeratorPanelSimple() {
                       <Button variant="outline" onClick={() => setEditMode(false)} className="w-full sm:w-auto">
                         Cancel
                       </Button>
-                      <Button onClick={() => {
-                        // TODO: Implement save functionality
-                        setEditMode(false);
-                        toast({
-                          title: "Success",
-                          description: "Brand information updated successfully"
-                        });
+                      <Button onClick={async () => {
+                        try {
+                          // Update keywords (brand name and variants)
+                          const variantsArray = editingProfile.variants
+                            .split(',')
+                            .map(v => v.trim())
+                            .filter(v => v.length > 0);
+
+                          const keywordsResponse = await apiFetch('/admin/keywords-management', {
+                            method: 'PUT',
+                            body: JSON.stringify({
+                              user_id: selectedUser.id,
+                              brand_name: editingProfile.brand_name,
+                              variants: variantsArray
+                            })
+                          });
+                          
+                          const keywordsData = await keywordsResponse.json();
+                          
+                          if (!keywordsData.success) {
+                            throw new Error(keywordsData.error || "Failed to update keywords");
+                          }
+
+                          // Update user profile (website, description, social media)
+                          const profileResponse = await apiFetch('/admin/update-user-profile-complete', {
+                            method: 'PUT',
+                            body: JSON.stringify({
+                              userId: selectedUser.id,
+                              fullName: editingProfile.full_name,
+                              phoneNumber: editingProfile.phone_number,
+                              brandWebsite: editingProfile.brand_website,
+                              brandDescription: editingProfile.brand_description,
+                              socialMediaLinks: editingProfile.social_media_links
+                            })
+                          });
+                          
+                          const profileData = await profileResponse.json();
+                          
+                          if (!profileData.success) {
+                            throw new Error(profileData.error || "Failed to update profile");
+                          }
+                          
+                          setEditMode(false);
+                          fetchData(); // Refresh the data
+                          toast({
+                            title: "Success",
+                            description: "Brand information updated successfully"
+                          });
+                        } catch (error: any) {
+                          console.error('Error saving brand info:', error);
+                          toast({
+                            title: "Error",
+                            description: error.message || "Failed to update brand information",
+                            variant: "destructive"
+                          });
+                        }
                       }} className="w-full sm:w-auto">
                         Save Changes
                       </Button>
