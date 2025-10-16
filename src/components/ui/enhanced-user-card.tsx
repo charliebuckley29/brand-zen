@@ -108,7 +108,14 @@ export function EnhancedUserCard({
                   variant="outline"
                   onClick={() => {
                     console.log('🔧 [ENHANCED_USER_CARD] Automation button clicked for user:', user.id, user.full_name);
-                    onConfigureAutomation();
+                    console.log('🔧 [ENHANCED_USER_CARD] User object properties:', Object.keys(user));
+                    console.log('🔧 [ENHANCED_USER_CARD] User object:', user);
+                    console.log('🔧 [ENHANCED_USER_CARD] onConfigureAutomation function:', typeof onConfigureAutomation, onConfigureAutomation);
+                    if (typeof onConfigureAutomation === 'function') {
+                      onConfigureAutomation();
+                    } else {
+                      console.error('🔧 [ENHANCED_USER_CARD] onConfigureAutomation is not a function:', onConfigureAutomation);
+                    }
                   }}
                   className="min-w-[44px] min-h-[44px] md:min-w-auto md:min-h-auto"
                 >
