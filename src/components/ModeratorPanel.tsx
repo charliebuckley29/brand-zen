@@ -167,6 +167,13 @@ export function ModeratorPanel() {
       
       const result = await response.json();
       
+      console.log("🔍 [MODERATOR PANEL] Raw backend response:", {
+        success: result.success,
+        dataLength: result.data?.length,
+        firstUserProfile: result.data?.[0]?.profile,
+        firstUserStatus: result.data?.[0]?.profile?.user_status
+      });
+      
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch users');
       }
@@ -185,7 +192,7 @@ export function ModeratorPanel() {
         brand_website: user.profile?.brand_website || null,
         brand_description: user.profile?.brand_description || null,
         social_media_links: user.profile?.social_media_links || {},
-        user_status: user.profile?.user_status || 'approved',
+        user_status: user.profile?.user_status || 'pending_approval',
         approved_at: user.profile?.approved_at || null,
         approved_by: user.profile?.approved_by || null,
         rejection_reason: user.profile?.rejection_reason || null
@@ -197,6 +204,7 @@ export function ModeratorPanel() {
           id: u.id,
           email: u.email,
           full_name: u.full_name,
+          user_status: u.user_status,
           brand_website: u.brand_website,
           brand_description: u.brand_description,
           social_media_links: u.social_media_links
