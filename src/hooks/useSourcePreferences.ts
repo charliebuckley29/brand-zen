@@ -42,14 +42,17 @@ export function useSourcePreferences() {
         const response = await apiFetch(`/keyword-source-preferences?userId=${user.id}`);
         if (response.ok) {
           const result = await response.json();
+          console.log('🔧 [USER_SETTINGS] Raw preferences data:', result.data);
           if (result.success && result.data) {
             // Convert keyword-source preferences to source-level preferences
-            // Group by source_type and take the first preference for each source
+            // Group by source_type and aggregate preferences intelligently
             const sourcePrefs = new Map<SourceType, PrefRecord>();
             
             for (const pref of result.data) {
               const sourceType = pref.source_type as SourceType;
+              
               if (!sourcePrefs.has(sourceType)) {
+                // First preference for this source type
                 sourcePrefs.set(sourceType, {
                   id: pref.id,
                   user_id: pref.user_id,
@@ -57,6 +60,16 @@ export function useSourcePreferences() {
                   show_in_mentions: pref.show_in_mentions,
                   show_in_analytics: pref.show_in_analytics,
                   show_in_reports: pref.show_in_reports
+                });
+              } else {
+                // Aggregate with existing preference
+                // If ANY keyword has this source enabled, show as enabled
+                const existing = sourcePrefs.get(sourceType)!;
+                sourcePrefs.set(sourceType, {
+                  ...existing,
+                  show_in_mentions: existing.show_in_mentions || pref.show_in_mentions,
+                  show_in_analytics: existing.show_in_analytics || pref.show_in_analytics,
+                  show_in_reports: existing.show_in_reports || pref.show_in_reports
                 });
               }
             }
@@ -66,6 +79,7 @@ export function useSourcePreferences() {
             for (const [sourceType, pref] of sourcePrefs) {
               next[sourceType] = pref;
             }
+            console.log('🔧 [USER_SETTINGS] Aggregated preferences:', next);
             setPrefs(next);
           }
         }
