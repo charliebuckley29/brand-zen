@@ -83,6 +83,7 @@ export function AdminNavigation() {
       subItems: [
         { id: "monitoring-overview", label: "Overview", path: "/admin/monitoring" },
         { id: "monitoring-unified", label: "Unified Dashboard", path: "/admin/unified-monitoring" },
+        { id: "monitoring-api-health", label: "API Health Monitoring", path: "/admin/monitoring/api-health" },
         { id: "monitoring-queues", label: "Queue Monitoring", path: "/admin/queue-errors" },
         { id: "monitoring-alerts", label: "System Alerts", path: "/admin/system-alerts" },
         { id: "monitoring-analytics", label: "Enhanced Analytics", path: "/admin/enhanced-analytics" },
