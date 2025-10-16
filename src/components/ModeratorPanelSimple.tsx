@@ -425,6 +425,11 @@ export function ModeratorPanelSimple() {
                       key={user.id}
                       user={user}
                       onEdit={handleEdit}
+                      onConfigureAutomation={() => {
+                        console.log('🔧 [MODERATOR_SIMPLE] Configure Automation clicked for user:', user.id);
+                        setSelectedUser(user);
+                        setKeywordSourceDialogOpen(true);
+                      }}
                       onDelete={() => handleDeleteUserClick(user)}
                       onPasswordReset={() => sendPasswordReset(user.id, user.email)}
                       onEmailResend={() => resendEmailConfirmation(user.id, user.email)}
