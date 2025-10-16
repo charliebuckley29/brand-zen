@@ -1141,12 +1141,6 @@ export function ModeratorPanel() {
                             {selectedUserKeywords.variants?.join(', ') || 'None'}
                           </p>
                         </div>
-                        <div>
-                          <Label className="text-sm font-medium">Google Alert RSS URL</Label>
-                          <p className="text-sm text-muted-foreground break-all">
-                            {selectedUserKeywords.google_alert_rss_url || 'Not configured'}
-                          </p>
-                        </div>
                       </>
                     )}
                     {selectedUser.brand_website && (
@@ -1269,16 +1263,6 @@ export function ModeratorPanel() {
                         value={editingProfile.variants}
                         onChange={(e) => setEditingProfile(prev => ({ ...prev, variants: e.target.value }))}
                         placeholder="variant1, variant2, variant3"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-rss">Google Alert RSS URL</Label>
-                      <Textarea
-                        id="edit-rss"
-                        value={editingProfile.google_alert_rss_url}
-                        onChange={(e) => setEditingProfile(prev => ({ ...prev, google_alert_rss_url: e.target.value }))}
-                        placeholder="https://www.google.com/alerts/feeds/... or https://www.google.co.uk/alerts/feeds/..."
-                        rows={3}
                       />
                     </div>
                     <div>

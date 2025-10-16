@@ -99,7 +99,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
   const { profileData, loading: profileLoading, updateProfile, updateTeamEmails, updateBrandInformation, updateNotificationPreferences } = useProfileCompletion();
 
   const { loading: prefsLoading, updating: prefsUpdating, prefs, setPref, setAllForSource } = useSourcePreferences();
-  const [googleAlertsEnabled, setGoogleAlertsEnabled] = useState<boolean>(() => (typeof window !== 'undefined' ? localStorage.getItem('google_alerts_enabled') !== 'false' : true));
   
   // Quota management
   const { quotaData, loading: quotaLoading, error: quotaError, refreshQuotaData, getSourcesNearLimit, getSourcesExceeded } = useQuotaUsage();
@@ -1476,29 +1475,6 @@ export function SettingsPage({ onSignOut }: SettingsPageProps) {
                   );
                 })}
 
-                {/* Google Alerts */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Rss className="h-4 w-4" />
-                    <div>
-                      <h4 className="text-sm font-medium">Google Alerts RSS</h4>
-                      <p className="text-xs text-muted-foreground">Fetch mentions from Google Alerts RSS feeds</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{googleAlertsEnabled ? 'On' : 'Off'}</span>
-                    <Switch
-                      checked={googleAlertsEnabled}
-                      onCheckedChange={(v) => {
-                        setGoogleAlertsEnabled(v);
-                        try {
-                          localStorage.setItem('google_alerts_enabled', v ? 'true' : 'false');
-                          toast({ title: v ? 'Google Alerts enabled' : 'Google Alerts disabled' });
-                        } catch {}
-                      }}
-                    />
-                  </div>
-                </div>
               </CardContent>
             </Card>
 

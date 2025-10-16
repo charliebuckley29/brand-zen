@@ -36,7 +36,7 @@ interface KeywordSourcePreference {
   id: string;
   user_id: string;
   keyword: string;
-  source_type: 'google_alert' | 'reddit' | 'rss_news' | 'x' | 'youtube';
+  source_type: 'google_alert' | 'reddit' | 'x' | 'youtube';
   automation_enabled: boolean;
   automation_configured: boolean;
   show_in_mentions: boolean;
@@ -86,12 +86,6 @@ const SOURCE_CONFIG = {
     icon: MessageSquare,
     color: 'bg-orange-100 text-orange-800',
     description: 'Reddit posts and comments'
-  },
-  rss_news: {
-    name: 'RSS News',
-    icon: Rss,
-    color: 'bg-green-100 text-green-800',
-    description: 'News RSS feeds'
   },
   x: {
     name: 'X (Twitter)',
