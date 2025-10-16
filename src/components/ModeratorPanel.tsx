@@ -899,16 +899,22 @@ export function ModeratorPanel() {
                     console.log('🔧 [MODERATOR] Dialog should now be open, userDetailOpen set to true');
                   };
 
+                  const automationHandler = () => {
+                    console.log('🔧 [MODERATOR] Configure Automation clicked for user:', user.id);
+                    console.log('🔧 [MODERATOR] Setting selectedUser to:', user);
+                    console.log('🔧 [MODERATOR] Setting keywordSourceDialogOpen to true');
+                    setSelectedUser(user);
+                    setKeywordSourceDialogOpen(true);
+                  };
+
+                  console.log('🔧 [MODERATOR] Creating EnhancedUserCard for user:', user.id, 'with automationHandler:', typeof automationHandler);
+
                   return (
                     <EnhancedUserCard
                       key={user.id}
                       user={user}
                       onEdit={handleEdit}
-                      onConfigureAutomation={() => {
-                        console.log('🔧 [MODERATOR] Configure Automation clicked for user:', user.id);
-                        setSelectedUser(user);
-                        setKeywordSourceDialogOpen(true);
-                      }}
+                      onConfigureAutomation={automationHandler}
                       onDelete={() => handleDeleteUserClick(user)}
                       onPasswordReset={() => sendPasswordReset(user.id, user.email)}
                       onEmailResend={() => resendEmailConfirmation(user.id, user.email)}
