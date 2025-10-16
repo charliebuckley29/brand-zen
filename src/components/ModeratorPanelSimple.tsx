@@ -228,47 +228,194 @@ export function ModeratorPanelSimple() {
               </div>
 
               <div className="grid gap-3">
-                {users.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => {
-                      setSelectedUser(user);
-                      setKeywordSourceDialogOpen(true);
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Users className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium">{user.full_name}</h3>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="text-xs">
-                            {user.user_type}
-                          </Badge>
-                          <StatusIndicator status={user.user_status || 'pending_approval'} />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedUser(user);
-                          setKeywordSourceDialogOpen(true);
-                        }}
-                        className="w-full sm:w-auto"
-                      >
-                        <Settings className="h-4 w-4 mr-2" />
-                        Configure Automation
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                {users.map((user) => {
+                  const handleEdit = () => {
+                    setSelectedUser(user);
+                    setEditingProfile({
+                      full_name: user.full_name,
+                      email: user.email,
+                      phone_number: user.phone_number || '',
+                      brand_name: '',
+                      variants: '',
+                      rss_url: '',
+                      brand_website: user.brand_website || '',
+                      brand_description: user.brand_description || '',
+                      social_media_links: user.social_media_links || {}
+                    });
+                    setUserDetailOpen(true);
+                    setEditMode(true);
+                  };
+
+                  const handleDeleteUserClick = (userToDelete: User) => {
+                    setUserToDelete(userToDelete);
+                    setDeleteDialogOpen(true);
+                  };
+
+                  const handleDeleteUser = async () => {
+                    if (!userToDelete) return;
+                    
+                    try {
+                      const response = await apiFetch('/admin/delete-user', {
+                        method: 'DELETE',
+                        body: JSON.stringify({
+                          userId: userToDelete.id,
+                          reason: deleteReason
+                        })
+                      });
+
+                      if (!response.ok) {
+                        throw new Error('Failed to delete user');
+                      }
+
+                      toast({
+                        title: "User deleted",
+                        description: `${userToDelete.full_name} has been deleted.`,
+                      });
+
+                      setDeleteDialogOpen(false);
+                      setUserToDelete(null);
+                      setDeleteReason('');
+                      fetchData(); // Refresh the data
+                    } catch (error) {
+                      console.error('Error deleting user:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to delete user",
+                        variant: "destructive"
+                      });
+                    }
+                  };
+
+                  const updateUserRole = async (userId: string, role: UserType) => {
+                    setLoadingStates(prev => ({ ...prev, [`role-${userId}`]: true }));
+                    try {
+                      const response = await apiFetch('/admin/update-user-role', {
+                        method: 'PUT',
+                        body: JSON.stringify({ userId, role })
+                      });
+
+                      if (!response.ok) {
+                        throw new Error('Failed to update user role');
+                      }
+
+                      toast({
+                        title: "Role updated",
+                        description: "User role has been updated successfully.",
+                      });
+
+                      fetchData(); // Refresh the data
+                    } catch (error) {
+                      console.error('Error updating user role:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to update user role",
+                        variant: "destructive"
+                      });
+                    } finally {
+                      setLoadingStates(prev => ({ ...prev, [`role-${userId}`]: false }));
+                    }
+                  };
+
+                  const updateUserFetchFrequency = async (userId: string, frequency: number) => {
+                    setLoadingStates(prev => ({ ...prev, [`frequency-${userId}`]: true }));
+                    try {
+                      const response = await apiFetch('/admin/update-user-fetch-frequency', {
+                        method: 'PUT',
+                        body: JSON.stringify({ userId, frequency })
+                      });
+
+                      if (!response.ok) {
+                        throw new Error('Failed to update fetch frequency');
+                      }
+
+                      toast({
+                        title: "Frequency updated",
+                        description: "User fetch frequency has been updated successfully.",
+                      });
+
+                      fetchData(); // Refresh the data
+                    } catch (error) {
+                      console.error('Error updating fetch frequency:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to update fetch frequency",
+                        variant: "destructive"
+                      });
+                    } finally {
+                      setLoadingStates(prev => ({ ...prev, [`frequency-${userId}`]: false }));
+                    }
+                  };
+
+                  const resendEmailConfirmation = async (userId: string, email: string) => {
+                    setLoadingStates(prev => ({ ...prev, [`email-${userId}`]: true }));
+                    try {
+                      const response = await apiFetch('/admin/resend-email-confirmation', {
+                        method: 'POST',
+                        body: JSON.stringify({ userId, email })
+                      });
+
+                      if (!response.ok) {
+                        throw new Error('Failed to resend email confirmation');
+                      }
+
+                      toast({
+                        title: "Email sent",
+                        description: "Email confirmation has been resent.",
+                      });
+                    } catch (error) {
+                      console.error('Error resending email confirmation:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to resend email confirmation",
+                        variant: "destructive"
+                      });
+                    } finally {
+                      setLoadingStates(prev => ({ ...prev, [`email-${userId}`]: false }));
+                    }
+                  };
+
+                  const sendPasswordReset = async (userId: string, email: string) => {
+                    setLoadingStates(prev => ({ ...prev, [`password-${userId}`]: true }));
+                    try {
+                      const response = await apiFetch('/admin/send-password-reset', {
+                        method: 'POST',
+                        body: JSON.stringify({ userId, email })
+                      });
+
+                      if (!response.ok) {
+                        throw new Error('Failed to send password reset');
+                      }
+
+                      toast({
+                        title: "Password reset sent",
+                        description: "Password reset email has been sent.",
+                      });
+                    } catch (error) {
+                      console.error('Error sending password reset:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to send password reset",
+                        variant: "destructive"
+                      });
+                    } finally {
+                      setLoadingStates(prev => ({ ...prev, [`password-${userId}`]: false }));
+                    }
+                  };
+
+                  return (
+                    <EnhancedUserCard
+                      key={user.id}
+                      user={user}
+                      onEdit={handleEdit}
+                      onDelete={() => handleDeleteUserClick(user)}
+                      onPasswordReset={() => sendPasswordReset(user.id, user.email)}
+                      onEmailResend={() => resendEmailConfirmation(user.id, user.email)}
+                      onRoleChange={(role: UserType) => updateUserRole(user.id, role)}
+                      onFrequencyChange={(frequency: number) => updateUserFetchFrequency(user.id, frequency)}
+                      loadingStates={loadingStates}
+                    />
+                  );
+                })}
               </div>
             </div>
           </TabsContent>
@@ -348,6 +495,130 @@ export function ModeratorPanelSimple() {
             brands: userKeywords.length
           }}
         />
+
+        {/* User Detail Dialog */}
+        <Dialog open={userDetailOpen} onOpenChange={setUserDetailOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editMode ? 'Edit User' : 'User Details'}
+              </DialogTitle>
+              <DialogDescription>
+                {editMode ? 'Update user information and settings' : 'View user information and manage settings'}
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedUser && (
+              <div className="space-y-6">
+                {/* User Profile Information */}
+                <UserBrandInfoSection
+                  user={selectedUser}
+                  onUpdate={() => {
+                    fetchData();
+                    setUserDetailOpen(false);
+                  }}
+                  editMode={editMode}
+                  onEditModeChange={setEditMode}
+                />
+
+                {/* Keyword x Source Management Section */}
+                <div className="border-t pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold">Keyword x Source Management</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Configure automation and display preferences for this user's keywords and sources
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => setKeywordSourceDialogOpen(true)}
+                      className="w-full sm:w-auto"
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      Configure Automation
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete User Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete User</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete {userToDelete?.full_name}? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="deleteReason">Reason for deletion (optional)</Label>
+                <Textarea
+                  id="deleteReason"
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  placeholder="Enter reason for deletion..."
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDeleteDialogOpen(false);
+                    setUserToDelete(null);
+                    setDeleteReason('');
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={async () => {
+                    if (!userToDelete) return;
+                    
+                    try {
+                      const response = await apiFetch('/admin/delete-user', {
+                        method: 'DELETE',
+                        body: JSON.stringify({
+                          userId: userToDelete.id,
+                          reason: deleteReason
+                        })
+                      });
+
+                      if (!response.ok) {
+                        throw new Error('Failed to delete user');
+                      }
+
+                      toast({
+                        title: "User deleted",
+                        description: `${userToDelete.full_name} has been deleted.`,
+                      });
+
+                      setDeleteDialogOpen(false);
+                      setUserToDelete(null);
+                      setDeleteReason('');
+                      fetchData(); // Refresh the data
+                    } catch (error) {
+                      console.error('Error deleting user:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to delete user",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
+                >
+                  Delete User
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
