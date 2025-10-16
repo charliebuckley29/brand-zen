@@ -141,8 +141,10 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
         const profileData = await profileResponse.json();
         if (profileData.success && profileData.data && profileData.data.length > 0) {
           const userProfile = profileData.data[0];
-          setMasterAutomationEnabled(userProfile.automation_enabled || false);
-          console.log('🔧 [MODERATOR] Master automation status:', userProfile.automation_enabled);
+          // The automation_enabled field is nested under profile
+          const automationEnabled = userProfile.profile?.automation_enabled || false;
+          setMasterAutomationEnabled(automationEnabled);
+          console.log('🔧 [MODERATOR] Master automation status:', automationEnabled, 'from profile:', userProfile.profile?.automation_enabled);
         }
       }
       
