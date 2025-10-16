@@ -878,21 +878,21 @@ export function ModeratorPanel() {
                   };
 
                   const handleEdit = () => {
-                    console.log('🔧 [MODERATOR] handleEdit called for user:', user.id, user.full_name);
+                    console.log('🔧 [MODERATOR] handleEdit called for user:', user.id, user.profile?.full_name);
                     console.log('🔧 [MODERATOR] handleEdit - user object:', user);
                     setSelectedUser(user);
                     const userKeyword = userKeywords.find(k => k.user_id === user.id);
                     setSelectedUserKeywords(userKeyword || null);
                     setEditingProfile({
-                      full_name: user.full_name,
+                      full_name: user.profile?.full_name || '',
                       email: user.email,
-                      phone_number: user.phone_number || '',
+                      phone_number: user.profile?.phone_number || '',
                       brand_name: userKeyword?.brand_name || '',
                       variants: userKeyword?.variants?.join(', ') || '',
                       google_alert_rss_url: userKeyword?.google_alert_rss_url || '',
-                      brand_website: user.brand_website || '',
-                      brand_description: user.brand_description || '',
-                      social_media_links: user.social_media_links || {}
+                      brand_website: user.profile?.brand_website || '',
+                      brand_description: user.profile?.brand_description || '',
+                      social_media_links: user.profile?.social_media_links || {}
                     });
                     setEditMode(false);
                     setUserDetailOpen(true);

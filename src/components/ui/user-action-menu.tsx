@@ -110,6 +110,7 @@ export function UserActionMenu({
         onClick={() => {
           console.log('🔧 [USER_ACTION_MENU] Primary action clicked:', primaryAction.label, 'for user:', user);
           console.log('🔧 [USER_ACTION_MENU] User properties:', Object.keys(user));
+          console.log('🔧 [USER_ACTION_MENU] User profile:', user.profile);
           primaryAction.action();
         }}
         disabled={primaryAction.loading || !canEdit}
