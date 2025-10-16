@@ -134,44 +134,73 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
       const keywordsResponse = await apiFetch(`/admin/keywords-management?user_id=${userId}`);
       console.log('🔧 [MODERATOR] Keywords response status:', keywordsResponse.status);
       
+      if (!keywordsResponse.ok) {
+        throw new Error(`Keywords API failed: ${keywordsResponse.status} ${keywordsResponse.statusText}`);
+      }
+      
       const keywordsData = await keywordsResponse.json();
       console.log('🔧 [MODERATOR] Keywords data:', keywordsData);
       
       if (keywordsData.success) {
         setKeywords(keywordsData.data);
+        console.log('🔧 [MODERATOR] Set keywords:', keywordsData.data.length, 'keywords');
         
         // For each keyword, fetch source preferences
         const allPreferences: KeywordSourcePreference[] = [];
         
         for (const keyword of keywordsData.data) {
+          console.log('🔧 [MODERATOR] Fetching preferences for keyword:', keyword.keyword_text);
+          
           // Get preferences for brand name using admin endpoint
           const brandPrefsResponse = await apiFetch(`/admin/keyword-source-preferences?userId=${userId}&keyword=${encodeURIComponent(keyword.keyword_text)}`);
-          const brandPrefsData = await brandPrefsResponse.json();
+          console.log('🔧 [MODERATOR] Brand prefs response status:', brandPrefsResponse.status);
           
-          if (brandPrefsData.success && brandPrefsData.data) {
-            allPreferences.push(...brandPrefsData.data);
+          if (brandPrefsResponse.ok) {
+            const brandPrefsData = await brandPrefsResponse.json();
+            console.log('🔧 [MODERATOR] Brand prefs data:', brandPrefsData);
+            
+            if (brandPrefsData.success && brandPrefsData.data) {
+              allPreferences.push(...brandPrefsData.data);
+              console.log('🔧 [MODERATOR] Added brand preferences:', brandPrefsData.data.length);
+            }
+          } else {
+            console.warn('🔧 [MODERATOR] Brand prefs API failed:', brandPrefsResponse.status);
           }
           
           // Get preferences for variants
           if (keyword.variants && keyword.variants.length > 0) {
             for (const variant of keyword.variants) {
-              const variantPrefsResponse = await apiFetch(`/admin/keyword-source-preferences?userId=${userId}&keyword=${encodeURIComponent(variant)}`);
-              const variantPrefsData = await variantPrefsResponse.json();
+              console.log('🔧 [MODERATOR] Fetching preferences for variant:', variant);
               
-              if (variantPrefsData.success && variantPrefsData.data) {
-                allPreferences.push(...variantPrefsData.data);
+              const variantPrefsResponse = await apiFetch(`/admin/keyword-source-preferences?userId=${userId}&keyword=${encodeURIComponent(variant)}`);
+              console.log('🔧 [MODERATOR] Variant prefs response status:', variantPrefsResponse.status);
+              
+              if (variantPrefsResponse.ok) {
+                const variantPrefsData = await variantPrefsResponse.json();
+                console.log('🔧 [MODERATOR] Variant prefs data:', variantPrefsData);
+                
+                if (variantPrefsData.success && variantPrefsData.data) {
+                  allPreferences.push(...variantPrefsData.data);
+                  console.log('🔧 [MODERATOR] Added variant preferences:', variantPrefsData.data.length);
+                }
+              } else {
+                console.warn('🔧 [MODERATOR] Variant prefs API failed:', variantPrefsResponse.status);
               }
             }
           }
         }
         
+        console.log('🔧 [MODERATOR] Total preferences collected:', allPreferences.length);
         setPreferences(allPreferences);
+      } else {
+        console.error('🔧 [MODERATOR] Keywords API returned success: false', keywordsData);
+        throw new Error(keywordsData.error || 'Keywords API failed');
       }
     } catch (error) {
-      console.error('Error fetching keyword-source data:', error);
+      console.error('🔧 [MODERATOR] Error fetching keyword-source data:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch keyword-source preferences",
+        description: `Failed to fetch keyword-source preferences: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
@@ -180,8 +209,19 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
   };
 
   useEffect(() => {
-    fetchData();
-  }, [userId]);
+    if (open && userId) {
+      console.log('🔧 [DIALOG] Dialog opened, refreshing data for user:', userId);
+      fetchData();
+    }
+  }, [userId, open]);
+
+  // Also refresh when dialog opens (in case useEffect doesn't catch it)
+  useEffect(() => {
+    if (open && userId && !loading) {
+      console.log('🔧 [DIALOG] Dialog is open, ensuring data is fresh');
+      fetchData();
+    }
+  }, [open]);
 
   // Get all unique keywords (brand name + variants)
   const getAllKeywords = () => {
@@ -376,6 +416,9 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
           <p className="text-sm text-blue-800">
             🔧 Debug: Dialog is open for user {userId} ({userName})
           </p>
+          <p className="text-xs text-blue-600 mt-1">
+            Last refreshed: {new Date().toLocaleTimeString()} | Keywords: {keywords.length} | Preferences: {preferences.length}
+          </p>
         </div>
 
         <div className="space-y-6">
@@ -390,8 +433,13 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
                 className="pl-10"
               />
             </div>
-            <Button onClick={fetchData} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
+            <Button 
+              onClick={fetchData} 
+              variant="outline" 
+              size="sm"
+              disabled={loading || isUpdating}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
           </div>
