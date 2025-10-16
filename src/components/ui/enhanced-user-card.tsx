@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { EnhancedStatusBadge } from "./enhanced-status-badge";
 import { UserActionMenu } from "./user-action-menu";
-import { Globe, Calendar } from "lucide-react";
+import { Globe, Calendar, Settings } from "lucide-react";
 import type { UserType } from "@/hooks/use-user-role";
 
 interface User {
@@ -28,6 +28,7 @@ interface User {
 interface EnhancedUserCardProps {
   user: User;
   onEdit: () => void;
+  onConfigureAutomation: () => void;
   onDelete: () => void;
   onPasswordReset: () => void;
   onEmailResend: () => void;
@@ -45,6 +46,7 @@ interface EnhancedUserCardProps {
 export function EnhancedUserCard({
   user,
   onEdit,
+  onConfigureAutomation,
   onDelete,
   onPasswordReset,
   onEmailResend,
@@ -100,18 +102,29 @@ export function EnhancedUserCard({
               </div>
               
               {/* Actions */}
-              <UserActionMenu
-                user={user}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onPasswordReset={onPasswordReset}
-                onEmailResend={onEmailResend}
-                onRoleChange={onRoleChange}
-                onFrequencyChange={onFrequencyChange}
-                loadingStates={loadingStates}
-                canEdit={canEdit}
-                canDelete={canDelete}
-              />
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onConfigureAutomation}
+                  className="min-w-[44px] min-h-[44px] md:min-w-auto md:min-h-auto"
+                >
+                  <Settings className="h-4 w-4 mr-1" />
+                  <span className="hidden sm:inline">Automation</span>
+                </Button>
+                <UserActionMenu
+                  user={user}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onPasswordReset={onPasswordReset}
+                  onEmailResend={onEmailResend}
+                  onRoleChange={onRoleChange}
+                  onFrequencyChange={onFrequencyChange}
+                  loadingStates={loadingStates}
+                  canEdit={canEdit}
+                  canDelete={canDelete}
+                />
+              </div>
             </div>
 
             {/* Status Badges */}

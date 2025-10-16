@@ -904,6 +904,11 @@ export function ModeratorPanel() {
                       key={user.id}
                       user={user}
                       onEdit={handleEdit}
+                      onConfigureAutomation={() => {
+                        console.log('🔧 [MODERATOR] Configure Automation clicked for user:', user.id);
+                        setSelectedUser(user);
+                        setKeywordSourceDialogOpen(true);
+                      }}
                       onDelete={() => handleDeleteUserClick(user)}
                       onPasswordReset={() => sendPasswordReset(user.id, user.email)}
                       onEmailResend={() => resendEmailConfirmation(user.id, user.email)}
@@ -1052,12 +1057,12 @@ export function ModeratorPanel() {
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editMode ? 'Edit User Profile' : 'User Details'}
+              {editMode ? 'Configure Brand Information' : 'Brand Information'}
             </DialogTitle>
             <DialogDescription>
               {editMode 
-                ? `Edit profile information for ${selectedUser?.full_name}`
-                : `Detailed information for ${selectedUser?.full_name}`
+                ? `Edit brand information for ${selectedUser?.profile?.full_name || selectedUser?.full_name}`
+                : `Brand information for ${selectedUser?.profile?.full_name || selectedUser?.full_name}`
               }
             </DialogDescription>
           </DialogHeader>
@@ -1193,30 +1198,33 @@ export function ModeratorPanel() {
                   </div>
                   
                   {/* Brand Information Section */}
-                  {(() => {
-                    console.log('🔧 [MODERATOR] Rendering UserBrandInfoSection for user:', selectedUser.id, selectedUser.full_name);
-                    return (
-                      <UserBrandInfoSection 
-                        userId={selectedUser.id} 
-                        userFullName={selectedUser.full_name}
-                        onUpdate={fetchData}
-                      />
-                    );
-                  })()}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="text-lg font-semibold">Brand Information</h3>
+                    </div>
+                    
+                    {selectedUserKeywords ? (
+                      <div className="grid gap-3">
+                        <div>
+                          <Label className="text-sm font-medium">Brand Name</Label>
+                          <p className="text-sm text-muted-foreground">{selectedUserKeywords.brand_name || 'Not set'}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">Brand Variants</Label>
+                          <p className="text-sm text-muted-foreground">
+                            {selectedUserKeywords.variants?.join(', ') || 'None'}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-muted-foreground">No brand information available</p>
+                      </div>
+                    )}
+                  </div>
                   
                    <div className="flex flex-col sm:flex-row justify-end gap-2">
-                     <Button 
-                       variant="default" 
-                       onClick={() => {
-                         console.log('🔧 [MODERATOR] Configure Automation button clicked');
-                         setKeywordSourceDialogOpen(true);
-                         console.log('🔧 [MODERATOR] Dialog state should be set to true');
-                       }}
-                       className="w-full sm:w-auto"
-                     >
-                       <Settings className="h-4 w-4 mr-2" />
-                       Configure Automation
-                     </Button>
                      <Button variant="outline" onClick={() => setUserDetailOpen(false)} className="w-full sm:w-auto">
                        Close
                      </Button>
