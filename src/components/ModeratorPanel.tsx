@@ -877,6 +877,7 @@ export function ModeratorPanel() {
                   };
 
                   const handleEdit = () => {
+                    console.log('🔧 [MODERATOR] handleEdit called for user:', user.id, user.full_name);
                     setSelectedUser(user);
                     const userKeyword = userKeywords.find(k => k.user_id === user.id);
                     setSelectedUserKeywords(userKeyword || null);
@@ -893,6 +894,7 @@ export function ModeratorPanel() {
                     });
                     setEditMode(false);
                     setUserDetailOpen(true);
+                    console.log('🔧 [MODERATOR] Dialog should now be open, userDetailOpen set to true');
                   };
 
                   return (
@@ -1189,11 +1191,16 @@ export function ModeratorPanel() {
                   </div>
                   
                   {/* Brand Information Section */}
-                  <UserBrandInfoSection 
-                    userId={selectedUser.id} 
-                    userFullName={selectedUser.full_name}
-                    onUpdate={fetchData}
-                  />
+                  {(() => {
+                    console.log('🔧 [MODERATOR] Rendering UserBrandInfoSection for user:', selectedUser.id, selectedUser.full_name);
+                    return (
+                      <UserBrandInfoSection 
+                        userId={selectedUser.id} 
+                        userFullName={selectedUser.full_name}
+                        onUpdate={fetchData}
+                      />
+                    );
+                  })()}
                   
                    <div className="flex flex-col sm:flex-row justify-end gap-2">
                      <Button 
