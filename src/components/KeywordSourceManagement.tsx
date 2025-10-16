@@ -137,15 +137,25 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
       
       // Fetch user's master automation status
       const profileResponse = await apiFetch(`/admin/users-with-roles?user_id=${userId}`);
+      console.log('🔧 [MODERATOR] Profile response status:', profileResponse.status);
       if (profileResponse.ok) {
         const profileData = await profileResponse.json();
+        console.log('🔧 [MODERATOR] Profile response data:', profileData);
         if (profileData.success && profileData.data && profileData.data.length > 0) {
           const userProfile = profileData.data[0];
+          console.log('🔧 [MODERATOR] User profile object:', userProfile);
+          console.log('🔧 [MODERATOR] User profile.profile object:', userProfile.profile);
           // The automation_enabled field is nested under profile
           const automationEnabled = userProfile.profile?.automation_enabled || false;
+          console.log('🔧 [MODERATOR] Extracted automation_enabled:', automationEnabled);
+          console.log('🔧 [MODERATOR] Raw automation_enabled value:', userProfile.profile?.automation_enabled);
           setMasterAutomationEnabled(automationEnabled);
-          console.log('🔧 [MODERATOR] Master automation status:', automationEnabled, 'from profile:', userProfile.profile?.automation_enabled);
+          console.log('🔧 [MODERATOR] Set masterAutomationEnabled to:', automationEnabled);
+        } else {
+          console.log('🔧 [MODERATOR] No user profile data found in response');
         }
+      } else {
+        console.log('🔧 [MODERATOR] Profile response failed:', profileResponse.status, profileResponse.statusText);
       }
       
       // Fetch user keywords with cache busting
@@ -526,6 +536,9 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
           <p className="text-xs text-blue-600 mt-1">
             Last refreshed: {new Date().toLocaleTimeString()} | Keywords: {keywords.length} | Preferences: {preferences.length}
           </p>
+          <p className="text-xs text-blue-600 mt-1">
+            🔧 Master Automation State: {masterAutomationEnabled ? 'TRUE' : 'FALSE'} (Type: {typeof masterAutomationEnabled})
+          </p>
         </div>
 
         <div className="space-y-6">
@@ -584,6 +597,7 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
                     onCheckedChange={handleMasterAutomationToggle}
                     disabled={isUpdatingMasterAutomation}
                     className="data-[state=checked]:bg-green-600"
+                    onClick={() => console.log('🔧 [MODERATOR] Switch clicked, current value:', masterAutomationEnabled)}
                   />
                   {isUpdatingMasterAutomation && (
                     <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
