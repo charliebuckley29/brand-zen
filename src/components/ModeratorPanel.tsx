@@ -185,7 +185,7 @@ export function ModeratorPanel() {
         brand_website: user.profile?.brand_website || null,
         brand_description: user.profile?.brand_description || null,
         social_media_links: user.profile?.social_media_links || {},
-        user_status: user.profile?.user_status || 'pending_approval',
+        user_status: user.profile?.user_status || 'approved',
         approved_at: user.profile?.approved_at || null,
         approved_by: user.profile?.approved_by || null,
         rejection_reason: user.profile?.rejection_reason || null
