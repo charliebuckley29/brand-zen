@@ -51,12 +51,20 @@ interface UserKeyword {
   id: string;
   user_id: string;
   brand_name: string;
+  keyword_text: string;  // Added this field
+  keyword_type: string;  // Added this field
   variants: string[] | null;
   google_alert_rss_url: string | null;
   google_alerts_enabled: boolean;
+  youtube_enabled: boolean;  // Added this field
+  reddit_enabled: boolean;   // Added this field
+  x_enabled: boolean;        // Added this field
+  rss_news_enabled: boolean; // Added this field
+  rss_news_url: string;      // Added this field
   created_at: string;
   updated_at: string;
   user_full_name: string;
+  user_brand_name: string;   // Added this field
 }
 
 interface KeywordSourceManagementProps {
@@ -180,8 +188,8 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
     const allKeywords: string[] = [];
     
     keywords.forEach(keyword => {
-      if (keyword.brand_name) {
-        allKeywords.push(keyword.brand_name);
+      if (keyword.keyword_text) {
+        allKeywords.push(keyword.keyword_text);
       }
       if (keyword.variants && Array.isArray(keyword.variants)) {
         allKeywords.push(...keyword.variants.filter(variant => variant && typeof variant === 'string'));
