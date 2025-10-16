@@ -49,26 +49,60 @@ export function UserBrandInfoSection({ userId, userFullName, onUpdate }: UserBra
   const fetchBrandInfo = async () => {
     try {
       setIsLoading(true);
-      const response = await apiFetch(`/admin/user-brand-info?user_id=${userId}`);
+      const response = await apiFetch(`/admin/keywords-management?user_id=${userId}`);
       const data = await response.json();
       
-      if (data.success) {
-        setBrandInfo(data.data);
+      if (data.success && data.data && data.data.length > 0) {
+        // Get the first keyword record (should be the main brand)
+        const mainKeyword = data.data.find((k: any) => k.keyword_type === 'brand_name') || data.data[0];
+        
+        // Also fetch user profile for additional brand info
+        const profileResponse = await apiFetch(`/admin/users-with-roles?user_id=${userId}`);
+        const profileData = await profileResponse.json();
+        
+        let profileInfo = {};
+        if (profileData.success && profileData.data && profileData.data.length > 0) {
+          const userProfile = profileData.data[0];
+          profileInfo = {
+            brand_website: userProfile.brand_website || '',
+            brand_description: userProfile.brand_description || '',
+            social_media_links: userProfile.social_media_links || {}
+          };
+        }
+        
+        const brandInfo = {
+          brand_name: mainKeyword.keyword_text || '',
+          variants: data.data.filter((k: any) => k.keyword_type === 'variant').map((k: any) => k.keyword_text) || [],
+          ...profileInfo
+        };
+        
+        setBrandInfo(brandInfo);
         setFormData({
-          brand_name: data.data.brand_name || '',
-          variants: data.data.variants?.join(', ') || '',
-          brand_website: data.data.brand_website || '',
-          brand_description: data.data.brand_description || '',
-          social_media_links: data.data.social_media_links || {}
+          brand_name: brandInfo.brand_name || '',
+          variants: brandInfo.variants?.join(', ') || '',
+          brand_website: brandInfo.brand_website || '',
+          brand_description: brandInfo.brand_description || '',
+          social_media_links: brandInfo.social_media_links || {}
         });
       } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to fetch brand information",
-          variant: "destructive"
+        // No keywords found, set empty state
+        setBrandInfo({
+          brand_name: '',
+          variants: [],
+          brand_website: '',
+          brand_description: '',
+          social_media_links: {}
+        });
+        setFormData({
+          brand_name: '',
+          variants: '',
+          brand_website: '',
+          brand_description: '',
+          social_media_links: {}
         });
       }
     } catch (error: any) {
+      console.error('Error fetching brand info:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to fetch brand information",
@@ -95,47 +129,57 @@ export function UserBrandInfoSection({ userId, userFullName, onUpdate }: UserBra
         .map(v => v.trim())
         .filter(v => v.length > 0);
 
-      const response = await apiFetch('/admin/user-brand-info', {
+      // Update keywords (brand name and variants)
+      const keywordsResponse = await apiFetch('/admin/keywords-management', {
         method: 'PUT',
         body: JSON.stringify({
-          userId,
-          brandInfo: {
-            brand_name: formData.brand_name,
-            variants: variantsArray,
-            brand_website: formData.brand_website,
-            brand_description: formData.brand_description,
-            social_media_links: formData.social_media_links
-          }
+          user_id: userId,
+          brand_name: formData.brand_name,
+          variants: variantsArray
         })
       });
       
-      const data = await response.json();
+      const keywordsData = await keywordsResponse.json();
       
-      if (data.success) {
-        toast({
-          title: "Success",
-          description: "Brand information updated successfully"
-        });
-        
-        // Update local state
-        setBrandInfo({
-          brand_name: formData.brand_name,
-          variants: variantsArray,
+      if (!keywordsData.success) {
+        throw new Error(keywordsData.error || "Failed to update keywords");
+      }
+
+      // Update user profile (website, description, social media)
+      const profileResponse = await apiFetch('/admin/update-user-profile', {
+        method: 'PUT',
+        body: JSON.stringify({
+          user_id: userId,
           brand_website: formData.brand_website,
           brand_description: formData.brand_description,
           social_media_links: formData.social_media_links
-        });
-        
-        setIsEditing(false);
-        onUpdate?.();
-      } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to update brand information",
-          variant: "destructive"
-        });
+        })
+      });
+      
+      const profileData = await profileResponse.json();
+      
+      if (!profileData.success) {
+        throw new Error(profileData.error || "Failed to update profile");
       }
+      
+      toast({
+        title: "Success",
+        description: "Brand information updated successfully"
+      });
+      
+      // Update local state
+      setBrandInfo({
+        brand_name: formData.brand_name,
+        variants: variantsArray,
+        brand_website: formData.brand_website,
+        brand_description: formData.brand_description,
+        social_media_links: formData.social_media_links
+      });
+      
+      setIsEditing(false);
+      onUpdate?.();
     } catch (error: any) {
+      console.error('Error saving brand info:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to update brand information",
