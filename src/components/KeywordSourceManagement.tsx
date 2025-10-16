@@ -29,8 +29,11 @@ import {
   BarChart3,
   FileText,
   Zap,
-  ZapOff
+  ZapOff,
+  Link,
+  Unlink
 } from "lucide-react";
+import { RssUrlConfigurationDialog } from "./RssUrlConfigurationDialog";
 
 interface KeywordSourcePreference {
   id: string;
@@ -116,6 +119,12 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
   const [editingPreference, setEditingPreference] = useState<KeywordSourcePreference | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [rssUrlDialogOpen, setRssUrlDialogOpen] = useState(false);
+  const [selectedKeywordForRss, setSelectedKeywordForRss] = useState<{
+    keyword: string;
+    keywordId: string;
+    currentRssUrl?: string | null;
+  } | null>(null);
   const { toast } = useToast();
 
   // Fetch user keywords and their source preferences
@@ -377,6 +386,53 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
     }
   };
 
+  // Handle RSS URL configuration
+  const handleConfigureRssUrl = (keyword: string) => {
+    // Find the keyword data to get the ID and current RSS URL
+    const keywordData = keywords.find(k => k.keyword_text === keyword);
+    if (keywordData) {
+      setSelectedKeywordForRss({
+        keyword,
+        keywordId: keywordData.original_keyword_id || keywordData.id,
+        currentRssUrl: keywordData.google_alert_rss_url
+      });
+      setRssUrlDialogOpen(true);
+    }
+  };
+
+  // Handle RSS URL update
+  const handleRssUrlUpdated = (keywordId: string, rssUrl: string | null) => {
+    // Update the keywords state
+    setKeywords(prev => prev.map(k => {
+      if (k.original_keyword_id === keywordId || k.id === keywordId) {
+        return { ...k, google_alert_rss_url: rssUrl };
+      }
+      return k;
+    }));
+    
+    // Refresh data to ensure consistency
+    fetchData();
+  };
+
+  // Get RSS URL status for a keyword
+  const getRssUrlStatus = (keyword: string) => {
+    const keywordData = keywords.find(k => k.keyword_text === keyword);
+    if (!keywordData) return { hasUrl: false, url: null };
+    
+    const hasUrl = keywordData.google_alert_rss_url && keywordData.google_alert_rss_url.trim() !== '';
+    return { hasUrl, url: keywordData.google_alert_rss_url };
+  };
+
+  // Get RSS URL status icon
+  const getRssUrlIcon = (keyword: string) => {
+    const { hasUrl } = getRssUrlStatus(keyword);
+    return hasUrl ? (
+      <Link className="h-4 w-4 text-green-600" />
+    ) : (
+      <Unlink className="h-4 w-4 text-gray-400" />
+    );
+  };
+
   const filteredKeywords = getAllKeywords().filter(keyword =>
     (keyword || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -481,6 +537,15 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
                           </TableHead>
                         );
                       })}
+                      <TableHead className="text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="p-1 rounded bg-blue-100 text-blue-800">
+                            <Rss className="h-4 w-4" />
+                          </div>
+                          <div className="text-xs font-medium">RSS URLs</div>
+                          <div className="text-xs text-gray-500">Configuration</div>
+                        </div>
+                      </TableHead>
                     </TableRow>
                     {/* Automation Headers Row */}
                     <TableRow>
@@ -499,6 +564,15 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
                           </TableHead>
                         );
                       })}
+                      <TableHead className="text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="p-1 rounded bg-blue-100 text-blue-800">
+                            <Globe className="h-4 w-4" />
+                          </div>
+                          <div className="text-xs font-medium">Google Alerts</div>
+                          <div className="text-xs text-gray-500">RSS URL</div>
+                        </div>
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -538,6 +612,27 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
                             </TableCell>
                           );
                         })}
+                        {/* RSS URL Configuration Column */}
+                        <TableCell className="text-center">
+                          <div className="flex flex-col items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleConfigureRssUrl(keyword)}
+                              className="flex items-center gap-2"
+                            >
+                              {getRssUrlIcon(keyword)}
+                              <span className="text-xs">Configure</span>
+                            </Button>
+                            <div className="text-xs text-gray-500">
+                              {getRssUrlStatus(keyword).hasUrl ? (
+                                <span className="text-green-600 font-medium">Configured</span>
+                              ) : (
+                                <span className="text-gray-400">Not Set</span>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -581,6 +676,22 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
             </CardContent>
           </Card>
         </div>
+
+        {/* RSS URL Configuration Dialog */}
+        {selectedKeywordForRss && (
+          <RssUrlConfigurationDialog
+            open={rssUrlDialogOpen}
+            onClose={() => {
+              setRssUrlDialogOpen(false);
+              setSelectedKeywordForRss(null);
+            }}
+            keyword={selectedKeywordForRss.keyword}
+            keywordId={selectedKeywordForRss.keywordId}
+            userId={userId}
+            currentRssUrl={selectedKeywordForRss.currentRssUrl}
+            onRssUrlUpdated={handleRssUrlUpdated}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
