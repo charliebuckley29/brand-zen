@@ -1220,11 +1220,9 @@ export function ModeratorPanel() {
                      <Button variant="outline" onClick={() => setUserDetailOpen(false)} className="w-full sm:w-auto">
                        Close
                      </Button>
-                     {canEditUser(selectedUser.user_type) && (
-                       <Button onClick={() => setEditMode(true)} className="w-full sm:w-auto">
-                         Edit Profile
-                       </Button>
-                     )}
+                     <Button onClick={() => setEditMode(true)} className="w-full sm:w-auto">
+                       Configure Brand
+                     </Button>
                    </div>
                 </>
               ) : (
