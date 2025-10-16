@@ -263,6 +263,60 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
     }
   };
 
+  // Toggle keyword-source pair (simplified interface)
+  const toggleKeywordSource = async (keyword: string, sourceType: string, enabled: boolean) => {
+    try {
+      setIsUpdating(true);
+      
+      const existingPref = preferences.find(p => 
+        p.keyword === keyword && p.source_type === sourceType
+      );
+      
+      // When toggling on: set all display booleans to true
+      // When toggling off: set all display booleans to false
+      const updatedPreferences = {
+        automation_enabled: enabled,
+        automation_configured: enabled, // If we're enabling, mark as configured
+        show_in_mentions: enabled,
+        show_in_analytics: enabled,
+        show_in_reports: enabled,
+        source_url: existingPref?.source_url || null
+      };
+
+      const response = await apiFetch('/admin/keyword-source-preferences', {
+        method: 'PUT',
+        body: JSON.stringify({
+          userId,
+          keyword,
+          sourceType,
+          preferences: updatedPreferences
+        })
+      });
+
+      if (response.ok) {
+        const action = enabled ? 'enabled' : 'disabled';
+        toast({
+          title: "Success",
+          description: `${action.charAt(0).toUpperCase() + action.slice(1)} ${keyword} on ${SOURCE_CONFIG[sourceType as keyof typeof SOURCE_CONFIG]?.name}`,
+        });
+        
+        // Refresh data
+        await fetchData();
+      } else {
+        throw new Error('Failed to update preference');
+      }
+    } catch (error) {
+      console.error('Error toggling keyword-source:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update keyword-source preference",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   // Get status icon for automation
   const getAutomationIcon = (automationEnabled: boolean, automationConfigured: boolean) => {
     if (automationConfigured && automationEnabled) {
@@ -347,7 +401,7 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
             <CardHeader>
               <CardTitle className="text-lg">Keyword × Source Configuration</CardTitle>
               <CardDescription>
-                {filteredKeywords.length} keywords found. Configure automation and display preferences for each combination.
+                {filteredKeywords.length} keywords found. Toggle fetching on/off for each keyword-source combination.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -355,118 +409,59 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Keyword</TableHead>
-                      <TableHead>Source</TableHead>
-                      <TableHead className="text-center">Automation</TableHead>
-                      <TableHead className="text-center">Show in Mentions</TableHead>
-                      <TableHead className="text-center">Show in Analytics</TableHead>
-                      <TableHead className="text-center">Show in Reports</TableHead>
-                      <TableHead className="text-center">Actions</TableHead>
+                      <TableHead className="font-semibold">Keyword</TableHead>
+                      {Object.entries(SOURCE_CONFIG).map(([sourceType, config]) => {
+                        const IconComponent = config.icon;
+                        return (
+                          <TableHead key={sourceType} className="text-center">
+                            <div className="flex flex-col items-center gap-1">
+                              <div className={`p-1 rounded ${config.color}`}>
+                                <IconComponent className="h-4 w-4" />
+                              </div>
+                              <div className="text-xs font-medium">{config.name}</div>
+                            </div>
+                          </TableHead>
+                        );
+                      })}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredKeywords.map((keyword) => (
-                      <React.Fragment key={keyword}>
+                      <TableRow key={keyword}>
+                        <TableCell className="font-medium">
+                          <Badge variant="outline" className="text-sm">{keyword}</Badge>
+                        </TableCell>
                         {Object.entries(SOURCE_CONFIG).map(([sourceType, config]) => {
                           const preference = getPreferencesForKeyword(keyword).find(p => p.source_type === sourceType);
-                          const IconComponent = config.icon;
-                          const automationStatus = getAutomationStatus(
-                            preference?.automation_enabled ?? false,
-                            preference?.automation_configured ?? false
-                          );
+                          const isEnabled = preference?.automation_enabled ?? false;
+                          const isConfigured = preference?.automation_configured ?? false;
+                          const isActive = isEnabled && isConfigured;
 
                           return (
-                            <TableRow key={`${keyword}-${sourceType}`}>
-                              <TableCell className="font-medium">
-                                <Badge variant="outline">{keyword}</Badge>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <div className={`p-1 rounded ${config.color}`}>
-                                    <IconComponent className="h-4 w-4" />
-                                  </div>
-                                  <div>
-                                    <div className="font-medium">{config.name}</div>
-                                    <div className="text-xs text-gray-500">{config.description}</div>
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <div className="flex items-center justify-center gap-2">
-                                  {getAutomationIcon(
-                                    preference?.automation_enabled ?? false,
-                                    preference?.automation_configured ?? false
+                            <TableCell key={`${keyword}-${sourceType}`} className="text-center">
+                              <div className="flex flex-col items-center gap-2">
+                                <Switch
+                                  checked={isActive}
+                                  onCheckedChange={(checked) => 
+                                    toggleKeywordSource(keyword, sourceType, checked)
+                                  }
+                                  disabled={isUpdating}
+                                  className="data-[state=checked]:bg-green-600"
+                                />
+                                <div className="text-xs text-gray-500">
+                                  {isActive ? (
+                                    <span className="text-green-600 font-medium">Active</span>
+                                  ) : isConfigured ? (
+                                    <span className="text-yellow-600 font-medium">Configured</span>
+                                  ) : (
+                                    <span className="text-gray-400">Not Set</span>
                                   )}
-                                  <Badge variant={automationStatus.variant}>
-                                    {automationStatus.text}
-                                  </Badge>
                                 </div>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Switch
-                                  checked={preference?.show_in_mentions ?? true}
-                                  onCheckedChange={(checked) => 
-                                    updatePreference(keyword, sourceType, 'show_in_mentions', checked)
-                                  }
-                                  disabled={isUpdating}
-                                />
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Switch
-                                  checked={preference?.show_in_analytics ?? true}
-                                  onCheckedChange={(checked) => 
-                                    updatePreference(keyword, sourceType, 'show_in_analytics', checked)
-                                  }
-                                  disabled={isUpdating}
-                                />
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Switch
-                                  checked={preference?.show_in_reports ?? true}
-                                  onCheckedChange={(checked) => 
-                                    updatePreference(keyword, sourceType, 'show_in_reports', checked)
-                                  }
-                                  disabled={isUpdating}
-                                />
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <div className="flex items-center justify-center gap-2">
-                                  <Switch
-                                    checked={preference?.automation_enabled ?? false}
-                                    onCheckedChange={(checked) => 
-                                      updatePreference(keyword, sourceType, 'automation_enabled', checked)
-                                    }
-                                    disabled={isUpdating || !preference?.automation_configured}
-                                  />
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setEditingPreference(preference || {
-                                        id: '',
-                                        user_id: userId,
-                                        keyword,
-                                        source_type: sourceType as any,
-                                        automation_enabled: false,
-                                        automation_configured: false,
-                                        show_in_mentions: true,
-                                        show_in_analytics: true,
-                                        show_in_reports: true,
-                                        source_url: null,
-                                        created_at: '',
-                                        updated_at: ''
-                                      });
-                                      setEditDialogOpen(true);
-                                    }}
-                                  >
-                                    <Settings className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
+                              </div>
+                            </TableCell>
                           );
                         })}
-                      </React.Fragment>
+                      </TableRow>
                     ))}
                   </TableBody>
                 </Table>
