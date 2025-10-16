@@ -176,7 +176,7 @@ export function UserActionMenu({
               <span className="text-sm font-medium">Frequency</span>
             </div>
             <Select 
-              value={user.fetch_frequency_minutes.toString()} 
+              value={(user.fetch_frequency_minutes || 60).toString()} 
               onValueChange={(value: string) => onFrequencyChange(parseInt(value))}
               disabled={!canEdit}
             >

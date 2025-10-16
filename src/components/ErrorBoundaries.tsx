@@ -122,7 +122,7 @@ class BaseErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
                   <div>
                     <strong>Error:</strong>
                     <pre className="mt-1 whitespace-pre-wrap break-all text-xs">
-                      {error.toString()}
+                      {error?.toString() || 'Unknown error'}
                     </pre>
                   </div>
                   {errorInfo?.componentStack && (
