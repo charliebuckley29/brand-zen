@@ -869,6 +869,7 @@ export function ModeratorPanel() {
                 {filteredUsers.map((user) => {
                   const canEdit = canEditUser(user.user_type);
                   const canDelete = user.user_type === 'basic_user';
+                  console.log('🔧 [MODERATOR] User card for:', user.full_name, 'canEdit:', canEdit, 'user_type:', user.user_type);
                   
                   const loadingStates = {
                     deleting: deletingUsers.has(user.id),

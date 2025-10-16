@@ -107,7 +107,10 @@ export function UserActionMenu({
       <Button
         size="sm"
         variant={primaryAction.variant}
-        onClick={primaryAction.action}
+        onClick={() => {
+          console.log('🔧 [USER_ACTION_MENU] Primary action clicked:', primaryAction.label, 'for user:', user.full_name);
+          primaryAction.action();
+        }}
         disabled={primaryAction.loading || !canEdit}
         className="min-w-[44px] min-h-[44px] md:min-w-auto md:min-h-auto"
       >
