@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { ApiSourceHealth, ApiSourceAnalytics } from "../../../types/api-monitoring";
 import { getHealthStatus } from "../../../lib/api-monitoring-utils";
+import { ErrorDisplay } from "./ErrorDisplay";
 
 interface SourceMonitoringCardProps {
   sourceId: string;
@@ -85,9 +86,8 @@ export function SourceMonitoringCard({
               </div>
               
               {health.error && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm font-medium text-red-800 mb-1">Error Details</p>
-                  <p className="text-sm text-red-600">{health.error}</p>
+                <div className="mt-4">
+                  <ErrorDisplay error={health.error} />
                 </div>
               )}
             </div>

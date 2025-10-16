@@ -3,6 +3,7 @@ import { Badge } from "../../ui/badge";
 import { DashboardData } from "../../../types/api-monitoring";
 import { getSeverityColor } from "../../../lib/api-monitoring-utils";
 import { AlertTriangle, Info } from "lucide-react";
+import { ErrorDisplay } from "./ErrorDisplay";
 
 interface AlertsAndRecommendationsCardProps {
   dashboardData: DashboardData;
@@ -31,17 +32,24 @@ export function AlertsAndRecommendationsCard({
           <EnhancedCardContent>
             <div className="space-y-3">
               {filteredAlerts.map((alert) => (
-                <div key={alert.id} className={`p-3 rounded-lg border ${getSeverityColor(alert.severity)}`}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium">{alert.message}</p>
-                      <p className="text-sm opacity-75 mt-1">
-                        {alert.source} • {new Date(alert.timestamp).toLocaleString()}
-                      </p>
+                <div key={alert.id} className={`rounded-lg border ${getSeverityColor(alert.severity)}`}>
+                  <div className="p-3">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <p className="text-sm opacity-75">
+                          {alert.source} • {new Date(alert.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="ml-2">
+                        {alert.severity}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="ml-2">
-                      {alert.severity}
-                    </Badge>
+                    {/* Check if alert message contains HTML */}
+                    {alert.message.includes('<') && alert.message.includes('>') ? (
+                      <ErrorDisplay error={alert.message} className="!mt-0 !p-0 !bg-transparent !border-0" />
+                    ) : (
+                      <p className="font-medium">{alert.message}</p>
+                    )}
                   </div>
                 </div>
               ))}
