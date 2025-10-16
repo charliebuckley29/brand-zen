@@ -113,10 +113,11 @@ export function ModeratorPanelSimple() {
   renderCount.current += 1;
   const { toast } = useToast();
 
-  // Helper function to check if a user can be edited by moderators
+  // Helper function to check if a user can be edited by moderators/admins
   const canEditUser = (user: User): boolean => {
     const userStatus = user.user_status || user.profile?.user_status;
-    return userStatus !== 'suspended' && user.user_type !== 'admin';
+    // Allow editing of non-suspended users (moderators and admins can edit all non-suspended users)
+    return userStatus !== 'suspended';
   };
 
   const fetchData = async () => {
