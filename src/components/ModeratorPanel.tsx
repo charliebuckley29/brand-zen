@@ -371,7 +371,55 @@ export function ModeratorPanel() {
 
       console.log("🔍 [MODERATOR PANEL] Current profile data:", currentProfile);
 
-      // Use the backend API to update keywords/brand information
+      // Check if brand name changed and use keyword cascade system
+      const oldBrandName = keyword.brand_name;
+      const newBrandNameTrimmed = brandName?.trim() || "";
+      
+      if (oldBrandName !== newBrandNameTrimmed) {
+        console.log("🔄 [MODERATOR PANEL] Brand name changed, using keyword cascade system");
+        console.log("🔄 [MODERATOR PANEL] Old brand name:", oldBrandName);
+        console.log("🔄 [MODERATOR PANEL] New brand name:", newBrandNameTrimmed);
+
+        // Step 1: Validate the keyword update
+        const validationResponse = await apiFetch('/admin/update-keyword-cascade', {
+          method: 'POST',
+          body: JSON.stringify({
+            userId: keyword.user_id,
+            oldKeyword: oldBrandName,
+            newKeyword: newBrandNameTrimmed,
+            validateOnly: true
+          })
+        });
+
+        if (!validationResponse.ok) {
+          const errorResult = await validationResponse.json();
+          if (errorResult.conflicts && errorResult.conflicts.length > 0) {
+            throw new Error(`Cannot update brand name: conflicts detected. ${errorResult.conflicts.map((c: any) => `${c.table}: ${c.existing_keyword}`).join(', ')}`);
+          }
+          throw new Error(errorResult.error || 'Validation failed');
+        }
+
+        // Step 2: Perform the keyword cascade update
+        const cascadeResponse = await apiFetch('/admin/update-keyword-cascade', {
+          method: 'POST',
+          body: JSON.stringify({
+            userId: keyword.user_id,
+            oldKeyword: oldBrandName,
+            newKeyword: newBrandNameTrimmed,
+            dryRun: false
+          })
+        });
+
+        if (!cascadeResponse.ok) {
+          const errorResult = await cascadeResponse.json();
+          throw new Error(errorResult.error || 'Failed to update keywords across system');
+        }
+
+        const cascadeResult = await cascadeResponse.json();
+        console.log('✅ [MODERATOR PANEL] Keyword cascade update completed:', cascadeResult);
+      }
+
+      // Step 3: Update the main keyword data
       const response = await apiFetch('/admin/update-user-profile-complete', {
         method: 'PUT',
         body: JSON.stringify({
@@ -405,7 +453,7 @@ export function ModeratorPanel() {
 
       toast({
         title: "Success",
-        description: "Brand information updated successfully"
+        description: "Brand information updated successfully across all systems"
       });
       
       console.log("🔧 [MODERATOR PANEL] Refreshing data...");
