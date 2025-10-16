@@ -130,8 +130,9 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
       setLoading(true);
       console.log('🔧 [MODERATOR] Fetching data for user:', userId);
       
-      // Fetch user keywords
-      const keywordsResponse = await apiFetch(`/admin/keywords-management?user_id=${userId}`);
+      // Fetch user keywords with cache busting
+      const timestamp = Date.now();
+      const keywordsResponse = await apiFetch(`/admin/keywords-management?user_id=${userId}&_t=${timestamp}`);
       console.log('🔧 [MODERATOR] Keywords response status:', keywordsResponse.status);
       
       if (!keywordsResponse.ok) {
@@ -151,8 +152,8 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
         for (const keyword of keywordsData.data) {
           console.log('🔧 [MODERATOR] Fetching preferences for keyword:', keyword.keyword_text);
           
-          // Get preferences for brand name using admin endpoint
-          const brandPrefsResponse = await apiFetch(`/admin/keyword-source-preferences?userId=${userId}&keyword=${encodeURIComponent(keyword.keyword_text)}`);
+          // Get preferences for brand name using admin endpoint with cache busting
+          const brandPrefsResponse = await apiFetch(`/admin/keyword-source-preferences?userId=${userId}&keyword=${encodeURIComponent(keyword.keyword_text)}&_t=${timestamp}`);
           console.log('🔧 [MODERATOR] Brand prefs response status:', brandPrefsResponse.status);
           
           if (brandPrefsResponse.ok) {
@@ -172,7 +173,7 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
             for (const variant of keyword.variants) {
               console.log('🔧 [MODERATOR] Fetching preferences for variant:', variant);
               
-              const variantPrefsResponse = await apiFetch(`/admin/keyword-source-preferences?userId=${userId}&keyword=${encodeURIComponent(variant)}`);
+              const variantPrefsResponse = await apiFetch(`/admin/keyword-source-preferences?userId=${userId}&keyword=${encodeURIComponent(variant)}&_t=${timestamp}`);
               console.log('🔧 [MODERATOR] Variant prefs response status:', variantPrefsResponse.status);
               
               if (variantPrefsResponse.ok) {
@@ -215,11 +216,14 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
     }
   }, [userId, open]);
 
-  // Also refresh when dialog opens (in case useEffect doesn't catch it)
+  // Force refresh when dialog opens to ensure fresh data
   useEffect(() => {
-    if (open && userId && !loading) {
-      console.log('🔧 [DIALOG] Dialog is open, ensuring data is fresh');
-      fetchData();
+    if (open && userId) {
+      console.log('🔧 [DIALOG] Dialog opened, force refreshing data to sync with user settings');
+      // Add a small delay to ensure any pending user settings updates are completed
+      setTimeout(() => {
+        fetchData();
+      }, 100);
     }
   }, [open]);
 
