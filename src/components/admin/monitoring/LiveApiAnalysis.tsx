@@ -28,7 +28,7 @@ interface ApiCall {
   processing_time_ms: number;
   status: 'success' | 'failure' | 'no_results';
   timestamp: string;
-  profiles: {
+  profiles?: {
     id: string;
     email: string;
     full_name: string;
@@ -60,7 +60,7 @@ interface ApiMention {
   url: string;
   sentiment: string;
   created_at: string;
-  profiles: {
+  profiles?: {
     id: string;
     email: string;
     full_name: string;
@@ -337,8 +337,8 @@ export function LiveApiAnalysis({ className = "" }: LiveApiAnalysisProps) {
                       <div className="flex items-center gap-4 text-sm">
                         <div className="flex items-center gap-1">
                           <User className="h-4 w-4" />
-                          <span>{call.profiles.full_name || call.profiles.email}</span>
-                          {call.profiles.company_name && (
+                          <span>{call.profiles?.full_name || call.profiles?.email || 'Unknown User'}</span>
+                          {call.profiles?.company_name && (
                             <span className="text-muted-foreground">({call.profiles.company_name})</span>
                           )}
                         </div>
@@ -397,8 +397,8 @@ export function LiveApiAnalysis({ className = "" }: LiveApiAnalysisProps) {
                       {error.profiles && (
                         <div className="flex items-center gap-1 text-sm">
                           <User className="h-4 w-4" />
-                          <span>{error.profiles.full_name || error.profiles.email}</span>
-                          {error.profiles.company_name && (
+                          <span>{error.profiles?.full_name || error.profiles?.email || 'Unknown User'}</span>
+                          {error.profiles?.company_name && (
                             <span className="text-muted-foreground">({error.profiles.company_name})</span>
                           )}
                         </div>
@@ -446,8 +446,8 @@ export function LiveApiAnalysis({ className = "" }: LiveApiAnalysisProps) {
                       
                       <div className="flex items-center gap-1 text-sm">
                         <User className="h-4 w-4" />
-                        <span>{mention.profiles.full_name || mention.profiles.email}</span>
-                        {mention.profiles.company_name && (
+                        <span>{mention.profiles?.full_name || mention.profiles?.email || 'Unknown User'}</span>
+                        {mention.profiles?.company_name && (
                           <span className="text-muted-foreground">({mention.profiles.company_name})</span>
                         )}
                         <span className="text-muted-foreground">• Keyword: {mention.keyword}</span>
