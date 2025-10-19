@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { createApiUrl } from '@/lib/api';
+import { createApiUrl, getAuthHeaders } from '@/lib/api';
 
 interface SSEState {
   isConnected: boolean;
@@ -32,7 +32,7 @@ export function useServerSentEvents(options: UseSSEOptions = {}) {
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
     if (!enabled) return;
 
     // Clean up existing connection
@@ -46,15 +46,30 @@ export function useServerSentEvents(options: UseSSEOptions = {}) {
     }
 
     try {
+      // Get auth headers and append token to URL
+      const authHeaders = await getAuthHeaders();
+      const token = authHeaders.Authorization?.replace('Bearer ', '');
+      
+      if (!token) {
+        setState(prev => ({
+          ...prev,
+          isConnected: false,
+          error: 'No authentication token available'
+        }));
+        return;
+      }
+
       const sseUrl = createApiUrl('/admin/realtime');
-      const eventSource = new EventSource(sseUrl, {
+      const urlWithToken = `${sseUrl}?token=${encodeURIComponent(token)}`;
+      
+      const eventSource = new EventSource(urlWithToken, {
         withCredentials: true
       });
 
       eventSourceRef.current = eventSource;
 
       eventSource.onopen = () => {
-        console.log('SSE connection opened');
+        console.log('SSE connection opened successfully');
         setState(prev => ({
           ...prev,
           isConnected: true,
@@ -99,13 +114,13 @@ export function useServerSentEvents(options: UseSSEOptions = {}) {
         // Attempt to reconnect
         if (reconnectAttemptsRef.current < maxReconnectAttempts) {
           reconnectAttemptsRef.current++;
-          console.log(`Attempting to reconnect (${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`);
+          console.log(`SSE: Attempting to reconnect (${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`);
           
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, reconnectInterval);
         } else {
-          console.error('Max reconnection attempts reached');
+          console.error('SSE: Max reconnection attempts reached');
           setState(prev => ({
             ...prev,
             error: 'Connection failed after multiple attempts'

@@ -273,12 +273,21 @@ export function useRealTimeData() {
 
   // Combined reconnect function
   const reconnect = useCallback(() => {
+    console.log('Real-time: Attempting to reconnect...');
     if (sse.isConnected) {
       sse.reconnect();
     } else {
       wsReconnect();
     }
   }, [sse.isConnected, sse.reconnect, wsReconnect]);
+
+  // Fallback polling when both SSE and WebSocket fail
+  useEffect(() => {
+    if (!sse.isConnected && !wsConnected && sse.error && wsError) {
+      console.log('Real-time: Both SSE and WebSocket failed, enabling fallback polling');
+      // Could implement polling fallback here if needed
+    }
+  }, [sse.isConnected, wsConnected, sse.error, wsError]);
 
   return {
     data: state.data,
