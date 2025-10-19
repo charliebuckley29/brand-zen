@@ -62,9 +62,7 @@ export function useServerSentEvents(options: UseSSEOptions = {}) {
       const sseUrl = createApiUrl('/admin/realtime');
       const urlWithToken = `${sseUrl}?token=${encodeURIComponent(token)}`;
       
-      const eventSource = new EventSource(urlWithToken, {
-        withCredentials: true
-      });
+      const eventSource = new EventSource(urlWithToken);
 
       eventSourceRef.current = eventSource;
 
