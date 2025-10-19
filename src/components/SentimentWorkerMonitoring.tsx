@@ -469,7 +469,7 @@ export function SentimentWorkerMonitoring() {
               <div>
                 <h4 className="font-medium mb-3">Error Categories</h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {Object.entries(diagnosticData.errorAnalysis.errorCategories).map(([category, count]) => (
+                  {diagnosticData.errorAnalysis.errorCategories && Object.entries(diagnosticData.errorAnalysis.errorCategories).map(([category, count]) => (
                     <div key={category} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">
@@ -501,9 +501,9 @@ export function SentimentWorkerMonitoring() {
                         <div className="flex items-center gap-3">
                           <div className="h-2 w-2 bg-red-500 rounded-full" />
                           <div>
-                            <div className="text-sm font-medium">{mention.source_name}</div>
+                            <div className="text-sm font-medium">{mention.source_name || 'Unknown Source'}</div>
                             <div className="text-xs text-muted-foreground">
-                              {getTimeAgo(mention.updated_at)} • {mention.id.substring(0, 8)}...
+                              {mention.updated_at ? getTimeAgo(mention.updated_at) : 'Unknown time'} • {mention.id ? mention.id.substring(0, 8) + '...' : 'Unknown ID'}
                             </div>
                           </div>
                         </div>
@@ -521,13 +521,13 @@ export function SentimentWorkerMonitoring() {
                 <div>
                   <h4 className="font-medium mb-3">System Health Issues</h4>
                   <div className="space-y-2">
-                    {diagnosticData.systemHealth.issues.map((issue: string, index: number) => (
+                    {diagnosticData.systemHealth.issues && diagnosticData.systemHealth.issues.map((issue: string, index: number) => (
                       <div key={index} className="flex items-center gap-2 p-2 bg-red-100 border border-red-200 rounded">
                         <AlertTriangle className="h-4 w-4 text-red-600" />
                         <span className="text-sm text-red-800">{issue}</span>
                       </div>
                     ))}
-                    {diagnosticData.systemHealth.warnings.map((warning: string, index: number) => (
+                    {diagnosticData.systemHealth.warnings && diagnosticData.systemHealth.warnings.map((warning: string, index: number) => (
                       <div key={index} className="flex items-center gap-2 p-2 bg-yellow-100 border border-yellow-200 rounded">
                         <AlertTriangle className="h-4 w-4 text-yellow-600" />
                         <span className="text-sm text-yellow-800">{warning}</span>
@@ -542,7 +542,7 @@ export function SentimentWorkerMonitoring() {
                 <div>
                   <h4 className="font-medium mb-3">Recommendations</h4>
                   <div className="space-y-2">
-                    {diagnosticData.recommendations.map((rec: string, index: number) => (
+                    {diagnosticData.recommendations && diagnosticData.recommendations.map((rec: string, index: number) => (
                       <div key={index} className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-200 rounded">
                         <Eye className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                         <span className="text-sm text-blue-800">{rec}</span>
@@ -611,7 +611,7 @@ export function SentimentWorkerMonitoring() {
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <User className="h-3 w-3" />
-                                  {mention.user_id.substring(0, 8)}...
+                                  {mention.user_id ? mention.user_id.substring(0, 8) + '...' : 'Unknown User'}
                                 </div>
                               </div>
                             </div>
@@ -736,7 +736,7 @@ export function SentimentWorkerMonitoring() {
                             </div>
                             <div className="flex items-center gap-1">
                               <User className="h-3 w-3" />
-                              {mention.user_id.substring(0, 8)}...
+                              {mention.user_id ? mention.user_id.substring(0, 8) + '...' : 'Unknown User'}
                             </div>
                           </div>
                         </div>
@@ -850,7 +850,7 @@ export function SentimentWorkerMonitoring() {
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <User className="h-3 w-3" />
-                                  {mention.user_id.substring(0, 8)}...
+                                  {mention.user_id ? mention.user_id.substring(0, 8) + '...' : 'Unknown User'}
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Activity className="h-3 w-3" />
