@@ -39,12 +39,20 @@ import MonitoringOverview from "./pages/admin/monitoring/MonitoringOverview";
 import ConfigurationOverview from "./pages/admin/configuration/ConfigurationOverview";
 import ToolsOverview from "./pages/admin/tools/ToolsOverview";
 
+// Individual monitoring pages
+import SystemMonitoringPage from "./pages/admin/monitoring/SystemMonitoringPage";
+import ApiMonitoringPage from "./pages/admin/monitoring/ApiMonitoringPage";
+import UserMonitoringPage from "./pages/admin/monitoring/UserMonitoringPage";
+import AlertMonitoringPage from "./pages/admin/monitoring/AlertMonitoringPage";
+import SentimentMonitoringPage from "./pages/admin/monitoring/SentimentMonitoringPage";
+import LogArchivesPage from "./pages/admin/monitoring/LogArchivesPage";
+import ArchiveRetentionPage from "./pages/admin/monitoring/ArchiveRetentionPage";
+
 // Legacy admin pages (redirected to new structure)
 import AdminUserQuotaManagement from "./pages/AdminUserQuotaManagement";
 import AdminModeratorsPanel from "./pages/AdminModeratorsPanel";
 import AdminBugReportsPage from "./pages/AdminBugReportsPage";
 import AdminTwilioPanel from "./pages/AdminTwilioPanel";
-import AdminMonitoringPanel from "./pages/AdminMonitoringPanel";
 import AdminUnifiedMonitoring from "./pages/AdminUnifiedMonitoring";
 import AdminApiLimitsPanel from "./pages/AdminApiLimitsPanel";
 import AdminTestDebugTools from "./pages/AdminTestDebugTools";
@@ -150,9 +158,19 @@ const App = () => {
                   {/* Monitoring Section */}
                   <Route path="/admin/monitoring" element={<MonitoringOverview />} />
                   <Route path="/admin/monitoring/overview" element={<AdminUnifiedMonitoring />} />
+                  
+                  {/* Individual Monitoring Pages */}
+                  <Route path="/admin/monitoring/system" element={<SystemMonitoringPage />} />
+                  <Route path="/admin/monitoring/api" element={<ApiMonitoringPage />} />
+                  <Route path="/admin/monitoring/users" element={<UserMonitoringPage />} />
+                  <Route path="/admin/monitoring/alerts" element={<AlertMonitoringPage />} />
+                  <Route path="/admin/monitoring/sentiment" element={<SentimentMonitoringPage />} />
+                  <Route path="/admin/monitoring/archives" element={<LogArchivesPage />} />
+                  <Route path="/admin/monitoring/retention" element={<ArchiveRetentionPage />} />
+                  
+                  {/* Legacy Monitoring Routes */}
                   <Route path="/admin/monitoring/api-health" element={<ApiHealthMonitoringPage />} />
                   <Route path="/admin/monitoring/queues" element={<QueueErrorMonitoringPage />} />
-                  <Route path="/admin/monitoring/alerts" element={<SystemAlertsPage />} />
                   <Route path="/admin/monitoring/analytics" element={<EnhancedAnalyticsPage />} />
                   <Route path="/admin/monitoring/recovery" element={<AutomatedRecoveryPage />} />
                   

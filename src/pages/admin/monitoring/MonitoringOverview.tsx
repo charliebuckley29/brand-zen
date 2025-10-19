@@ -13,10 +13,13 @@ import {
   XCircle,
   Clock,
   RefreshCw,
+  Wifi,
+  Users,
+  Archive,
+  Settings,
   ArrowLeft,
   TrendingUp,
   TrendingDown,
-  Wifi,
   WifiOff
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -108,44 +111,74 @@ export default function MonitoringOverview() {
 
   const monitoringSections = [
     {
-      id: 'unified',
-      title: 'Unified Dashboard',
-      description: 'Comprehensive system monitoring & analytics',
+      id: 'system',
+      title: 'System Monitoring',
+      description: 'Monitor system health, performance, and infrastructure',
       icon: BarChart3,
       color: 'bg-green-100 text-green-600',
-      href: '/admin/unified-monitoring',
+      href: '/admin/monitoring/system',
       status: 'implemented',
-      features: ['System Overview', 'API Monitoring', 'User Monitoring', 'Alert Monitoring']
+      features: ['System Health', 'Performance Metrics', 'Infrastructure Status', 'Cache Statistics']
     },
     {
-      id: 'api-health',
-      title: 'API Health Monitoring',
-      description: 'Real-time API source health, performance, and analytics',
+      id: 'api',
+      title: 'API Monitoring',
+      description: 'Monitor API health, usage, and rate limits',
       icon: Wifi,
       color: 'bg-emerald-100 text-emerald-600',
-      href: '/admin/monitoring/api-health',
+      href: '/admin/monitoring/api',
       status: 'implemented',
-      features: ['Health Checks', 'Performance Analytics', 'Error Tracking', 'Smart Alerts']
+      features: ['API Health', 'Usage Analytics', 'Rate Limits', 'Error Tracking']
     },
     {
-      id: 'queues',
-      title: 'Queue Monitoring',
-      description: 'Monitor queue health, errors, and retry patterns',
-      icon: Activity,
+      id: 'users',
+      title: 'User Monitoring',
+      description: 'Monitor user activity, quotas, and engagement',
+      icon: Users,
       color: 'bg-blue-100 text-blue-600',
-      href: '/admin/queue-errors',
+      href: '/admin/monitoring/users',
       status: 'implemented',
-      features: ['Queue Health', 'Error Tracking', 'Retry Analytics', 'Recovery Actions']
+      features: ['User Activity', 'Quota Usage', 'Engagement Metrics', 'User Analytics']
     },
     {
       id: 'alerts',
-      title: 'System Alerts',
-      description: 'Real-time alerts and notifications',
+      title: 'Alert Monitoring',
+      description: 'Monitor system alerts and notifications',
       icon: AlertTriangle,
       color: 'bg-yellow-100 text-yellow-600',
-      href: '/admin/system-alerts',
-      status: 'partial',
+      href: '/admin/monitoring/alerts',
+      status: 'implemented',
       features: ['Active Alerts', 'Alert History', 'Notification Rules', 'Escalation Policies']
+    },
+    {
+      id: 'sentiment',
+      title: 'Sentiment Monitoring',
+      description: 'Monitor sentiment analysis worker status',
+      icon: Brain,
+      color: 'bg-purple-100 text-purple-600',
+      href: '/admin/monitoring/sentiment',
+      status: 'implemented',
+      features: ['Worker Status', 'Processing Metrics', 'Queue Health', 'Performance Analytics']
+    },
+    {
+      id: 'archives',
+      title: 'Log Archives',
+      description: 'Manage and view system log archives',
+      icon: Archive,
+      color: 'bg-gray-100 text-gray-600',
+      href: '/admin/monitoring/archives',
+      status: 'implemented',
+      features: ['Log Management', 'Archive Viewing', 'Download Logs', 'Historical Data']
+    },
+    {
+      id: 'retention',
+      title: 'Archive Retention',
+      description: 'Configure data retention policies',
+      icon: Settings,
+      color: 'bg-orange-100 text-orange-600',
+      href: '/admin/monitoring/retention',
+      status: 'implemented',
+      features: ['Retention Policies', 'Archive Settings', 'Data Management', 'Cleanup Rules']
     },
     {
       id: 'analytics',
