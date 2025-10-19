@@ -54,12 +54,12 @@ export function useRealTimeData() {
   useEffect(() => {
     const isConnected = sse.isConnected || wsConnected;
     const error = sse.error || wsError;
-    const connectionAttempts = sse.isConnected ? 0 : connectionAttempts;
+    const totalConnectionAttempts = sse.isConnected ? 0 : connectionAttempts;
     
     setState(prev => ({
       ...prev,
       isConnected,
-      connectionAttempts,
+      connectionAttempts: totalConnectionAttempts,
       error
     }));
   }, [sse.isConnected, sse.error, wsConnected, wsError, connectionAttempts]);
