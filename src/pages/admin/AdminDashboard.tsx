@@ -1,7 +1,7 @@
 import { useUserRole } from "../../hooks/use-user-role";
 import { EnhancedCard, EnhancedCardContent, EnhancedCardDescription, EnhancedCardHeader, EnhancedCardTitle } from "../../components/ui/enhanced-card";
 import { Button } from "../../components/ui/button";
-import { ArrowLeft, Users, Activity, Settings, Wrench, TrendingUp, BarChart3, UserCheck, Shield, AlertTriangle, Brain, Zap, Mail, TestTube, Key, Database } from "lucide-react";
+import { ArrowLeft, Users, Activity, Settings, Wrench, TrendingUp, BarChart3, UserCheck, Shield, AlertTriangle, Brain, Zap, Mail, TestTube, Key, Database, Wifi } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AdminLayout } from "../../components/ui/admin-layout";
 import { Grid } from "../../components/ui/layout-system";
@@ -215,38 +215,56 @@ export default function AdminDashboard() {
         </Grid>
       </div>
 
-      {/* Legacy Quick Access */}
+      {/* Quick Access */}
       <div>
         <h2 className="text-lg font-semibold mb-4">Quick Access</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Link to="/admin/monitoring/system">
+            <Button variant="outline" className="w-full justify-start">
+              <Shield className="w-4 h-4 mr-2" />
+              System Health
+            </Button>
+          </Link>
+          <Link to="/admin/monitoring/api">
+            <Button variant="outline" className="w-full justify-start">
+              <Wifi className="w-4 h-4 mr-2" />
+              API Status
+            </Button>
+          </Link>
+          <Link to="/admin/monitoring/alerts">
+            <Button variant="outline" className="w-full justify-start">
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Alerts
+            </Button>
+          </Link>
           <Link to="/admin/users/quotas">
             <Button variant="outline" className="w-full justify-start">
               <Key className="w-4 h-4 mr-2" />
-              Quotas
+              User Quotas
             </Button>
           </Link>
           <Link to="/admin/monitoring/queues">
             <Button variant="outline" className="w-full justify-start">
               <BarChart3 className="w-4 h-4 mr-2" />
-              Queues
+              Queue Status
+            </Button>
+          </Link>
+          <Link to="/admin/monitoring/sentiment">
+            <Button variant="outline" className="w-full justify-start">
+              <Brain className="w-4 h-4 mr-2" />
+              Sentiment
             </Button>
           </Link>
           <Link to="/admin/configuration/email">
             <Button variant="outline" className="w-full justify-start">
               <Mail className="w-4 h-4 mr-2" />
-              Email
+              Email Config
             </Button>
           </Link>
           <Link to="/admin/tools/debug">
             <Button variant="outline" className="w-full justify-start">
               <TestTube className="w-4 h-4 mr-2" />
-              Debug
-            </Button>
-          </Link>
-          <Link to="/admin/tools/websocket-debug">
-            <Button variant="outline" className="w-full justify-start">
-              <Activity className="w-4 h-4 mr-2" />
-              WebSocket Debug
+              Debug Tools
             </Button>
           </Link>
         </div>
