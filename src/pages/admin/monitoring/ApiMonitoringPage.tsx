@@ -5,10 +5,22 @@ import { Button } from "../../../components/ui/button";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { useRealTimeData } from "../../../hooks/useRealTimeData";
+import { RealTimeIndicator } from "../../../components/admin/RealTimeIndicator";
 
 export default function ApiMonitoringPage() {
   const { isAdmin, loading: roleLoading } = useUserRole();
   const [loading, setLoading] = useState(false);
+  
+  // Real-time data hook
+  const { 
+    data: realTimeData, 
+    isConnected, 
+    lastUpdate, 
+    connectionAttempts, 
+    error, 
+    reconnect 
+  } = useRealTimeData();
 
   const handleRefresh = async () => {
     setLoading(true);
@@ -56,7 +68,15 @@ export default function ApiMonitoringPage() {
       title="API Monitoring"
       description="Monitor API health, usage, and rate limits across all sources"
       actions={
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <RealTimeIndicator 
+            isConnected={isConnected} 
+            isConnecting={false} 
+            lastUpdate={lastUpdate}
+            connectionAttempts={connectionAttempts}
+            error={error}
+            onReconnect={reconnect}
+          />
           <Button
             variant="outline"
             size="sm"
