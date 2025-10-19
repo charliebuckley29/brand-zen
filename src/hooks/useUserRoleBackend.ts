@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { createApiUrl } from "@/lib/api";
+import { createApiUrl, apiFetch } from "@/lib/api";
 
 export type UserType = 'admin' | 'moderator' | 'basic_user';
 
@@ -27,8 +27,8 @@ export function useUserRoleBackend() {
           return;
         }
 
-        // Use backend API instead of direct database access
-        const response = await fetch(createApiUrl(`/admin/user-roles/${user.id}`));
+        // Use backend API with proper authentication
+        const response = await apiFetch(`/admin/user-roles/${user.id}`);
         
         if (!response.ok) {
           if (response.status === 404) {
