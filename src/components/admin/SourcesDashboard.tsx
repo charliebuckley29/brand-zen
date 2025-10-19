@@ -46,11 +46,40 @@ interface SourcesDashboardData {
       status: 'healthy' | 'degraded' | 'unhealthy';
     };
     reddit: {
+      apiUsage: {
+        rateLimitRemaining: number;
+        rateLimitReset: number;
+        rateLimitUsed: number;
+        lastChecked: string;
+        error?: string;
+      };
+      rateLimit: {
+        isNearLimit: boolean;
+        remainingRequests: number;
+        resetTime: Date;
+        warningLevel: 'low' | 'medium' | 'high' | 'critical';
+      };
       internal: any;
       userQuotas: any;
       status: 'healthy' | 'degraded' | 'unhealthy';
     };
     x: {
+      apiUsage: {
+        dailyUsage: number;
+        monthlyUsage: number;
+        rateLimitRemaining: number;
+        rateLimitReset: number;
+        lastChecked: string;
+        error?: string;
+      };
+      rateLimit: {
+        isNearLimit: boolean;
+        remainingRequests: number;
+        resetTime: Date;
+        warningLevel: 'low' | 'medium' | 'high' | 'critical';
+        dailyUsage: number;
+        monthlyUsage: number;
+      };
       internal: any;
       userQuotas: any;
       status: 'healthy' | 'degraded' | 'unhealthy';
@@ -328,6 +357,72 @@ const SourcesDashboard: React.FC = () => {
                   {sourceData.googleCloud.error && (
                     <div className="mt-3 p-2 bg-red-100 rounded text-red-700 text-sm">
                       Error: {sourceData.googleCloud.error}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Reddit API Usage */}
+              {sourceName === 'reddit' && sourceData.apiUsage && (
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-orange-800 mb-3 flex items-center">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Reddit API Rate Limits
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-orange-600">Remaining</p>
+                      <p className="font-semibold">{sourceData.apiUsage.rateLimitRemaining}</p>
+                    </div>
+                    <div>
+                      <p className="text-orange-600">Used</p>
+                      <p className="font-semibold">{sourceData.apiUsage.rateLimitUsed}</p>
+                    </div>
+                    <div>
+                      <p className="text-orange-600">Reset In</p>
+                      <p className="font-semibold">{getTimeUntilReset(new Date(sourceData.apiUsage.rateLimitReset * 1000).toISOString())}</p>
+                    </div>
+                    <div>
+                      <p className="text-orange-600">Warning Level</p>
+                      <p className="font-semibold capitalize">{sourceData.rateLimit.warningLevel}</p>
+                    </div>
+                  </div>
+                  {sourceData.apiUsage.error && (
+                    <div className="mt-3 p-2 bg-red-100 rounded text-red-700 text-sm">
+                      Error: {sourceData.apiUsage.error}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* X/Twitter API Usage */}
+              {sourceName === 'x' && sourceData.apiUsage && (
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-slate-800 mb-3 flex items-center">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    X API Usage
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-slate-600">Daily Usage</p>
+                      <p className="font-semibold">{formatNumber(sourceData.apiUsage.dailyUsage)}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-600">Monthly Usage</p>
+                      <p className="font-semibold">{formatNumber(sourceData.apiUsage.monthlyUsage)}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-600">Rate Limit Remaining</p>
+                      <p className="font-semibold">{sourceData.apiUsage.rateLimitRemaining}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-600">Warning Level</p>
+                      <p className="font-semibold capitalize">{sourceData.rateLimit.warningLevel}</p>
+                    </div>
+                  </div>
+                  {sourceData.apiUsage.error && (
+                    <div className="mt-3 p-2 bg-red-100 rounded text-red-700 text-sm">
+                      Error: {sourceData.apiUsage.error}
                     </div>
                   )}
                 </div>
