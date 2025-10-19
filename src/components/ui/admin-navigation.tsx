@@ -82,12 +82,13 @@ export function AdminNavigation() {
       description: "Health, queues, analytics",
       subItems: [
         { id: "monitoring-overview", label: "Overview", path: "/admin/monitoring" },
-        { id: "monitoring-unified", label: "Unified Dashboard", path: "/admin/unified-monitoring" },
-        { id: "monitoring-api-health", label: "API Health Monitoring", path: "/admin/monitoring/api-health" },
-        { id: "monitoring-queues", label: "Queue Monitoring", path: "/admin/queue-errors" },
-        { id: "monitoring-alerts", label: "System Alerts", path: "/admin/system-alerts" },
-        { id: "monitoring-analytics", label: "Enhanced Analytics", path: "/admin/enhanced-analytics" },
-        { id: "monitoring-recovery", label: "Auto Recovery", path: "/admin/automated-recovery" }
+        { id: "monitoring-system", label: "System Health", path: "/admin/monitoring/system" },
+        { id: "monitoring-api", label: "API Status", path: "/admin/monitoring/api" },
+        { id: "monitoring-users", label: "User Activity", path: "/admin/monitoring/users" },
+        { id: "monitoring-alerts", label: "System Alerts", path: "/admin/monitoring/alerts" },
+        { id: "monitoring-sentiment", label: "Sentiment Worker", path: "/admin/monitoring/sentiment" },
+        { id: "monitoring-archives", label: "Log Archives", path: "/admin/monitoring/archives" },
+        { id: "monitoring-retention", label: "Archive Retention", path: "/admin/monitoring/retention" }
       ]
     },
     {
@@ -110,10 +111,9 @@ export function AdminNavigation() {
       path: "/admin/tools",
       description: "Debug, test, logs",
       subItems: [
-        { id: "tools-overview", label: "Overview", path: "/admin/tools" },
         { id: "tools-debug", label: "Debug Tools", path: "/admin/test-debug" },
         { id: "tools-bugs", label: "Bug Reports", path: "/admin/bug-reports" },
-        { id: "tools-logs", label: "Log Archives", path: "/admin/unified-monitoring" }
+        { id: "tools-websocket", label: "WebSocket Debug", path: "/admin/websocket-debug" }
       ]
     }
   ];
