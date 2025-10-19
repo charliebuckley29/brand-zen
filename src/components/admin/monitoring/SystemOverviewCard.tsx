@@ -71,3 +71,4 @@ export function SystemOverviewCard({ dashboardData }: SystemOverviewCardProps) {
     </EnhancedCard>
   );
 }
+
