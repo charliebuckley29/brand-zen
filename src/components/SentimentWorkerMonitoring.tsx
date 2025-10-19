@@ -94,6 +94,7 @@ interface SentimentData {
 
 export function SentimentWorkerMonitoring() {
   const [sentimentData, setSentimentData] = useState<SentimentData | null>(null);
+  const [diagnosticData, setDiagnosticData] = useState<any>(null);
   const [sentimentLoading, setSentimentLoading] = useState(false);
   const [expandedPending, setExpandedPending] = useState<Set<string>>(new Set());
   const [expandedAnalyzed, setExpandedAnalyzed] = useState<Set<string>>(new Set());
@@ -176,13 +177,45 @@ export function SentimentWorkerMonitoring() {
   const fetchSentimentData = async () => {
     setSentimentLoading(true);
     try {
-      const response = await fetch(createApiUrl('/debug/check-sentiment-queue'));
+      // Try the new comprehensive diagnostic endpoint first
+      const response = await fetch(createApiUrl('/admin/sentiment-diagnostics'));
       if (response.ok) {
         const result = await response.json();
-        setSentimentData(result);
+        // Transform the diagnostic data to match the existing interface
+        const transformedData = {
+          success: true,
+          queueStatus: {
+            pendingAnalysis: result.diagnostics.queueAnalysis.totalPending,
+            emptyMentions: 0, // Will be calculated from content analysis
+            totalPending: result.diagnostics.queueAnalysis.totalPending,
+            recentAnalyzed: result.diagnostics.performanceMetrics.last_24_hours.processed,
+            totalAnalyzed: result.diagnostics.queueAnalysis.totalProcessed,
+            sentimentDistribution: {
+              positive: 0, // Not available in diagnostic data
+              negative: 0,
+              neutral: 0,
+              unknown: 0
+            }
+          },
+          pendingMentions: result.diagnostics.errorAnalysis.recentErrorMentions || [],
+          emptyMentions: [],
+          recentAnalyzed: [],
+          timestamp: result.diagnostics.timestamp
+        };
+        setSentimentData(transformedData);
+        
+        // Store the full diagnostic data for error display
+        setDiagnosticData(result.diagnostics);
       } else {
-        console.warn('Sentiment queue endpoint not available');
-        setSentimentData(null);
+        // Fallback to old endpoint if new one isn't available
+        const fallbackResponse = await fetch(createApiUrl('/debug/check-sentiment-queue'));
+        if (fallbackResponse.ok) {
+          const result = await fallbackResponse.json();
+          setSentimentData(result);
+        } else {
+          console.warn('Sentiment queue endpoint not available');
+          setSentimentData(null);
+        }
       }
     } catch (error) {
       console.error('Error fetching sentiment data:', error);
@@ -393,6 +426,135 @@ export function SentimentWorkerMonitoring() {
           )}
         </CardContent>
       </Card>
+
+      {/* Error Tracking Section */}
+      {diagnosticData && diagnosticData.errorAnalysis && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Error Analysis
+            </CardTitle>
+            <CardDescription>
+              Detailed breakdown of sentiment analysis errors and failures
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Error Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                  <span className="text-sm font-medium">Total Errors</span>
+                  <Badge variant="destructive">{diagnosticData.errorAnalysis.totalErrors}</Badge>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm font-medium">Recent (24h)</span>
+                  <Badge variant="outline">{diagnosticData.errorAnalysis.recentErrors}</Badge>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <BarChart3 className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm font-medium">Error Rate</span>
+                  <Badge variant="outline">{diagnosticData.errorAnalysis.errorRate}%</Badge>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Tag className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm font-medium">Error Types</span>
+                  <Badge variant="outline">{Object.keys(diagnosticData.errorAnalysis.errorCategories).length}</Badge>
+                </div>
+              </div>
+
+              {/* Error Categories */}
+              <div>
+                <h4 className="font-medium mb-3">Error Categories</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {Object.entries(diagnosticData.errorAnalysis.errorCategories).map(([category, count]) => (
+                    <div key={category} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">
+                          {category === 'openai_api_error' ? '🤖' :
+                           category === 'content_too_long' ? '📄' :
+                           category === 'empty_content' ? '📭' :
+                           category === 'parsing_error' ? '🔍' :
+                           category === 'timeout_error' ? '⏱️' : '❓'}
+                        </span>
+                        <span className="text-sm font-medium capitalize">
+                          {category.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <Badge variant={count > 0 ? 'destructive' : 'secondary'}>
+                        {count}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recent Error Mentions */}
+              {diagnosticData.errorAnalysis.recentErrorMentions && diagnosticData.errorAnalysis.recentErrorMentions.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-3">Recent Error Mentions</h4>
+                  <div className="max-h-64 overflow-y-auto space-y-2">
+                    {diagnosticData.errorAnalysis.recentErrorMentions.slice(0, 10).map((mention: any) => (
+                      <div key={mention.id} className="flex items-center justify-between p-3 border rounded-lg bg-red-50">
+                        <div className="flex items-center gap-3">
+                          <div className="h-2 w-2 bg-red-500 rounded-full" />
+                          <div>
+                            <div className="text-sm font-medium">{mention.source_name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {getTimeAgo(mention.updated_at)} • {mention.id.substring(0, 8)}...
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-xs text-red-600 font-mono max-w-xs truncate">
+                          {mention.model_used || mention.internal_notes || 'Unknown error'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* System Health Issues */}
+              {diagnosticData.systemHealth && (diagnosticData.systemHealth.issues.length > 0 || diagnosticData.systemHealth.warnings.length > 0) && (
+                <div>
+                  <h4 className="font-medium mb-3">System Health Issues</h4>
+                  <div className="space-y-2">
+                    {diagnosticData.systemHealth.issues.map((issue: string, index: number) => (
+                      <div key={index} className="flex items-center gap-2 p-2 bg-red-100 border border-red-200 rounded">
+                        <AlertTriangle className="h-4 w-4 text-red-600" />
+                        <span className="text-sm text-red-800">{issue}</span>
+                      </div>
+                    ))}
+                    {diagnosticData.systemHealth.warnings.map((warning: string, index: number) => (
+                      <div key={index} className="flex items-center gap-2 p-2 bg-yellow-100 border border-yellow-200 rounded">
+                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                        <span className="text-sm text-yellow-800">{warning}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recommendations */}
+              {diagnosticData.recommendations && diagnosticData.recommendations.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-3">Recommendations</h4>
+                  <div className="space-y-2">
+                    {diagnosticData.recommendations.map((rec: string, index: number) => (
+                      <div key={index} className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                        <Eye className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-blue-800">{rec}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Pending Mentions Queue */}
       {sentimentData && (
