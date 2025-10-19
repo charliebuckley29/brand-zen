@@ -254,12 +254,44 @@ export function SentimentWorkerMonitoring() {
     }
   };
 
+  const checkWorkerHealth = async () => {
+    try {
+      const response = await fetch(createApiUrl('/debug/sentiment-worker-health'));
+      if (response.ok) {
+        const health = await response.json();
+        if (!health.healthy) {
+          const issues = health.issues?.join(', ') || 'Unknown issues';
+          const warnings = health.warnings?.join(', ') || '';
+          
+          if (health.status === 'error') {
+            toast.error(`Worker health issues: ${issues}`);
+          } else if (health.status === 'warning') {
+            toast.warning(`Worker warnings: ${warnings || issues}`);
+          }
+          
+          // Show recommendations if available
+          if (health.recommendations && health.recommendations.length > 0) {
+            console.log('Worker health recommendations:', health.recommendations);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Health check failed:', error);
+    }
+  };
+
   useEffect(() => {
     fetchSentimentData();
+    checkWorkerHealth(); // Initial health check
     
     const interval = setInterval(() => {
       fetchSentimentData();
     }, 30000); // 30 seconds
+
+    // Health check every 5 minutes
+    const healthInterval = setInterval(() => {
+      checkWorkerHealth();
+    }, 300000); // 5 minutes
 
     // Update timestamps every 10 seconds for real-time "time ago" display
     const timestampInterval = setInterval(() => {
@@ -269,6 +301,7 @@ export function SentimentWorkerMonitoring() {
 
     return () => {
       clearInterval(interval);
+      clearInterval(healthInterval);
       clearInterval(timestampInterval);
     };
   }, []);
@@ -317,6 +350,14 @@ export function SentimentWorkerMonitoring() {
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Reset Failed
+              </Button>
+              <Button 
+                onClick={checkWorkerHealth}
+                variant="secondary"
+                size="sm"
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                Health Check
               </Button>
             </div>
             <div className="text-sm text-muted-foreground">
