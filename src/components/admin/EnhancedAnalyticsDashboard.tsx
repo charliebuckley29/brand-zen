@@ -332,11 +332,15 @@ export function EnhancedAnalyticsDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {healthScore.recommendations.map((recommendation, index) => (
-                <div key={index} className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
-                  <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-blue-800">{recommendation}</span>
+                <div key={index} className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <span className="text-base font-medium text-blue-900 dark:text-blue-100 leading-relaxed">
+                      {recommendation}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>

@@ -472,23 +472,29 @@ export function QueueMonitoringDashboard() {
               <CardContent className="space-y-6">
                 {healthData.issues.length > 0 && (
                   <div>
-                    <h4 className="font-medium mb-2">Current Issues:</h4>
-                    <ul className="list-disc list-inside space-y-1">
+                    <h4 className="font-medium mb-3 text-lg">Current Issues:</h4>
+                    <div className="space-y-2">
                       {healthData.issues.map((issue, index) => (
-                        <li key={index} className="text-sm text-red-600">{issue}</li>
+                        <div key={index} className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+                          <div className="w-2 h-2 bg-red-600 dark:bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <span className="text-base font-medium text-red-900 dark:text-red-100 leading-relaxed">{issue}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 )}
                 
                 {healthData.recommendations.length > 0 && (
                   <div>
-                    <h4 className="font-medium mb-2">Recommendations:</h4>
-                    <ul className="list-disc list-inside space-y-1">
+                    <h4 className="font-medium mb-3 text-lg">Recommendations:</h4>
+                    <div className="space-y-2">
                       {healthData.recommendations.map((rec, index) => (
-                        <li key={index} className="text-sm text-blue-600">{rec}</li>
+                        <div key={index} className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                          <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <span className="text-base font-medium text-blue-900 dark:text-blue-100 leading-relaxed">{rec}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 )}
                 
