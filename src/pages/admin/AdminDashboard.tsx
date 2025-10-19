@@ -6,9 +6,16 @@ import { Link } from "react-router-dom";
 import { AdminLayout } from "../../components/ui/admin-layout";
 import { Grid } from "../../components/ui/layout-system";
 import { Badge } from "../../components/ui/badge";
+import { LiveQueueStatus } from "../../components/admin/LiveQueueStatus";
+import { useRealTimeData } from "../../hooks/useRealTimeData";
+import { useNotifications } from "../../hooks/useNotifications";
 
 export default function AdminDashboard() {
   const { isAdmin, loading: roleLoading } = useUserRole();
+  
+  // Real-time data hooks
+  const { data: realTimeData, isConnected, getQueueHealth, getSystemHealth } = useRealTimeData();
+  const { getUnreadAlertsCount, getCriticalAlertsCount } = useNotifications();
 
   if (roleLoading) {
     return (
@@ -112,21 +119,26 @@ export default function AdminDashboard() {
     },
     {
       title: 'System Health',
-      value: 'Loading...',
+      value: getSystemHealth() || 'Loading...',
       icon: Shield,
-      color: 'text-green-600'
+      color: getSystemHealth() === 'healthy' ? 'text-green-600' : 
+             getSystemHealth() === 'warning' ? 'text-yellow-600' : 
+             getSystemHealth() === 'critical' ? 'text-red-600' : 'text-gray-600'
     },
     {
       title: 'Active Alerts',
-      value: 'Loading...',
+      value: getUnreadAlertsCount().toString(),
       icon: AlertTriangle,
-      color: 'text-yellow-600'
+      color: getCriticalAlertsCount() > 0 ? 'text-red-600' : 
+             getUnreadAlertsCount() > 0 ? 'text-yellow-600' : 'text-green-600'
     },
     {
       title: 'Queue Status',
-      value: 'Loading...',
+      value: getQueueHealth() || 'Loading...',
       icon: Activity,
-      color: 'text-purple-600'
+      color: getQueueHealth() === 'healthy' ? 'text-green-600' : 
+             getQueueHealth() === 'warning' ? 'text-yellow-600' : 
+             getQueueHealth() === 'critical' ? 'text-red-600' : 'text-gray-600'
     }
   ];
 
@@ -158,6 +170,14 @@ export default function AdminDashboard() {
           ))}
         </div>
       </div>
+
+      {/* Real-Time Queue Status */}
+      {isConnected && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-4">Live Queue Status</h2>
+          <LiveQueueStatus />
+        </div>
+      )}
 
       {/* Main Sections */}
       <div className="mb-8">
@@ -221,6 +241,12 @@ export default function AdminDashboard() {
             <Button variant="outline" className="w-full justify-start">
               <TestTube className="w-4 h-4 mr-2" />
               Debug
+            </Button>
+          </Link>
+          <Link to="/admin/tools/websocket-debug">
+            <Button variant="outline" className="w-full justify-start">
+              <Activity className="w-4 h-4 mr-2" />
+              WebSocket Debug
             </Button>
           </Link>
         </div>

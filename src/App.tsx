@@ -48,6 +48,7 @@ import AdminMonitoringPanel from "./pages/AdminMonitoringPanel";
 import AdminUnifiedMonitoring from "./pages/AdminUnifiedMonitoring";
 import AdminApiLimitsPanel from "./pages/AdminApiLimitsPanel";
 import AdminTestDebugTools from "./pages/AdminTestDebugTools";
+import AdminWebSocketDebug from "./pages/admin/AdminWebSocketDebug";
 import AdminEmailDeliveryMonitoring from "./pages/AdminEmailDeliveryMonitoring";
 import QueueErrorMonitoringPage from "./pages/QueueErrorMonitoringPage";
 import ApiHealthMonitoringPage from "./pages/admin/monitoring/ApiHealthMonitoringPage";
@@ -164,6 +165,7 @@ const App = () => {
                   <Route path="/admin/tools" element={<ToolsOverview />} />
                   <Route path="/admin/tools/debug" element={<AdminTestDebugTools />} />
                   <Route path="/admin/tools/testing" element={<AdminTestDebugTools />} />
+                  <Route path="/admin/tools/websocket-debug" element={<AdminWebSocketDebug />} />
                   <Route path="/admin/tools/logs" element={<AdminUnifiedMonitoring />} />
                   <Route path="/admin/tools/bug-reports" element={<AdminBugReportsPage />} />
                   
