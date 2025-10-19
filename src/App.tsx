@@ -53,7 +53,6 @@ import AdminUserQuotaManagement from "./pages/AdminUserQuotaManagement";
 import AdminModeratorsPanel from "./pages/AdminModeratorsPanel";
 import AdminBugReportsPage from "./pages/AdminBugReportsPage";
 import AdminTwilioPanel from "./pages/AdminTwilioPanel";
-import AdminUnifiedMonitoring from "./pages/AdminUnifiedMonitoring";
 import AdminApiLimitsPanel from "./pages/AdminApiLimitsPanel";
 import AdminTestDebugTools from "./pages/AdminTestDebugTools";
 import AdminWebSocketDebug from "./pages/admin/AdminWebSocketDebug";
@@ -157,7 +156,7 @@ const App = () => {
                   
                   {/* Monitoring Section */}
                   <Route path="/admin/monitoring" element={<MonitoringOverview />} />
-                  <Route path="/admin/monitoring/overview" element={<AdminUnifiedMonitoring />} />
+                  <Route path="/admin/monitoring/overview" element={<MonitoringOverview />} />
                   
                   {/* Individual Monitoring Pages */}
                   <Route path="/admin/monitoring/system" element={<SystemMonitoringPage />} />
@@ -184,7 +183,7 @@ const App = () => {
                   <Route path="/admin/tools/debug" element={<AdminTestDebugTools />} />
                   <Route path="/admin/tools/testing" element={<AdminTestDebugTools />} />
                   <Route path="/admin/tools/websocket-debug" element={<AdminWebSocketDebug />} />
-                  <Route path="/admin/tools/logs" element={<AdminUnifiedMonitoring />} />
+                  <Route path="/admin/tools/logs" element={<MonitoringOverview />} />
                   <Route path="/admin/tools/bug-reports" element={<AdminBugReportsPage />} />
                   
                   {/* Legacy routes (redirected to new structure) */}
@@ -192,8 +191,8 @@ const App = () => {
                   <Route path="/admin/moderators" element={<AdminModeratorsPanel />} />
                   <Route path="/admin/bug-reports" element={<AdminBugReportsPage />} />
                   <Route path="/admin/twilio" element={<AdminTwilioPanel />} />
-                  <Route path="/admin/unified-monitoring" element={<AdminUnifiedMonitoring />} />
-                  <Route path="/admin/unified-monitoring/" element={<AdminUnifiedMonitoring />} />
+                  <Route path="/admin/unified-monitoring" element={<MonitoringOverview />} />
+                  <Route path="/admin/unified-monitoring/" element={<MonitoringOverview />} />
                   <Route path="/admin/api-limits" element={<AdminApiLimitsPanel />} />
                   <Route path="/admin/email-delivery" element={<AdminEmailDeliveryMonitoring />} />
                   <Route path="/admin/email-delivery/" element={<AdminEmailDeliveryMonitoring />} />
