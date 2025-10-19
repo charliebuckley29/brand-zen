@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createApiUrl } from '@/lib/api';
+import { RealTimeIndicator } from './RealTimeIndicator';
+import { useRealTimeData } from '@/hooks/useRealTimeData';
 
 interface SystemOverviewProps {
   onRefresh: () => void;
@@ -32,6 +34,17 @@ interface SystemOverviewProps {
 export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
   const [systemHealth, setSystemHealth] = useState<any>(null);
   const [cacheStats, setCacheStats] = useState<any>(null);
+  
+  // Real-time data hook
+  const { 
+    data: realTimeData, 
+    isConnected, 
+    lastUpdate, 
+    connectionAttempts, 
+    error, 
+    reconnect,
+    getSystemHealth 
+  } = useRealTimeData();
 
   const fetchSystemData = async () => {
     try {
@@ -66,6 +79,9 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
     fetchSystemData();
   }, []);
 
+  // Use real-time data if available, fallback to fetched data
+  const currentSystemHealth = realTimeData.systemHealth || systemHealth;
+
   const getHealthStatus = (status: string) => {
     switch (status) {
       case 'healthy': return { color: 'text-green-600', icon: CheckCircle, bg: 'bg-green-100' };
@@ -95,9 +111,19 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
       {/* System Health Overview */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            System Health Overview
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              System Health Overview
+            </div>
+            <RealTimeIndicator 
+              isConnected={isConnected} 
+              isConnecting={false} 
+              lastUpdate={lastUpdate}
+              connectionAttempts={connectionAttempts}
+              error={error}
+              onReconnect={reconnect}
+            />
           </CardTitle>
           <CardDescription>
             Real-time system status and performance metrics
@@ -123,23 +149,23 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
             </div>
           </div>
 
-          {systemHealth && (
+          {currentSystemHealth && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex items-center space-x-3 p-3 border rounded-lg">
                 <Database className="h-8 w-8 text-blue-600" />
                 <div>
                   <div className="text-sm font-medium">Database</div>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="default" className={getHealthStatus(systemHealth.database?.status || 'unknown').bg}>
-                      {systemHealth.database?.status || 'Unknown'}
+                    <Badge variant="default" className={getHealthStatus(currentSystemHealth.database?.status || 'unknown').bg}>
+                      {currentSystemHealth.database?.status || 'Unknown'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {formatTimestamp(systemHealth.database?.last_checked)}
+                      {formatTimestamp(currentSystemHealth.database?.lastChecked || currentSystemHealth.database?.last_checked)}
                     </span>
                   </div>
-                  {systemHealth.database?.error && (
+                  {currentSystemHealth.database?.error && (
                     <div className="text-xs text-red-600 mt-1">
-                      {systemHealth.database.error}
+                      {currentSystemHealth.database.error}
                     </div>
                   )}
                 </div>
@@ -150,16 +176,16 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
                 <div>
                   <div className="text-sm font-medium">API Endpoints</div>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="default" className={getHealthStatus(systemHealth.api_endpoints?.status || 'unknown').bg}>
-                      {systemHealth.api_endpoints?.status || 'Unknown'}
+                    <Badge variant="default" className={getHealthStatus(currentSystemHealth.api_endpoints?.status || 'unknown').bg}>
+                      {currentSystemHealth.api_endpoints?.status || 'Unknown'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {formatTimestamp(systemHealth.api_endpoints?.last_checked)}
+                      {formatTimestamp(currentSystemHealth.api_endpoints?.lastChecked || currentSystemHealth.api_endpoints?.last_checked)}
                     </span>
                   </div>
-                  {systemHealth.api_endpoints?.error && (
+                  {currentSystemHealth.api_endpoints?.error && (
                     <div className="text-xs text-red-600 mt-1">
-                      {systemHealth.api_endpoints.error}
+                      {currentSystemHealth.api_endpoints.error}
                     </div>
                   )}
                 </div>
@@ -170,16 +196,16 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
                 <div>
                   <div className="text-sm font-medium">Queue System</div>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="default" className={getHealthStatus(systemHealth.queue_system?.status || 'unknown').bg}>
-                      {systemHealth.queue_system?.status || 'Unknown'}
+                    <Badge variant="default" className={getHealthStatus(currentSystemHealth.queue_system?.status || 'unknown').bg}>
+                      {currentSystemHealth.queue_system?.status || 'Unknown'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {formatTimestamp(systemHealth.queue_system?.last_checked)}
+                      {formatTimestamp(currentSystemHealth.queue_system?.lastChecked || currentSystemHealth.queue_system?.last_checked)}
                     </span>
                   </div>
-                  {systemHealth.queue_system?.error && (
+                  {currentSystemHealth.queue_system?.error && (
                     <div className="text-xs text-red-600 mt-1">
-                      {systemHealth.queue_system.error}
+                      {currentSystemHealth.queue_system.error}
                     </div>
                   )}
                 </div>
@@ -191,15 +217,15 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
                   <div className="text-sm font-medium">Performance</div>
                   <div className="flex items-center space-x-2">
                     <Badge variant="default" className={getHealthStatus('healthy').bg}>
-                      {systemHealth.performance?.success_rate || 'Unknown'}
+                      {currentSystemHealth.performance?.success_rate || 'Unknown'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {systemHealth.performance?.average_response_time || 'N/A'}
+                      {currentSystemHealth.performance?.average_response_time || 'N/A'}
                     </span>
                   </div>
-                  {systemHealth.performance?.last_updated && (
+                  {currentSystemHealth.performance?.last_updated && (
                     <div className="text-xs text-muted-foreground mt-1">
-                      Updated: {formatTimestamp(systemHealth.performance.last_updated)}
+                      Updated: {formatTimestamp(currentSystemHealth.performance.last_updated)}
                     </div>
                   )}
                 </div>
@@ -207,7 +233,7 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
             </div>
           )}
 
-          {!systemHealth && (
+          {!currentSystemHealth && (
             <div className="text-center py-8 text-muted-foreground">
               <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-500" />
               <p>System health data not available</p>
