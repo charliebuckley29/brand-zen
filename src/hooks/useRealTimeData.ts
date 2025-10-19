@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useWebSocket } from './useWebSocket';
+import { useServerSentEvents } from './useServerSentEvents';
 import { createApiUrl } from '@/lib/api';
 
 interface RealTimeData {
@@ -39,26 +40,47 @@ export function useRealTimeData() {
     error: null
   });
 
-  // Create WebSocket URL
+  // Try SSE first (works with Vercel), fallback to WebSocket
+  const sse = useServerSentEvents({ enabled: true });
+  
+  // Create WebSocket URL as fallback
   const wsUrl = createApiUrl('/ws/admin')
     .replace('https://', 'wss://')
     .replace('http://', 'ws://');
 
-  const { isConnected, lastMessage, connectionAttempts, error, reconnect } = useWebSocket(wsUrl);
+  const { isConnected: wsConnected, lastMessage, connectionAttempts, error: wsError, reconnect: wsReconnect } = useWebSocket(wsUrl, { enabled: !sse.isConnected });
 
-  // Update connection state
+  // Update connection state - prefer SSE, fallback to WebSocket
   useEffect(() => {
+    const isConnected = sse.isConnected || wsConnected;
+    const error = sse.error || wsError;
+    const connectionAttempts = sse.isConnected ? 0 : connectionAttempts;
+    
     setState(prev => ({
       ...prev,
       isConnected,
       connectionAttempts,
       error
     }));
-  }, [isConnected, connectionAttempts, error]);
+  }, [sse.isConnected, sse.error, wsConnected, wsError, connectionAttempts]);
 
-  // Process incoming messages
+  // Process SSE data updates (primary method)
   useEffect(() => {
-    if (!lastMessage) return;
+    if (sse.data) {
+      setState(prev => ({
+        ...prev,
+        data: {
+          ...prev.data,
+          ...sse.data
+        },
+        lastUpdate: sse.lastUpdate || Date.now()
+      }));
+    }
+  }, [sse.data, sse.lastUpdate]);
+
+  // Process WebSocket messages (fallback only when SSE is not connected)
+  useEffect(() => {
+    if (!lastMessage || sse.isConnected) return; // Only use WebSocket if SSE is not connected
 
     const { type, data: messageData, timestamp } = lastMessage;
 
@@ -248,6 +270,15 @@ export function useRealTimeData() {
     
     return 'healthy';
   }, [state.data.systemHealth]);
+
+  // Combined reconnect function
+  const reconnect = useCallback(() => {
+    if (sse.isConnected) {
+      sse.reconnect();
+    } else {
+      wsReconnect();
+    }
+  }, [sse.isConnected, sse.reconnect, wsReconnect]);
 
   return {
     data: state.data,
