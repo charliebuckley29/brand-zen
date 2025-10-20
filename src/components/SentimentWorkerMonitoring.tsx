@@ -96,6 +96,8 @@ export function SentimentWorkerMonitoring() {
   const [sentimentData, setSentimentData] = useState<SentimentData | null>(null);
   const [diagnosticData, setDiagnosticData] = useState<any>(null);
   const [sentimentLoading, setSentimentLoading] = useState(false);
+  const [triggerLoading, setTriggerLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [expandedPending, setExpandedPending] = useState<Set<string>>(new Set());
   const [expandedAnalyzed, setExpandedAnalyzed] = useState<Set<string>>(new Set());
 
@@ -250,7 +252,10 @@ export function SentimentWorkerMonitoring() {
   };
 
   const triggerSentimentWorker = async () => {
+    setTriggerLoading(true);
     try {
+      toast.info('Starting sentiment worker...', { duration: 2000 });
+      
       const response = await fetch(createApiUrl('/mentions/sentiment-worker-unified'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -268,24 +273,38 @@ export function SentimentWorkerMonitoring() {
         
         if (result.success) {
           const stats = result.stats;
-          const message = `Sentiment processing complete: ${stats.totalProcessed} processed, ${stats.totalSkipped} skipped, ${stats.totalErrors} errors`;
-          toast.success(message);
+          const processingTime = Math.round((stats.processingTime || 0) / 1000);
+          
+          if (stats.totalProcessed > 0) {
+            toast.success(`✅ Sentiment processing complete! ${stats.totalProcessed} processed, ${stats.totalSkipped} skipped, ${stats.totalErrors} errors (${processingTime}s)`, { duration: 5000 });
+          } else if (stats.totalErrors > 0) {
+            toast.warning(`⚠️ Processing completed with ${stats.totalErrors} errors. Check OpenAI quota and API limits.`, { duration: 5000 });
+          } else {
+            toast.info(`ℹ️ No mentions to process. Queue is empty or all mentions already analyzed.`, { duration: 3000 });
+          }
+          
           await fetchSentimentData();
         } else {
-          toast.error('Sentiment worker failed');
+          toast.error('❌ Sentiment worker failed to start or complete processing');
         }
       } else {
-        console.warn('Unified sentiment worker endpoint not available');
-        toast.error('Unified sentiment worker endpoint not available');
+        const errorText = await response.text();
+        console.warn('Sentiment worker endpoint error:', response.status, errorText);
+        toast.error(`❌ Sentiment worker unavailable (${response.status}). Check backend status.`);
       }
     } catch (error) {
       console.error('Error triggering sentiment worker:', error);
-      toast.error('Failed to trigger sentiment worker');
+      toast.error('❌ Failed to trigger sentiment worker. Check network connection.');
+    } finally {
+      setTriggerLoading(false);
     }
   };
 
   const resetFailedSentiment = async () => {
+    setResetLoading(true);
     try {
+      toast.info('Resetting failed sentiment mentions...', { duration: 2000 });
+      
       const response = await fetch(createApiUrl('/admin/reset-failed-sentiment'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
@@ -295,18 +314,25 @@ export function SentimentWorkerMonitoring() {
         const result = await response.json();
         
         if (result.success) {
-          toast.success(`Reset ${result.resetCount} failed sentiment mentions back to pending`);
+          if (result.resetCount > 0) {
+            toast.success(`✅ Successfully reset ${result.resetCount} failed sentiment mentions! They can now be reprocessed.`, { duration: 5000 });
+          } else {
+            toast.info(`ℹ️ No failed mentions found to reset. All mentions are in good state.`, { duration: 3000 });
+          }
           await fetchSentimentData();
         } else {
-          toast.error('Failed to reset failed sentiment mentions');
+          toast.error('❌ Failed to reset failed mentions. Check backend logs.');
         }
       } else {
-        console.warn('Reset failed sentiment endpoint not available');
-        toast.error('Reset failed sentiment endpoint not available');
+        const errorText = await response.text();
+        console.warn('Reset failed sentiment endpoint error:', response.status, errorText);
+        toast.error(`❌ Reset endpoint unavailable (${response.status}). Check backend status.`);
       }
     } catch (error) {
       console.error('Error resetting failed sentiment:', error);
-      toast.error('Failed to reset failed sentiment mentions');
+      toast.error('❌ Failed to reset failed sentiment mentions. Check network connection.');
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -395,17 +421,27 @@ export function SentimentWorkerMonitoring() {
                 onClick={triggerSentimentWorker}
                 variant="default"
                 size="sm"
+                disabled={triggerLoading}
               >
-                <Zap className="h-4 w-4 mr-2" />
-                Trigger Worker
+                {triggerLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Zap className="h-4 w-4 mr-2" />
+                )}
+                {triggerLoading ? 'Processing...' : 'Trigger Worker'}
               </Button>
               <Button 
                 onClick={resetFailedSentiment}
                 variant="destructive"
                 size="sm"
+                disabled={resetLoading}
               >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Reset Failed
+                {resetLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                {resetLoading ? 'Resetting...' : 'Reset Failed'}
               </Button>
               <Button 
                 onClick={checkWorkerHealth}
