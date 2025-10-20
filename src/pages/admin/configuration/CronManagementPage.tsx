@@ -62,15 +62,31 @@ export default function CronManagementPage() {
       // Fetch cron configurations
       const configResponse = await fetch(createApiUrl('/admin/cron/config'));
       if (configResponse.ok) {
-        const configs = await configResponse.json();
-        setCronConfigs(configs);
+        const result = await configResponse.json();
+        if (result.success && result.config) {
+          // Transform the config object into an array format
+          const configArray = Object.entries(result.config).map(([key, value]: [string, any]) => ({
+            key,
+            name: key.replace('cron.', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            description: `Cron job for ${key.replace('cron.', '').replace(/_/g, ' ')}`,
+            enabled: value?.enabled || false,
+            interval_minutes: value?.interval_minutes || 0
+          }));
+          setCronConfigs(configArray);
+        } else {
+          setCronConfigs([]);
+        }
       }
 
       // Fetch cron history
       const historyResponse = await fetch(createApiUrl('/admin/cron/history?limit=20'));
       if (historyResponse.ok) {
-        const history = await historyResponse.json();
-        setCronHistory(history);
+        const result = await historyResponse.json();
+        if (result.success && Array.isArray(result.history)) {
+          setCronHistory(result.history);
+        } else {
+          setCronHistory([]);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch cron data:', error);
