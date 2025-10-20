@@ -37,6 +37,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import UsersOverview from "./pages/admin/users/UsersOverview";
 import MonitoringOverview from "./pages/admin/monitoring/MonitoringOverview";
 import ConfigurationOverview from "./pages/admin/configuration/ConfigurationOverview";
+import CronManagementPage from "./pages/admin/configuration/CronManagementPage";
 import ToolsOverview from "./pages/admin/tools/ToolsOverview";
 
 // Individual monitoring pages
@@ -175,6 +176,7 @@ const App = () => {
                   
                   {/* Configuration Section */}
                   <Route path="/admin/configuration" element={<ConfigurationOverview />} />
+                  <Route path="/admin/configuration/cron" element={<CronManagementPage />} />
                   <Route path="/admin/configuration/integrations" element={<AdminTwilioPanel />} />
                   <Route path="/admin/configuration/email" element={<AdminEmailDeliveryMonitoring />} />
                   

@@ -91,6 +91,16 @@ export default function ConfigurationOverview() {
       features: ['Delivery Monitoring', 'Template Management', 'Retry Logic', 'Webhook Processing']
     },
     {
+      id: 'cron',
+      title: 'Cron Management',
+      description: 'Control and monitor automated cron job execution',
+      icon: Clock,
+      color: 'bg-indigo-100 text-indigo-600',
+      href: '/admin/configuration/cron',
+      status: 'implemented',
+      features: ['Runtime Control', 'Execution History', 'Status Monitoring', 'Emergency Stop']
+    },
+    {
       id: 'system',
       title: 'System Configuration',
       description: 'Global system settings and maintenance',
@@ -269,6 +279,12 @@ export default function ConfigurationOverview() {
             <Button variant="outline" className="w-full justify-start">
               <MessageSquare className="w-4 h-4 mr-2" />
               Twilio
+            </Button>
+          </Link>
+          <Link to="/admin/configuration/cron">
+            <Button variant="outline" className="w-full justify-start">
+              <Clock className="w-4 h-4 mr-2" />
+              Cron Jobs
             </Button>
           </Link>
           <Button variant="outline" className="w-full justify-start" disabled>

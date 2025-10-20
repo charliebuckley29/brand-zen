@@ -1,7 +1,7 @@
 import { useUserRole } from "../../hooks/use-user-role";
 import { EnhancedCard, EnhancedCardContent, EnhancedCardDescription, EnhancedCardHeader, EnhancedCardTitle } from "../../components/ui/enhanced-card";
 import { Button } from "../../components/ui/button";
-import { ArrowLeft, Users, Activity, Settings, Wrench, TrendingUp, BarChart3, UserCheck, Shield, AlertTriangle, Brain, Zap, Mail, TestTube, Key, Database, Wifi } from "lucide-react";
+import { ArrowLeft, Users, Activity, Settings, Wrench, TrendingUp, BarChart3, UserCheck, Shield, AlertTriangle, Brain, Zap, Mail, TestTube, Key, Database, Wifi, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AdminLayout } from "../../components/ui/admin-layout";
 import { Grid } from "../../components/ui/layout-system";
@@ -265,6 +265,12 @@ export default function AdminDashboard() {
             <Button variant="outline" className="w-full justify-start">
               <TestTube className="w-4 h-4 mr-2" />
               Debug Tools
+            </Button>
+          </Link>
+          <Link to="/admin/configuration/cron">
+            <Button variant="outline" className="w-full justify-start">
+              <Clock className="w-4 h-4 mr-2" />
+              Cron Control
             </Button>
           </Link>
         </div>
