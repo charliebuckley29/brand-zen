@@ -254,18 +254,12 @@ export function SentimentWorkerMonitoring() {
   const triggerSentimentWorker = async () => {
     setTriggerLoading(true);
     try {
-      toast.info('Starting sentiment worker...', { duration: 2000 });
+      toast.info('Starting clean sentiment worker...', { duration: 2000 });
       
-      const response = await fetch(createApiUrl('/mentions/sentiment-worker-unified'), {
+      const response = await fetch(createApiUrl('/mentions/sentiment-worker-clean'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          batchSize: 10,
-          maxConcurrent: 3,
-          maxProcessingTime: 60000, // 1 minute
-          skipEmpty: true,
-          parallelProcessing: true
-        })
+        body: JSON.stringify({}) // Clean worker needs no parameters
       });
       
       if (response.ok) {
@@ -428,7 +422,7 @@ export function SentimentWorkerMonitoring() {
                 ) : (
                   <Zap className="h-4 w-4 mr-2" />
                 )}
-                {triggerLoading ? 'Processing...' : 'Trigger Worker'}
+                {triggerLoading ? 'Processing...' : 'Trigger Clean Worker'}
               </Button>
               <Button 
                 onClick={resetFailedSentiment}
