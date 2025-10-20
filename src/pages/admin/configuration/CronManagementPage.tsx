@@ -4,6 +4,7 @@ import { EnhancedCard, EnhancedCardContent, EnhancedCardDescription, EnhancedCar
 import { Button } from "../../../components/ui/button";
 import { Badge } from "../../../components/ui/badge";
 import { Switch } from "../../../components/ui/switch";
+import { createApiUrl } from "../../../lib/api";
 import { 
   Clock, 
   Play, 
@@ -59,14 +60,14 @@ export default function CronManagementPage() {
       setLoading(true);
       
       // Fetch cron configurations
-      const configResponse = await fetch('/api/admin/cron/config');
+      const configResponse = await fetch(createApiUrl('/admin/cron/config'));
       if (configResponse.ok) {
         const configs = await configResponse.json();
         setCronConfigs(configs);
       }
 
       // Fetch cron history
-      const historyResponse = await fetch('/api/admin/cron/history?limit=20');
+      const historyResponse = await fetch(createApiUrl('/admin/cron/history?limit=20'));
       if (historyResponse.ok) {
         const history = await historyResponse.json();
         setCronHistory(history);
@@ -87,7 +88,7 @@ export default function CronManagementPage() {
     try {
       setUpdating(cronKey);
       
-      const response = await fetch('/api/admin/cron/config', {
+      const response = await fetch(createApiUrl('/admin/cron/config'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [cronKey]: { enabled } })
