@@ -185,11 +185,11 @@ export function SentimentWorkerMonitoring() {
         const transformedData = {
           success: true,
           queueStatus: {
-            pendingAnalysis: result.diagnostics.queueAnalysis.totalPending,
+            pendingAnalysis: result.diagnostics?.queueAnalysis?.totalPending || 0,
             emptyMentions: 0, // Will be calculated from content analysis
-            totalPending: result.diagnostics.queueAnalysis.totalPending,
-            recentAnalyzed: result.diagnostics.performanceMetrics.last_24_hours.processed,
-            totalAnalyzed: result.diagnostics.queueAnalysis.totalProcessed,
+            totalPending: result.diagnostics?.queueAnalysis?.totalPending || 0,
+            recentAnalyzed: result.diagnostics?.performanceMetrics?.last_24_hours?.processed || 0,
+            totalAnalyzed: result.diagnostics?.queueAnalysis?.totalProcessed || 0,
             sentimentDistribution: {
               positive: 0, // Not available in diagnostic data
               negative: 0,
@@ -197,15 +197,38 @@ export function SentimentWorkerMonitoring() {
               unknown: 0
             }
           },
-          pendingMentions: result.diagnostics.errorAnalysis.recentErrorMentions || [],
+          pendingMentions: Array.isArray(result.diagnostics?.errorAnalysis?.recentErrorMentions) 
+            ? result.diagnostics.errorAnalysis.recentErrorMentions 
+            : [],
           emptyMentions: [],
           recentAnalyzed: [],
-          timestamp: result.diagnostics.timestamp
+          timestamp: result.diagnostics?.timestamp || new Date().toISOString()
         };
         setSentimentData(transformedData);
         
-        // Store the full diagnostic data for error display
-        setDiagnosticData(result.diagnostics);
+        // Store the full diagnostic data for error display with safety checks
+        const safeDiagnosticData = {
+          ...result.diagnostics,
+          errorAnalysis: {
+            ...result.diagnostics?.errorAnalysis,
+            recentErrorMentions: Array.isArray(result.diagnostics?.errorAnalysis?.recentErrorMentions) 
+              ? result.diagnostics.errorAnalysis.recentErrorMentions 
+              : []
+          },
+          systemHealth: {
+            ...result.diagnostics?.systemHealth,
+            issues: Array.isArray(result.diagnostics?.systemHealth?.issues) 
+              ? result.diagnostics.systemHealth.issues 
+              : [],
+            warnings: Array.isArray(result.diagnostics?.systemHealth?.warnings) 
+              ? result.diagnostics.systemHealth.warnings 
+              : []
+          },
+          recommendations: Array.isArray(result.diagnostics?.recommendations) 
+            ? result.diagnostics.recommendations 
+            : []
+        };
+        setDiagnosticData(safeDiagnosticData);
       } else {
         // Fallback to old endpoint if new one isn't available
         const fallbackResponse = await fetch(createApiUrl('/debug/check-sentiment-queue'));
