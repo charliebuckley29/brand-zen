@@ -199,8 +199,8 @@ export function SentimentWorkerMonitoring() {
               unknown: 0
             }
           },
-          pendingMentions: Array.isArray(result.diagnostics?.errorAnalysis?.recentErrorMentions) 
-            ? result.diagnostics.errorAnalysis.recentErrorMentions 
+          pendingMentions: Array.isArray(result.diagnostics?.pendingMentions) 
+            ? result.diagnostics.pendingMentions 
             : [],
           emptyMentions: [],
           recentAnalyzed: [],
