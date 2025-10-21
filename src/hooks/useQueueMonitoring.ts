@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { createApiUrl } from '@/lib/api';
+import { createApiUrl, apiFetch } from '@/lib/api';
 
 export interface QueueEntry {
   id: string;
@@ -71,20 +71,12 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
       setLoading(true);
       setError(null);
 
-      const baseUrl = createApiUrl('');
-      const url = new URL('/api/admin/queue-status', baseUrl);
-      
+      let endpoint = '/admin/queue-status?limit=100';
       if (apiSource) {
-        url.searchParams.set('api_source', apiSource);
-      }
-      url.searchParams.set('limit', '100');
-
-      const response = await fetch(url.toString());
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        endpoint += `&api_source=${apiSource}`;
       }
 
+      const response = await apiFetch(endpoint);
       const result = await response.json();
       
       if (result.success) {

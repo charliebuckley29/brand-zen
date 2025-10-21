@@ -24,7 +24,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createApiUrl } from '@/lib/api';
+import { createApiUrl, apiFetch } from '@/lib/api';
 
 interface DiagnosticData {
   timestamp: string;
@@ -132,13 +132,9 @@ export function SentimentDiagnosticsDashboard() {
   const fetchDiagnostics = async () => {
     setLoading(true);
     try {
-      const response = await fetch(createApiUrl('/admin/sentiment-diagnostics'));
-      if (response.ok) {
-        const result = await response.json();
-        setDiagnosticData(result.diagnostics);
-      } else {
-        toast.error('Failed to fetch diagnostics');
-      }
+      const response = await apiFetch('/admin/sentiment-diagnostics');
+      const result = await response.json();
+      setDiagnosticData(result.diagnostics);
     } catch (error) {
       console.error('Error fetching diagnostics:', error);
       toast.error('Failed to fetch diagnostics');

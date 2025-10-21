@@ -15,7 +15,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createApiUrl } from '@/lib/api';
+import { createApiUrl, apiFetch } from '@/lib/api';
 
 interface ApiMonitoringProps {
   onRefresh: () => void;
@@ -29,26 +29,16 @@ export function ApiMonitoring({ onRefresh, loading }: ApiMonitoringProps) {
   const fetchApiData = async () => {
     try {
       // Fetch API limits (real API key status)
-      const limitsResponse = await fetch(createApiUrl('/admin/api-limits'));
-      if (limitsResponse.ok) {
-        const limitsData = await limitsResponse.json();
-        console.log('API limits data:', limitsData); // Debug log
-        setApiLimits(limitsData.data || limitsData);
-      } else {
-        console.warn('API limits endpoint not available');
-        setApiLimits(null);
-      }
+      const limitsResponse = await apiFetch('/admin/api-limits');
+      const limitsData = await limitsResponse.json();
+      console.log('API limits data:', limitsData); // Debug log
+      setApiLimits(limitsData.data || limitsData);
 
       // Fetch real user quota usage instead of deprecated api-usage
-      const quotaResponse = await fetch(createApiUrl('/admin/user-quota-usage'));
-      if (quotaResponse.ok) {
-        const quotaData = await quotaResponse.json();
-        console.log('User quota usage data:', quotaData); // Debug log
-        setUserQuotaUsage(quotaData.data || quotaData);
-      } else {
-        console.warn('User quota usage endpoint not available');
-        setUserQuotaUsage(null);
-      }
+      const quotaResponse = await apiFetch('/admin/user-quota-usage');
+      const quotaData = await quotaResponse.json();
+      console.log('User quota usage data:', quotaData); // Debug log
+      setUserQuotaUsage(quotaData.data || quotaData);
     } catch (error) {
       console.error('Error fetching API data:', error);
       // Don't show toast for missing endpoints, just log the error

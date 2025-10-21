@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { createApiUrl } from '@/lib/api';
+import { createApiUrl, apiFetch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -196,7 +196,10 @@ export default function AdminTestDebugTools() {
         options.body = JSON.stringify(cursorTestParams);
       }
 
-      const response = await fetch(url, options);
+      // Use apiFetch for admin endpoints that require authentication
+      const response = tool.endpoint.startsWith('/api/admin/') 
+        ? await apiFetch(tool.endpoint.replace('/api', ''), options)
+        : await fetch(url, options);
       const result = await response.json();
 
       const endTime = new Date();

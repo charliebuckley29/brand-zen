@@ -22,7 +22,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createApiUrl } from '@/lib/api';
+import { createApiUrl, apiFetch } from '@/lib/api';
 import { RealTimeIndicator } from './RealTimeIndicator';
 import { useRealTimeData } from '@/hooks/useRealTimeData';
 
@@ -49,26 +49,16 @@ export function SystemOverview({ onRefresh, loading }: SystemOverviewProps) {
   const fetchSystemData = async () => {
     try {
       // Fetch system health
-      const healthResponse = await fetch(createApiUrl('/admin/system-health'));
-      if (healthResponse.ok) {
-        const healthData = await healthResponse.json();
-        console.log('System health data:', healthData); // Debug log
-        setSystemHealth(healthData.data || healthData);
-      } else {
-        console.warn('System health endpoint not available');
-        setSystemHealth(null);
-      }
+      const healthResponse = await apiFetch('/admin/system-health');
+      const healthData = await healthResponse.json();
+      console.log('System health data:', healthData); // Debug log
+      setSystemHealth(healthData.data || healthData);
 
       // Fetch cache stats
-      const cacheResponse = await fetch(createApiUrl('/admin/cache-stats'));
-      if (cacheResponse.ok) {
-        const cacheData = await cacheResponse.json();
-        console.log('Cache stats data:', cacheData); // Debug log
-        setCacheStats(cacheData.data || cacheData);
-      } else {
-        console.warn('Cache stats endpoint not available');
-        setCacheStats(null);
-      }
+      const cacheResponse = await apiFetch('/admin/cache-stats');
+      const cacheData = await cacheResponse.json();
+      console.log('Cache stats data:', cacheData); // Debug log
+      setCacheStats(cacheData.data || cacheData);
     } catch (error) {
       console.error('Error fetching system data:', error);
       // Don't show toast for missing endpoints, just log the error

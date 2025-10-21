@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { createApiUrl } from '@/lib/api';
+import { createApiUrl, apiFetch } from '@/lib/api';
 
 interface SystemHealthScore {
   overall: number;
@@ -83,10 +83,10 @@ export function EnhancedAnalyticsDashboard() {
     try {
       // Fetch all analytics data in parallel
       const [healthResponse, insightsResponse, trendsResponse, benchmarksResponse] = await Promise.all([
-        fetch(createApiUrl('/admin/analytics/health-score')),
-        fetch(createApiUrl('/admin/analytics/predictive-insights')),
-        fetch(createApiUrl(`/admin/analytics/trends?metric=${selectedMetric}&period=${selectedPeriod}`)),
-        fetch(createApiUrl('/admin/analytics/benchmarks'))
+        apiFetch('/admin/analytics/health-score'),
+        apiFetch('/admin/analytics/predictive-insights'),
+        apiFetch(`/admin/analytics/trends?metric=${selectedMetric}&period=${selectedPeriod}`),
+        apiFetch('/admin/analytics/benchmarks')
       ]);
 
       const [healthResult, insightsResult, trendsResult, benchmarksResult] = await Promise.all([

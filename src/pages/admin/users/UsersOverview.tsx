@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { createApiUrl } from "../../../lib/api";
+import { createApiUrl, apiFetch } from "../../../lib/api";
 
 interface UserStats {
   totalUsers: number;
@@ -35,7 +35,7 @@ export default function UsersOverview() {
 
   const fetchUserStats = async () => {
     try {
-      const response = await fetch(createApiUrl('/admin/users'));
+      const response = await apiFetch('/admin/users');
       const data = await response.json();
       
       if (data.success) {
