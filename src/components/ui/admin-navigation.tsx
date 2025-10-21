@@ -49,7 +49,7 @@ interface AdminNavSection {
 
 export function AdminNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<string[]>(['users', 'monitoring', 'configuration', 'tools']);
+  const [expandedSections, setExpandedSections] = useState<string[]>(['users', 'monitoring', 'configuration', 'tools', 'miscellaneous']);
   const location = useLocation();
   const { isAdmin, isModerator } = useUserRole();
 
@@ -87,6 +87,7 @@ export function AdminNavigation() {
         { id: "monitoring-users", label: "User Activity", path: "/admin/monitoring/users" },
         { id: "monitoring-alerts", label: "System Alerts", path: "/admin/monitoring/alerts" },
         { id: "monitoring-sentiment", label: "Sentiment Worker", path: "/admin/monitoring/sentiment" },
+        { id: "monitoring-queues", label: "Queue Monitoring", path: "/admin/monitoring/queues" },
         { id: "monitoring-archives", label: "Log Archives", path: "/admin/monitoring/archives" },
         { id: "monitoring-retention", label: "Archive Retention", path: "/admin/monitoring/retention" }
       ]
@@ -99,6 +100,7 @@ export function AdminNavigation() {
       description: "Settings and integrations",
       subItems: [
         { id: "config-overview", label: "Overview", path: "/admin/configuration" },
+        { id: "config-cron", label: "Cron Management", path: "/admin/configuration/cron" },
         { id: "config-integrations", label: "Integrations", path: "/admin/twilio" },
         { id: "config-api", label: "API Keys", path: "/admin/api" },
         { id: "config-email", label: "Email Monitoring", path: "/admin/email-delivery" }
@@ -111,9 +113,28 @@ export function AdminNavigation() {
       path: "/admin/tools",
       description: "Debug, test, logs",
       subItems: [
+        { id: "tools-overview", label: "Overview", path: "/admin/tools" },
         { id: "tools-debug", label: "Debug Tools", path: "/admin/test-debug" },
         { id: "tools-bugs", label: "Bug Reports", path: "/admin/bug-reports" },
         { id: "tools-websocket", label: "WebSocket Debug", path: "/admin/websocket-debug" }
+      ]
+    },
+    {
+      id: "miscellaneous",
+      label: "Miscellaneous",
+      icon: Database,
+      path: "/admin/misc",
+      description: "Additional admin panels",
+      subItems: [
+        { id: "misc-overview", label: "Overview", path: "/admin/misc" },
+        { id: "misc-api-limits", label: "API Limits Panel", path: "/admin/api-limits" },
+        { id: "misc-email-delivery", label: "Email Delivery", path: "/admin/email-delivery" },
+        { id: "misc-system-alerts", label: "System Alerts", path: "/admin/system-alerts" },
+        { id: "misc-enhanced-analytics", label: "Enhanced Analytics", path: "/admin/enhanced-analytics" },
+        { id: "misc-automated-recovery", label: "Automated Recovery", path: "/admin/automated-recovery" },
+        { id: "misc-queue-errors", label: "Queue Error Monitoring", path: "/admin/queue-errors" },
+        { id: "misc-test-debug", label: "Test & Debug Tools", path: "/admin/test-debug" },
+        { id: "misc-unified-monitoring", label: "Unified Monitoring", path: "/admin/unified-monitoring" }
       ]
     }
   ];
