@@ -39,6 +39,7 @@ import MonitoringOverview from "./pages/admin/monitoring/MonitoringOverview";
 import ConfigurationOverview from "./pages/admin/configuration/ConfigurationOverview";
 import CronManagementPage from "./pages/admin/configuration/CronManagementPage";
 import ToolsOverview from "./pages/admin/tools/ToolsOverview";
+import MiscAdminPanels from "./pages/admin/MiscAdminPanels";
 
 // Individual monitoring pages
 import SystemMonitoringPage from "./pages/admin/monitoring/SystemMonitoringPage";
@@ -187,6 +188,9 @@ const App = () => {
                   <Route path="/admin/tools/websocket-debug" element={<AdminWebSocketDebug />} />
                   <Route path="/admin/tools/logs" element={<MonitoringOverview />} />
                   <Route path="/admin/tools/bug-reports" element={<AdminBugReportsPage />} />
+                  
+                  {/* Miscellaneous Admin Panels */}
+                  <Route path="/admin/misc" element={<MiscAdminPanels />} />
                   
                   {/* Legacy routes (redirected to new structure) */}
                   <Route path="/admin/api" element={<AdminUserQuotaManagement />} />

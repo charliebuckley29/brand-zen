@@ -161,6 +161,16 @@ export default function MonitoringOverview() {
       features: ['Worker Status', 'Processing Metrics', 'Queue Health', 'Performance Analytics']
     },
     {
+      id: 'queues',
+      title: 'Queue Monitoring',
+      description: 'Monitor source queues, view errors, and reset failed queues',
+      icon: Activity,
+      color: 'bg-blue-100 text-blue-600',
+      href: '/admin/monitoring/queues',
+      status: 'implemented',
+      features: ['Queue Status', 'Error Logs', 'Retry Analytics', 'Queue Reset']
+    },
+    {
       id: 'archives',
       title: 'Log Archives',
       description: 'Manage and view system log archives',

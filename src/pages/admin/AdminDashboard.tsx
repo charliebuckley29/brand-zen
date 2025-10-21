@@ -107,6 +107,23 @@ export default function AdminDashboard() {
         'Log Management',
         'Bug Reports'
       ]
+    },
+    {
+      id: 'misc',
+      title: 'Miscellaneous',
+      description: 'Additional admin panels and utilities',
+      icon: Settings,
+      color: 'bg-gray-100 text-gray-600',
+      href: '/admin/misc',
+      features: [
+        'API Limits Panel',
+        'Email Delivery Monitoring',
+        'System Alerts',
+        'Enhanced Analytics',
+        'Automated Recovery',
+        'Queue Error Monitoring',
+        'Test & Debug Tools'
+      ]
     }
   ];
 
