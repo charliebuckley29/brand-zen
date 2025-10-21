@@ -39,7 +39,7 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
       const statsData = await statsResponse.json();
       
       // Fetch detailed fetch logs
-      const logsResponse = await apiFetch(API_ENDPOINTS.DETAILED_FETCH_LOGS);
+      const logsResponse = await apiFetch('/debug/detailed-fetch-logs');
       const logsData = await logsResponse.json();
       
       setTechnicalData({

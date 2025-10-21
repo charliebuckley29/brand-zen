@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { createApiUrl } from '@/lib/api';
+import { createApiUrl, apiFetch } from '@/lib/api';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { 
@@ -233,7 +233,7 @@ export function SentimentWorkerMonitoring() {
         setDiagnosticData(safeDiagnosticData);
       } else {
         // Fallback to old endpoint if new one isn't available
-        const fallbackResponse = await fetch(createApiUrl('/debug/check-sentiment-queue'));
+        const fallbackResponse = await apiFetch('/debug/check-sentiment-queue');
         if (fallbackResponse.ok) {
           const result = await fallbackResponse.json();
           setSentimentData(result);
@@ -332,7 +332,7 @@ export function SentimentWorkerMonitoring() {
 
   const checkWorkerHealth = async () => {
     try {
-      const response = await fetch(createApiUrl('/debug/sentiment-worker-health'));
+      const response = await apiFetch('/debug/sentiment-worker-health');
       if (response.ok) {
         const health = await response.json();
         if (!health.healthy) {

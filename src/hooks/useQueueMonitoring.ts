@@ -102,7 +102,7 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(createApiUrl('/debug/reset-failed-queue'), {
+      const response = await apiFetch('/debug/reset-failed-queue', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -136,7 +136,7 @@ export function useQueueMonitoring(options: UseQueueMonitoringOptions = {}) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(createApiUrl(`/debug/reset-failed-queue?api_source=${apiSource}`), {
+      const response = await apiFetch(`/debug/reset-failed-queue?api_source=${apiSource}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

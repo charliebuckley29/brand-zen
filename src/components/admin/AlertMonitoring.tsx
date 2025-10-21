@@ -16,7 +16,7 @@ import {
   Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createApiUrl } from '@/lib/api';
+import { createApiUrl, apiFetch } from '@/lib/api';
 
 interface AlertMonitoringProps {
   onRefresh: () => void;
@@ -32,7 +32,7 @@ export function AlertMonitoring({ onRefresh, loading }: AlertMonitoringProps) {
   const fetchAlertData = async () => {
     try {
       // For now, use automation logs as alerts since we don't have a dedicated alerts endpoint
-      const logsResponse = await fetch(createApiUrl('/debug/logs?limit=50'));
+      const logsResponse = await apiFetch('/debug/logs?limit=50');
       if (logsResponse.ok) {
         const logsData = await logsResponse.json();
         // Convert logs to alert format

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { createApiUrl } from "@/lib/api";
+import { createApiUrl, apiFetch, API_ENDPOINTS } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -77,13 +77,7 @@ export function FetchLogsModal() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const backendUrl = createApiUrl('');
-      const response = await fetch(`${backendUrl}/api/debug/detailed-fetch-logs`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch detailed logs: ${response.status}`);
-      }
-      
+      const response = await apiFetch('/debug/detailed-fetch-logs');
       const data = await response.json();
       
       // Debug: Log the received data structure
