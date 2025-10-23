@@ -57,7 +57,7 @@ export const API_ENDPOINTS = {
   SYSTEM_STATUS: '/api/system/status',
   
   // Debug endpoints
-  DETAILED_FETCH_LOGS: '/api/debug/detailed-fetch-logs',
+        DETAILED_FETCH_LOGS: '/api/admin/detailed-fetch-logs',
   EMAIL_DIAGNOSIS: '/api/debug/email-diagnosis',
   TEST_NEGATIVE_EMAIL: '/api/debug/test-negative-email',
   

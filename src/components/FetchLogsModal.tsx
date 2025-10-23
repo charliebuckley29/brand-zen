@@ -77,7 +77,7 @@ export function FetchLogsModal() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const response = await apiFetch('/debug/detailed-fetch-logs');
+      const response = await apiFetch('/admin/detailed-fetch-logs');
       const data = await response.json();
       
       // Debug: Log the received data structure

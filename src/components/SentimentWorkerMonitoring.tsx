@@ -233,7 +233,7 @@ export function SentimentWorkerMonitoring() {
         setDiagnosticData(safeDiagnosticData);
       } else {
         // Fallback to old endpoint if new one isn't available
-        const fallbackResponse = await apiFetch('/debug/check-sentiment-queue');
+        const fallbackResponse = await apiFetch('/admin/check-sentiment-queue');
         if (fallbackResponse.ok) {
           const result = await fallbackResponse.json();
           setSentimentData(result);
@@ -332,7 +332,7 @@ export function SentimentWorkerMonitoring() {
 
   const checkWorkerHealth = async () => {
     try {
-      const response = await apiFetch('/debug/sentiment-worker-health');
+      const response = await apiFetch('/admin/sentiment-worker-health');
       if (response.ok) {
         const health = await response.json();
         if (!health.healthy) {
