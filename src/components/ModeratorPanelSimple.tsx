@@ -22,7 +22,6 @@ import { StatusIndicator, EmailStatusIndicator, UserStatusIndicator } from "@/co
 import { MobileNavBar } from "@/components/ui/mobile-nav-bar";
 import { UserBrandInfoSection } from "@/components/UserBrandInfoSection";
 import { KeywordSourceManagement } from "@/components/KeywordSourceManagement";
-import { BrandEditor } from "@/components/BrandEditor";
 import { extractBrandInfo, type StandardizedKeyword } from "@/lib/keywordUtils";
 
 interface User {
@@ -197,9 +196,8 @@ export function ModeratorPanelSimple() {
 
         {/* Tabs */}
         <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="users">Users ({users.length})</TabsTrigger>
-            <TabsTrigger value="keywords">Keywords</TabsTrigger>
             <TabsTrigger value="flagged">Flagged Mentions ({flaggedMentions.length})</TabsTrigger>
           </TabsList>
 
@@ -423,31 +421,6 @@ export function ModeratorPanelSimple() {
             </div>
           </TabsContent>
 
-          <TabsContent value="keywords" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Keyword x Source Management</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Select a user to configure automation and display preferences for their keywords and sources
-                </p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Click on a user below to configure their keyword x source automation settings:
-                </p>
-              </div>
-
-              <div className="grid gap-4">
-                {userKeywords.map((keyword) => (
-                  <BrandEditor
-                    key={keyword.id}
-                    keyword={keyword}
-                    user={users.find(u => u.id === keyword.user_id) || {} as User}
-                    onUpdate={() => {}} // TODO: Implement
-                    onUpdateProfile={() => {}} // TODO: Implement
-                  />
-                ))}
-              </div>
-            </div>
-          </TabsContent>
 
           <TabsContent value="flagged" className="space-y-4">
             <div className="space-y-4">
