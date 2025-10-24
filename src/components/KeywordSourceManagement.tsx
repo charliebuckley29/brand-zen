@@ -177,8 +177,7 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
       console.log('🔧 [MODERATOR] Keywords data:', keywordsData);
       
       if (keywordsData.success) {
-        setKeywords(keywordsData.data);
-        console.log('🔧 [MODERATOR] Set keywords:', keywordsData.data.length, 'keywords');
+        console.log('🔧 [MODERATOR] Keywords data received:', keywordsData.data.length, 'keywords');
         
         // For each keyword, fetch source preferences
         const allPreferences: KeywordSourcePreference[] = [];
@@ -227,6 +226,33 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
         
         console.log('🔧 [MODERATOR] Total preferences collected:', allPreferences.length);
         setPreferences(allPreferences);
+        
+        // Merge RSS URL data from preferences into keywords
+        console.log('🔧 [MODERATOR] Merging RSS URL data from preferences into keywords...');
+        const updatedKeywords = keywordsData.data.map(keyword => {
+          // Find the Google Alerts preference for this keyword
+          const googleAlertPref = allPreferences.find(pref => 
+            pref.keyword === keyword.keyword_text && 
+            pref.source_type === 'google_alert'
+          );
+          
+          if (googleAlertPref && googleAlertPref.source_url) {
+            console.log('🔧 [MODERATOR] Found RSS URL for keyword:', keyword.keyword_text, 'URL:', googleAlertPref.source_url);
+            return {
+              ...keyword,
+              google_alert_rss_url: googleAlertPref.source_url
+            };
+          } else {
+            console.log('🔧 [MODERATOR] No RSS URL found for keyword:', keyword.keyword_text);
+            return {
+              ...keyword,
+              google_alert_rss_url: null
+            };
+          }
+        });
+        
+        console.log('🔧 [MODERATOR] Updated keywords with RSS URLs:', updatedKeywords);
+        setKeywords(updatedKeywords);
       } else {
         console.error('🔧 [MODERATOR] Keywords API returned success: false', keywordsData);
         throw new Error(keywordsData.error || 'Keywords API failed');
