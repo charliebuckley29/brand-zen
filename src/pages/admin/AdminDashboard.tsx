@@ -266,6 +266,12 @@ export default function AdminDashboard() {
               Queue Status
             </Button>
           </Link>
+          <Link to="/admin/monitoring/inngest">
+            <Button variant="outline" className="w-full justify-start">
+              <Zap className="w-4 h-4 mr-2" />
+              Inngest Functions
+            </Button>
+          </Link>
           <Link to="/admin/monitoring/sentiment">
             <Button variant="outline" className="w-full justify-start">
               <Brain className="w-4 h-4 mr-2" />

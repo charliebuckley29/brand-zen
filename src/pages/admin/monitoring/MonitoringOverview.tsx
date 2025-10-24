@@ -171,6 +171,16 @@ export default function MonitoringOverview() {
       features: ['Queue Status', 'Error Logs', 'Retry Analytics', 'Queue Reset']
     },
     {
+      id: 'inngest',
+      title: 'Inngest Function Monitoring',
+      description: 'Monitor Inngest functions, event processing, and function performance',
+      icon: Zap,
+      color: 'bg-indigo-100 text-indigo-600',
+      href: '/admin/monitoring/inngest',
+      status: 'implemented',
+      features: ['Function Performance', 'Event Tracking', 'Error Monitoring', 'Health Scoring']
+    },
+    {
       id: 'archives',
       title: 'Log Archives',
       description: 'Manage and view system log archives',
