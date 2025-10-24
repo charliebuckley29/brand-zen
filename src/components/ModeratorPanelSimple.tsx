@@ -260,6 +260,16 @@ export function ModeratorPanelSimple() {
                     setSelectedUser(user);
                     const userKeywordsList = userKeywords.filter(k => k.user_id === user.id);
                     const brandInfo = extractBrandInfo(userKeywordsList);
+                    
+                    // Debug: Log what we're setting in editingProfile
+                    console.log('🔧 [MODERATOR] Setting editingProfile for user:', {
+                      userId: user.id,
+                      userKeywordsList,
+                      brandInfo,
+                      extractedBrandName: brandInfo.brand_name,
+                      extractedVariants: brandInfo.variants
+                    });
+                    
                     setEditingProfile({
                       full_name: user.full_name || user.profile?.full_name || '',
                       email: user.email,
@@ -667,13 +677,22 @@ export function ModeratorPanelSimple() {
                 ) : (
                   <>
                     {/* Edit Mode - Brand Configuration Form */}
-                    <div className="space-y-4">
+                    <div className="space-y-4" key={`edit-form-${selectedUser.id}`}>
                       <div className="flex items-center gap-2">
                         <Building2 className="h-5 w-5 text-muted-foreground" />
                         <h3 className="text-lg font-semibold">Configure Brand Information</h3>
                       </div>
                       
                       <div className="grid gap-4">
+                        {/* Debug: Show current editingProfile state */}
+                        <div className="bg-yellow-50 p-2 rounded text-xs">
+                          <strong>Debug - Current editingProfile:</strong><br/>
+                          brand_name: "{editingProfile.brand_name}"<br/>
+                          variants: "{editingProfile.variants}"<br/>
+                          brand_website: "{editingProfile.brand_website}"<br/>
+                          brand_description: "{editingProfile.brand_description}"
+                        </div>
+                        
                         <div>
                           <Label htmlFor="edit-fullname">Full Name</Label>
                           <Input
@@ -751,12 +770,19 @@ export function ModeratorPanelSimple() {
                       </Button>
                       <Button onClick={async () => {
                         try {
-                          // Update keywords (brand name and variants)
-                          const variantsArray = editingProfile.variants
-                            .split(',')
-                            .map(v => v.trim())
-                            .filter(v => v.length > 0);
+                          // Debug: Log what we're about to send
+                          console.log('🔧 [MODERATOR] About to send profile update:', {
+                            userId: selectedUser.id,
+                            fullName: editingProfile.full_name,
+                            phoneNumber: editingProfile.phone_number,
+                            brandName: editingProfile.brand_name,
+                            variants: editingProfile.variants,
+                            brandWebsite: editingProfile.brand_website,
+                            brandDescription: editingProfile.brand_description,
+                            socialMediaLinks: editingProfile.social_media_links
+                          });
 
+                          // Update keywords (brand name and variants)
                           // Update user profile and brand information in one call
                           const profileResponse = await apiFetch('/admin/update-user-profile-complete', {
                             method: 'PUT',
@@ -765,7 +791,7 @@ export function ModeratorPanelSimple() {
                               fullName: editingProfile.full_name,
                               phoneNumber: editingProfile.phone_number,
                               brandName: editingProfile.brand_name,
-                              variants: variantsArray,
+                              variants: editingProfile.variants, // Send as string (comma-separated)
                               brandWebsite: editingProfile.brand_website,
                               brandDescription: editingProfile.brand_description,
                               socialMediaLinks: editingProfile.social_media_links
