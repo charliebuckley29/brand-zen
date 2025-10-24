@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -102,9 +102,6 @@ export function ModeratorPanelSimple() {
   const [currentTab, setCurrentTab] = useState<string>('users');
   const [keywordSourceDialogOpen, setKeywordSourceDialogOpen] = useState(false);
   
-  // Debug render counter (can be removed once everything is working)
-  const renderCount = useRef(0);
-  renderCount.current += 1;
   const { toast } = useToast();
 
   // Helper function to check if a user can be edited by moderators/admins
@@ -136,20 +133,6 @@ export function ModeratorPanelSimple() {
         setUserKeywords(keywordsResult.data);
         console.log('🔑 [MODERATOR PANEL] Loaded keywords data:', { totalKeywords: keywordsResult.data.length, keywords: keywordsResult.data });
         
-        // Debug: Check what data we have for Rusty Kate specifically
-        const rustyKateKeywords = keywordsResult.data.filter((k: any) => k.user_id === '291db40f-ff62-4667-9c32-d5f802f7bfd0');
-        console.log('🔍 [DEBUG] Rusty Kate keywords from backend:', rustyKateKeywords);
-        if (rustyKateKeywords.length > 0) {
-          console.log('🔍 [DEBUG] First keyword structure:', {
-            id: rustyKateKeywords[0].id,
-            keyword_text: rustyKateKeywords[0].keyword_text,
-            keyword_type: rustyKateKeywords[0].keyword_type,
-            keyword_order: rustyKateKeywords[0].keyword_order,
-            user_id: rustyKateKeywords[0].user_id
-          });
-          const brandInfo = extractBrandInfo(rustyKateKeywords);
-          console.log('🔍 [DEBUG] Extracted brand info for Rusty Kate:', brandInfo);
-        }
       }
 
       // Fetch flagged mentions
@@ -186,23 +169,6 @@ export function ModeratorPanelSimple() {
 
   return (
     <>
-      {/* Debug elements outside of any containers */}
-      <div 
-        style={{
-          position: 'fixed',
-          top: '10px',
-          right: '10px',
-          backgroundColor: 'yellow',
-          border: '2px solid red',
-          padding: '10px',
-          borderRadius: '4px',
-          zIndex: 99999,
-          fontSize: '12px',
-          color: 'black'
-        }}
-      >
-        DEBUG: dialogOpen={keywordSourceDialogOpen ? 'true' : 'false'}, selectedUser={selectedUser?.id || 'none'}
-      </div>
       
       {/* Keyword Source Management Dialog */}
       {selectedUser && (
@@ -261,14 +227,6 @@ export function ModeratorPanelSimple() {
                     const userKeywordsList = userKeywords.filter(k => k.user_id === user.id);
                     const brandInfo = extractBrandInfo(userKeywordsList);
                     
-                    // Debug: Log what we're setting in editingProfile
-                    console.log('🔧 [MODERATOR] Setting editingProfile for user:', {
-                      userId: user.id,
-                      userKeywordsList,
-                      brandInfo,
-                      extractedBrandName: brandInfo.brand_name,
-                      extractedVariants: brandInfo.variants
-                    });
                     
                     setEditingProfile({
                       full_name: user.full_name || user.profile?.full_name || '',
@@ -447,7 +405,6 @@ export function ModeratorPanelSimple() {
                       user={user}
                       onEdit={handleEdit}
                       onConfigureAutomation={() => {
-                        console.log('🔧 [MODERATOR_SIMPLE] Configure Automation clicked for user:', user.id);
                         setSelectedUser(user);
                         setKeywordSourceDialogOpen(true);
                       }}
@@ -596,11 +553,7 @@ export function ModeratorPanelSimple() {
                       
                       {(() => {
                         const userKeywordsList = userKeywords.filter(k => k.user_id === selectedUser.id);
-                        console.log('🔍 [DEBUG] Filtering keywords for user:', selectedUser.id);
-                        console.log('🔍 [DEBUG] All userKeywords:', userKeywords);
-                        console.log('🔍 [DEBUG] Filtered userKeywordsList:', userKeywordsList);
                         const brandInfo = extractBrandInfo(userKeywordsList);
-                        console.log('🔍 [DEBUG] Extracted brandInfo:', brandInfo);
                         return brandInfo.brand_name ? (
                           <div className="grid gap-3">
                             <div>
@@ -684,14 +637,6 @@ export function ModeratorPanelSimple() {
                       </div>
                       
                       <div className="grid gap-4">
-                        {/* Debug: Show current editingProfile state */}
-                        <div className="bg-yellow-50 p-2 rounded text-xs">
-                          <strong>Debug - Current editingProfile:</strong><br/>
-                          brand_name: "{editingProfile.brand_name}"<br/>
-                          variants: "{editingProfile.variants}"<br/>
-                          brand_website: "{editingProfile.brand_website}"<br/>
-                          brand_description: "{editingProfile.brand_description}"
-                        </div>
                         
                         <div>
                           <Label htmlFor="edit-fullname">Full Name</Label>
@@ -770,17 +715,6 @@ export function ModeratorPanelSimple() {
                       </Button>
                       <Button onClick={async () => {
                         try {
-                          // Debug: Log what we're about to send
-                          console.log('🔧 [MODERATOR] About to send profile update:', {
-                            userId: selectedUser.id,
-                            fullName: editingProfile.full_name,
-                            phoneNumber: editingProfile.phone_number,
-                            brandName: editingProfile.brand_name,
-                            variants: editingProfile.variants,
-                            brandWebsite: editingProfile.brand_website,
-                            brandDescription: editingProfile.brand_description,
-                            socialMediaLinks: editingProfile.social_media_links
-                          });
 
                           // Update keywords (brand name and variants)
                           // Update user profile and brand information in one call
