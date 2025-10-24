@@ -216,7 +216,7 @@ export function ModeratorPanel() {
       });
 
       // Fetch user keywords using authenticated backend endpoint
-      const keywordsResponse = await apiFetch('/admin/user-keywords?include_all=true');
+      const keywordsResponse = await apiFetch('/admin/keywords-management?include_all=true');
       const keywordsResult = await keywordsResponse.json();
       
       const formattedKeywords: UserKeywords[] = keywordsResult.success ? keywordsResult.data : [];
