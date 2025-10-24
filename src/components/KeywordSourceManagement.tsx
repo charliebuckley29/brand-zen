@@ -433,24 +433,66 @@ export function KeywordSourceManagement({ userId, userName, open, onClose }: Key
 
   // Handle RSS URL update
   const handleRssUrlUpdated = (keywordId: string, rssUrl: string | null) => {
-    // Update the keywords state
-    setKeywords(prev => prev.map(k => {
-      if (k.original_keyword_id === keywordId || k.id === keywordId) {
-        return { ...k, google_alert_rss_url: rssUrl };
-      }
-      return k;
-    }));
+    console.log('🔧 [KEYWORD_SOURCE_MGMT] ===== RSS URL UPDATED =====');
+    console.log('🔧 [KEYWORD_SOURCE_MGMT] Updated keywordId:', keywordId);
+    console.log('🔧 [KEYWORD_SOURCE_MGMT] Updated rssUrl:', rssUrl);
+    console.log('🔧 [KEYWORD_SOURCE_MGMT] Current keywords before update:', keywords);
     
-    // Refresh data to ensure consistency
-    fetchData();
+    // Update the keywords state
+    setKeywords(prev => {
+      const updated = prev.map(k => {
+        // Check multiple possible ID fields and also by keyword text
+        if (k.original_keyword_id === keywordId || 
+            k.id === keywordId || 
+            k.keyword_text === keywordId ||
+            k.keyword_id === keywordId) {
+          console.log('🔧 [KEYWORD_SOURCE_MGMT] Updating keyword:', k.keyword_text, 'with RSS URL:', rssUrl);
+          console.log('🔧 [KEYWORD_SOURCE_MGMT] Keyword object before update:', k);
+          return { ...k, google_alert_rss_url: rssUrl };
+        }
+        return k;
+      });
+      console.log('🔧 [KEYWORD_SOURCE_MGMT] Updated keywords after state change:', updated);
+      return updated;
+    });
+    
+    // Also update the preferences state to reflect the RSS URL change
+    setPreferences(prev => {
+      const updated = prev.map(p => {
+        if (p.keyword === keywordId && p.source_type === 'google_alert') {
+          console.log('🔧 [KEYWORD_SOURCE_MGMT] Updating preference for keyword:', p.keyword, 'with source_url:', rssUrl);
+          return { ...p, source_url: rssUrl, automation_configured: !!rssUrl };
+        }
+        return p;
+      });
+      console.log('🔧 [KEYWORD_SOURCE_MGMT] Updated preferences after state change:', updated);
+      return updated;
+    });
+    
+    console.log('🔧 [KEYWORD_SOURCE_MGMT] Calling fetchData to refresh...');
+    // Refresh data to ensure consistency with a small delay to avoid race conditions
+    setTimeout(() => {
+      console.log('🔧 [KEYWORD_SOURCE_MGMT] Delayed fetchData call...');
+      fetchData();
+    }, 500);
+    console.log('🔧 [KEYWORD_SOURCE_MGMT] ===== RSS URL UPDATE COMPLETE =====');
   };
 
   // Get RSS URL status for a keyword
   const getRssUrlStatus = (keyword: string) => {
+    console.log('🔧 [KEYWORD_SOURCE_MGMT] getRssUrlStatus called for keyword:', keyword);
+    console.log('🔧 [KEYWORD_SOURCE_MGMT] Available keywords:', keywords.map(k => ({ text: k.keyword_text, id: k.id, rssUrl: k.google_alert_rss_url })));
+    
     const keywordData = keywords.find(k => k.keyword_text === keyword);
-    if (!keywordData) return { hasUrl: false, url: null };
+    console.log('🔧 [KEYWORD_SOURCE_MGMT] Found keyword data:', keywordData);
+    
+    if (!keywordData) {
+      console.log('🔧 [KEYWORD_SOURCE_MGMT] No keyword data found for:', keyword);
+      return { hasUrl: false, url: null };
+    }
     
     const hasUrl = keywordData.google_alert_rss_url && keywordData.google_alert_rss_url.trim() !== '';
+    console.log('🔧 [KEYWORD_SOURCE_MGMT] RSS URL status:', { hasUrl, url: keywordData.google_alert_rss_url });
     return { hasUrl, url: keywordData.google_alert_rss_url };
   };
 

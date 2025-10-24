@@ -170,6 +170,7 @@ export function RssUrlConfigurationDialog({
       
       if (data.success) {
         console.log('✅ [RSS_DIALOG] RSS URL save successful');
+        console.log('🔧 [RSS_DIALOG] Calling onRssUrlUpdated with:', { keywordId, rssUrl: rssUrl.trim() || null, keyword });
         onRssUrlUpdated(keywordId, rssUrl.trim() || null);
         toast({
           title: "Success",
