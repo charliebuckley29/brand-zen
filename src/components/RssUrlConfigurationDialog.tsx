@@ -129,27 +129,47 @@ export function RssUrlConfigurationDialog({
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      console.log('🔧 [RSS_DIALOG] ===== SAVE RSS URL START =====');
+      console.log('🔧 [RSS_DIALOG] Save parameters:', {
+        userId,
+        keyword,
+        keywordId,
+        rssUrl: rssUrl.trim() || null,
+        currentRssUrl,
+        sourceType: 'google_alert'
+      });
+
+      const requestBody = {
+        userId,
+        keyword,
+        sourceType: 'google_alert',
+        preferences: {
+          automation_enabled: true, // Keep automation enabled
+          automation_configured: true, // Mark as configured
+          show_in_mentions: true,
+          show_in_analytics: true,
+          show_in_reports: true,
+          source_url: rssUrl.trim() || null
+        }
+      };
+
+      console.log('🔧 [RSS_DIALOG] Request body:', requestBody);
+      console.log('🔧 [RSS_DIALOG] Making API call to /admin/keyword-source-preferences...');
+
       // Use the correct endpoint that handles keyword_source_preferences updates
       const response = await apiFetch('/admin/keyword-source-preferences', {
         method: 'PUT',
-        body: JSON.stringify({
-          userId,
-          keyword,
-          sourceType: 'google_alert',
-          preferences: {
-            automation_enabled: true, // Keep automation enabled
-            automation_configured: true, // Mark as configured
-            show_in_mentions: true,
-            show_in_analytics: true,
-            show_in_reports: true,
-            source_url: rssUrl.trim() || null
-          }
-        })
+        body: JSON.stringify(requestBody)
       });
 
+      console.log('🔧 [RSS_DIALOG] API response status:', response.status, response.statusText);
+      console.log('🔧 [RSS_DIALOG] API response headers:', Object.fromEntries(response.headers.entries()));
+
       const data = await response.json();
+      console.log('🔧 [RSS_DIALOG] API response data:', data);
       
       if (data.success) {
+        console.log('✅ [RSS_DIALOG] RSS URL save successful');
         onRssUrlUpdated(keywordId, rssUrl.trim() || null);
         toast({
           title: "Success",
@@ -157,10 +177,15 @@ export function RssUrlConfigurationDialog({
         });
         onClose();
       } else {
+        console.error('❌ [RSS_DIALOG] API returned success: false', data);
         throw new Error(data.error || 'Failed to update RSS URL');
       }
     } catch (error: any) {
-      console.error('Error saving RSS URL:', error);
+      console.error('❌ [RSS_DIALOG] Error saving RSS URL:', {
+        error: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       toast({
         title: "Error",
         description: error.message || "Failed to update RSS URL",
@@ -168,6 +193,7 @@ export function RssUrlConfigurationDialog({
       });
     } finally {
       setIsSaving(false);
+      console.log('🔧 [RSS_DIALOG] ===== SAVE RSS URL END =====');
     }
   };
 
