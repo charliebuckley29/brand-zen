@@ -127,8 +127,8 @@ export function ModeratorPanelSimple() {
         console.log('📊 [MODERATOR PANEL] Loaded users data:', { totalUsers: usersResult.data.length, users: usersResult.data });
       }
 
-      // Fetch keywords
-      const keywordsResponse = await apiFetch('/admin/keywords-management');
+      // Fetch keywords for all users (moderator panel needs to see all users' keywords)
+      const keywordsResponse = await apiFetch('/admin/keywords-management?include_all=true');
       if (!keywordsResponse.ok) throw new Error('Failed to fetch keywords');
       const keywordsResult = await keywordsResponse.json();
       
