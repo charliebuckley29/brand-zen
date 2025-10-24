@@ -757,28 +757,15 @@ export function ModeratorPanelSimple() {
                             .map(v => v.trim())
                             .filter(v => v.length > 0);
 
-                          const keywordsResponse = await apiFetch('/admin/keywords-management', {
-                            method: 'PUT',
-                            body: JSON.stringify({
-                              user_id: selectedUser.id,
-                              brand_name: editingProfile.brand_name,
-                              variants: variantsArray
-                            })
-                          });
-                          
-                          const keywordsData = await keywordsResponse.json();
-                          
-                          if (!keywordsData.success) {
-                            throw new Error(keywordsData.error || "Failed to update keywords");
-                          }
-
-                          // Update user profile (website, description, social media)
+                          // Update user profile and brand information in one call
                           const profileResponse = await apiFetch('/admin/update-user-profile-complete', {
                             method: 'PUT',
                             body: JSON.stringify({
                               userId: selectedUser.id,
                               fullName: editingProfile.full_name,
                               phoneNumber: editingProfile.phone_number,
+                              brandName: editingProfile.brand_name,
+                              variants: variantsArray,
                               brandWebsite: editingProfile.brand_website,
                               brandDescription: editingProfile.brand_description,
                               socialMediaLinks: editingProfile.social_media_links
