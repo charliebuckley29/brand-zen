@@ -129,12 +129,20 @@ export function RssUrlConfigurationDialog({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await apiFetch('/admin/keywords-management', {
+      // Use the correct endpoint that handles keyword_source_preferences updates
+      const response = await apiFetch('/admin/keyword-source-preferences', {
         method: 'PUT',
         body: JSON.stringify({
-          keywordId,
-          updates: { 
-            google_alert_rss_url: rssUrl.trim() || null 
+          userId,
+          keyword,
+          sourceType: 'google_alert',
+          preferences: {
+            automation_enabled: true, // Keep automation enabled
+            automation_configured: true, // Mark as configured
+            show_in_mentions: true,
+            show_in_analytics: true,
+            show_in_reports: true,
+            source_url: rssUrl.trim() || null
           }
         })
       });
