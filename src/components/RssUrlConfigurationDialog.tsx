@@ -258,7 +258,7 @@ export function RssUrlConfigurationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
@@ -269,7 +269,7 @@ export function RssUrlConfigurationDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-6 pb-6">
           {/* RSS URL Input */}
           <div className="space-y-2">
             <Label htmlFor="rss-url">Google Alerts RSS URL</Label>
@@ -283,7 +283,7 @@ export function RssUrlConfigurationDialog({
                   setRssUrl(e.target.value);
                   setValidationResult(null);
                 }}
-                className="flex-1"
+                className="flex-1 text-gray-900 bg-white border-gray-300 focus:text-gray-900 focus:bg-white"
               />
               <Button
                 variant="outline"
@@ -385,7 +385,6 @@ export function RssUrlConfigurationDialog({
             </div>
           </div>
         </div>
-        <div className="pb-4"></div>
       </DialogContent>
     </Dialog>
   );
