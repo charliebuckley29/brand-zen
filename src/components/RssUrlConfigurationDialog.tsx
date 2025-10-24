@@ -37,6 +37,16 @@ export function RssUrlConfigurationDialog({
   currentRssUrl,
   onRssUrlUpdated
 }: RssUrlConfigurationDialogProps) {
+  console.log('🔧 [RSS_DIALOG] Dialog props:', {
+    open,
+    keyword,
+    keywordId,
+    userId,
+    currentRssUrl,
+    currentRssUrlType: typeof currentRssUrl,
+    currentRssUrlLength: currentRssUrl?.length
+  });
+  
   const [rssUrl, setRssUrl] = useState(currentRssUrl || '');
   const [isValidating, setIsValidating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -248,7 +258,7 @@ export function RssUrlConfigurationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
@@ -375,6 +385,7 @@ export function RssUrlConfigurationDialog({
             </div>
           </div>
         </div>
+        <div className="pb-4"></div>
       </DialogContent>
     </Dialog>
   );
