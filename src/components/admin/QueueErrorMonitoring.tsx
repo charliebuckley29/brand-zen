@@ -537,25 +537,25 @@ export function QueueErrorMonitoring() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-yellow-600">
-                  {queueData.summary.byStatus.pending}
+                  {queueData.summary?.byStatus?.pending || 0}
                 </div>
                 <div className="text-sm text-muted-foreground">Pending</div>
               </div>
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">
-                  {queueData.summary.byStatus.processing}
+                  {queueData.summary?.byStatus?.processing || 0}
                 </div>
                 <div className="text-sm text-muted-foreground">Processing</div>
               </div>
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
-                  {queueData.summary.byStatus.completed}
+                  {queueData.summary?.byStatus?.completed || 0}
                 </div>
                 <div className="text-sm text-muted-foreground">Completed</div>
               </div>
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-red-600">
-                  {queueData.summary.byStatus.failed}
+                  {queueData.summary?.byStatus?.failed || 0}
                 </div>
                 <div className="text-sm text-muted-foreground">Failed</div>
               </div>
@@ -578,7 +578,7 @@ export function QueueErrorMonitoring() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {Object.entries(queueData.summary.byApiSource).map(([apiSource, stats]) => (
+              {Object.entries(queueData.summary?.byApiSource || {}).map(([apiSource, stats]) => (
                 <div key={apiSource} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center space-x-3">
                     <span className="text-2xl">{getApiSourceIcon(apiSource)}</span>
