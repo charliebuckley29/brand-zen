@@ -724,7 +724,7 @@ export function QueueErrorMonitoring() {
       )}
 
       {/* Recent Queue Entries */}
-      {queueData && queueData.entries.length > 0 && (
+      {queueData && queueData.entries && queueData.entries.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Recent Queue Entries</CardTitle>
