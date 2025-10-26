@@ -181,6 +181,16 @@ export default function MonitoringOverview() {
       features: ['Function Performance', 'Event Tracking', 'Error Monitoring', 'Health Scoring']
     },
     {
+      id: 'inngest-events',
+      title: 'Inngest Events Monitoring',
+      description: 'Real-time monitoring of Inngest events and function processing',
+      icon: Activity,
+      color: 'bg-violet-100 text-violet-600',
+      href: '/admin/monitoring/inngest-events',
+      status: 'implemented',
+      features: ['Real-Time Events', 'Event Stream', 'Function Status', 'Processing Metrics']
+    },
+    {
       id: 'archives',
       title: 'Log Archives',
       description: 'Manage and view system log archives',

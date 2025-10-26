@@ -272,6 +272,12 @@ export default function AdminDashboard() {
               Inngest Functions
             </Button>
           </Link>
+          <Link to="/admin/monitoring/inngest-events">
+            <Button variant="outline" className="w-full justify-start">
+              <Activity className="w-4 h-4 mr-2" />
+              Inngest Events
+            </Button>
+          </Link>
           <Link to="/admin/monitoring/sentiment">
             <Button variant="outline" className="w-full justify-start">
               <Brain className="w-4 h-4 mr-2" />

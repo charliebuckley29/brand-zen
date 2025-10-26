@@ -50,6 +50,7 @@ import SentimentMonitoringPage from "./pages/admin/monitoring/SentimentMonitorin
 import LogArchivesPage from "./pages/admin/monitoring/LogArchivesPage";
 import ArchiveRetentionPage from "./pages/admin/monitoring/ArchiveRetentionPage";
 import InngestMonitoringPage from "./pages/admin/monitoring/InngestMonitoringPage";
+import InngestEventsMonitoringPage from "./pages/admin/monitoring/InngestEventsMonitoringPage";
 
 // Legacy admin pages (redirected to new structure)
 import AdminUserQuotaManagement from "./pages/AdminUserQuotaManagement";
@@ -168,6 +169,7 @@ const App = () => {
                   <Route path="/admin/monitoring/alerts" element={<AlertMonitoringPage />} />
                   <Route path="/admin/monitoring/sentiment" element={<SentimentMonitoringPage />} />
                   <Route path="/admin/monitoring/inngest" element={<InngestMonitoringPage />} />
+                  <Route path="/admin/monitoring/inngest-events" element={<InngestEventsMonitoringPage />} />
                   <Route path="/admin/monitoring/archives" element={<LogArchivesPage />} />
                   <Route path="/admin/monitoring/retention" element={<ArchiveRetentionPage />} />
                   
