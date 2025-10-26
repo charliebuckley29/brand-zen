@@ -36,7 +36,7 @@ interface UserStats {
   quotaUtilization: number;
 }
 
-export const UsersOverview: React.FC = () => {
+const UsersOverview: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<UserStats>({
     total: 0,
@@ -355,3 +355,5 @@ export const UsersOverview: React.FC = () => {
     </div>
   );
 };
+
+export default UsersOverview;

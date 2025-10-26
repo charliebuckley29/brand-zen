@@ -51,7 +51,7 @@ interface SystemConfig {
   };
 }
 
-export const ConfigurationOverview: React.FC = () => {
+const ConfigurationOverview: React.FC = () => {
   const [config, setConfig] = useState<SystemConfig>({
     emailDelivery: {
       enabled: true,
@@ -473,3 +473,5 @@ export const ConfigurationOverview: React.FC = () => {
     </div>
   );
 };
+
+export default ConfigurationOverview;

@@ -41,7 +41,7 @@ interface ApiHealth {
   errorRate: number;
 }
 
-export const MonitoringOverview: React.FC = () => {
+const MonitoringOverview: React.FC = () => {
   const [systemHealth, setSystemHealth] = useState<SystemHealth>({
     database_status: 'healthy',
     api_endpoints_status: 'operational',
@@ -387,3 +387,5 @@ export const MonitoringOverview: React.FC = () => {
     </div>
   );
 };
+
+export default MonitoringOverview;

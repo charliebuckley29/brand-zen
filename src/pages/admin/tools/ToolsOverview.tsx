@@ -39,7 +39,7 @@ interface RecoveryAction {
   lastRun?: string;
 }
 
-export const ToolsOverview: React.FC = () => {
+const ToolsOverview: React.FC = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [recoveryActions, setRecoveryActions] = useState<RecoveryAction[]>([
     {
@@ -432,3 +432,5 @@ export const ToolsOverview: React.FC = () => {
     </div>
   );
 };
+
+export default ToolsOverview;
