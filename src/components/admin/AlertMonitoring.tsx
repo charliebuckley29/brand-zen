@@ -31,42 +31,28 @@ export function AlertMonitoring({ onRefresh, loading }: AlertMonitoringProps) {
 
   const fetchAlertData = async () => {
     try {
-      // For now, use automation logs as alerts since we don't have a dedicated alerts endpoint
-      const logsResponse = await apiFetch('/debug/logs?limit=50');
-      if (logsResponse.ok) {
-        const logsData = await logsResponse.json();
-        // Convert logs to alert format
-        const alertLogs = logsData.logs?.filter((log: any) => 
-          log.event_type?.includes('error') || 
-          log.event_type?.includes('failed') ||
-          log.level === 'error'
-        ).map((log: any) => ({
-          id: log.id,
-          timestamp: log.created_at,
-          severity: log.level === 'error' ? 'high' : 'medium',
-          type: log.event_type,
-          message: log.message,
-          source: 'system',
-          status: 'open',
-          details: log.error_details
-        })) || [];
-        setAlerts(alertLogs);
+      // Use the new proper alerts endpoint
+      const alertsResponse = await apiFetch(`/admin/alerts/active?limit=50&hours=${selectedTimeRange === '24h' ? '24' : selectedTimeRange === '7d' ? '168' : '1'}`);
+      if (alertsResponse.ok) {
+        const alertsData = await alertsResponse.json();
+        if (alertsData.success) {
+          setAlerts(alertsData.data.alerts);
+          setAlertStats(alertsData.data.stats);
+        } else {
+          console.warn('Alerts endpoint returned error:', alertsData.error);
+          setAlerts([]);
+          setAlertStats({ critical: 0, high: 0, medium: 0, low: 0 });
+        }
       } else {
-        console.warn('Logs endpoint not available');
+        console.warn('Alerts endpoint not available');
         setAlerts([]);
+        setAlertStats({ critical: 0, high: 0, medium: 0, low: 0 });
       }
-
-      // Create mock alert stats from the logs
-      const mockStats = {
-        critical: alerts.filter(a => a.severity === 'critical').length,
-        high: alerts.filter(a => a.severity === 'high').length,
-        medium: alerts.filter(a => a.severity === 'medium').length,
-        low: alerts.filter(a => a.severity === 'low').length
-      };
-      setAlertStats(mockStats);
     } catch (error) {
       console.error('Error fetching alert data:', error);
       // Don't show toast for missing endpoints, just log the error
+      setAlerts([]);
+      setAlertStats({ critical: 0, high: 0, medium: 0, low: 0 });
     }
   };
 

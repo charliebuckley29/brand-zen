@@ -38,8 +38,8 @@ export function UserQueueModal({ userId }: UserQueueModalProps) {
       const statsResponse = await apiFetch(API_ENDPOINTS.SYSTEM_HEALTH);
       const statsData = await statsResponse.json();
       
-      // Fetch detailed fetch logs
-      const logsResponse = await apiFetch('/debug/detailed-fetch-logs');
+      // Fetch detailed fetch logs using the new proper endpoint
+      const logsResponse = await apiFetch('/admin/logs/detailed?limit=100&hours=24');
       const logsData = await logsResponse.json();
       
       setTechnicalData({

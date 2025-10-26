@@ -32,40 +32,12 @@ import { logger } from "@/lib/logger";
 import Index from "./pages/Index";
 import Help from "./pages/Help";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-// New consolidated admin structure
+// Consolidated admin structure
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UsersOverview from "./pages/admin/users/UsersOverview";
 import MonitoringOverview from "./pages/admin/monitoring/MonitoringOverview";
 import ConfigurationOverview from "./pages/admin/configuration/ConfigurationOverview";
-import CronManagementPage from "./pages/admin/configuration/CronManagementPage";
 import ToolsOverview from "./pages/admin/tools/ToolsOverview";
-import MiscAdminPanels from "./pages/admin/MiscAdminPanels";
-
-// Individual monitoring pages
-import SystemMonitoringPage from "./pages/admin/monitoring/SystemMonitoringPage";
-import ApiMonitoringPage from "./pages/admin/monitoring/ApiMonitoringPage";
-import UserMonitoringPage from "./pages/admin/monitoring/UserMonitoringPage";
-import AlertMonitoringPage from "./pages/admin/monitoring/AlertMonitoringPage";
-import SentimentMonitoringPage from "./pages/admin/monitoring/SentimentMonitoringPage";
-import LogArchivesPage from "./pages/admin/monitoring/LogArchivesPage";
-import ArchiveRetentionPage from "./pages/admin/monitoring/ArchiveRetentionPage";
-import InngestMonitoringPage from "./pages/admin/monitoring/InngestMonitoringPage";
-import InngestEventsMonitoringPage from "./pages/admin/monitoring/InngestEventsMonitoringPage";
-
-// Legacy admin pages (redirected to new structure)
-import AdminUserQuotaManagement from "./pages/AdminUserQuotaManagement";
-import AdminModeratorsPanel from "./pages/AdminModeratorsPanel";
-import AdminBugReportsPage from "./pages/AdminBugReportsPage";
-import AdminTwilioPanel from "./pages/AdminTwilioPanel";
-import AdminApiLimitsPanel from "./pages/AdminApiLimitsPanel";
-import AdminTestDebugTools from "./pages/AdminTestDebugTools";
-import AdminWebSocketDebug from "./pages/admin/AdminWebSocketDebug";
-import AdminEmailDeliveryMonitoring from "./pages/AdminEmailDeliveryMonitoring";
-import QueueErrorMonitoringPage from "./pages/QueueErrorMonitoringPage";
-import ApiHealthMonitoringPage from "./pages/admin/monitoring/ApiHealthMonitoringPage";
-import AutomatedRecoveryPage from "./pages/admin/monitoring/AutomatedRecoveryPage";
-import SystemAlertsPage from "./pages/SystemAlertsPage";
-import EnhancedAnalyticsPage from "./pages/admin/monitoring/EnhancedAnalyticsPage";
 import NewUserSignUp from "./pages/NewUserSignUp";
 import { PasswordSetup } from "./components/PasswordSetup";
 import { EmergencySignin } from "./components/EmergencySignin";
@@ -146,76 +118,27 @@ const App = () => {
                   <Route path="/password-setup" element={<PasswordSetup />} />
                   <Route path="/auth/callback" element={<EmergencySignin />} />
                   
-                  {/* Admin routes - protected by role-based access */}
+                  {/* Admin routes - consolidated structure */}
                   
-                  {/* New consolidated admin structure */}
+                  {/* Main Admin Dashboard */}
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="/admin/" element={<AdminDashboard />} />
                   
                   {/* User Management Section */}
                   <Route path="/admin/users" element={<UsersOverview />} />
-                  <Route path="/admin/users/quotas" element={<AdminUserQuotaManagement />} />
-                  <Route path="/admin/users/moderators" element={<AdminModeratorsPanel />} />
-                  <Route path="/admin/users/approvals" element={<AdminModeratorsPanel />} />
+                  <Route path="/admin/users/" element={<UsersOverview />} />
                   
                   {/* Monitoring Section */}
                   <Route path="/admin/monitoring" element={<MonitoringOverview />} />
-                  <Route path="/admin/monitoring/overview" element={<MonitoringOverview />} />
-                  
-                  {/* Individual Monitoring Pages */}
-                  <Route path="/admin/monitoring/system" element={<SystemMonitoringPage />} />
-                  <Route path="/admin/monitoring/api" element={<ApiMonitoringPage />} />
-                  <Route path="/admin/monitoring/users" element={<UserMonitoringPage />} />
-                  <Route path="/admin/monitoring/alerts" element={<AlertMonitoringPage />} />
-                  <Route path="/admin/monitoring/sentiment" element={<SentimentMonitoringPage />} />
-                  <Route path="/admin/monitoring/inngest" element={<InngestMonitoringPage />} />
-                  <Route path="/admin/monitoring/inngest-events" element={<InngestEventsMonitoringPage />} />
-                  <Route path="/admin/monitoring/archives" element={<LogArchivesPage />} />
-                  <Route path="/admin/monitoring/retention" element={<ArchiveRetentionPage />} />
-                  
-                  {/* Legacy Monitoring Routes */}
-                  <Route path="/admin/monitoring/api-health" element={<ApiHealthMonitoringPage />} />
-                  <Route path="/admin/monitoring/queues" element={<QueueErrorMonitoringPage />} />
-                  <Route path="/admin/monitoring/analytics" element={<EnhancedAnalyticsPage />} />
-                  <Route path="/admin/monitoring/recovery" element={<AutomatedRecoveryPage />} />
+                  <Route path="/admin/monitoring/" element={<MonitoringOverview />} />
                   
                   {/* Configuration Section */}
                   <Route path="/admin/configuration" element={<ConfigurationOverview />} />
-                  <Route path="/admin/configuration/cron" element={<CronManagementPage />} />
-                  <Route path="/admin/configuration/integrations" element={<AdminTwilioPanel />} />
-                  <Route path="/admin/configuration/email" element={<AdminEmailDeliveryMonitoring />} />
+                  <Route path="/admin/configuration/" element={<ConfigurationOverview />} />
                   
                   {/* Tools Section */}
                   <Route path="/admin/tools" element={<ToolsOverview />} />
-                  <Route path="/admin/tools/debug" element={<AdminTestDebugTools />} />
-                  <Route path="/admin/tools/testing" element={<AdminTestDebugTools />} />
-                  <Route path="/admin/tools/websocket-debug" element={<AdminWebSocketDebug />} />
-                  <Route path="/admin/tools/logs" element={<MonitoringOverview />} />
-                  <Route path="/admin/tools/bug-reports" element={<AdminBugReportsPage />} />
-                  
-                  {/* Miscellaneous Admin Panels */}
-                  <Route path="/admin/misc" element={<MiscAdminPanels />} />
-                  
-                  {/* Legacy routes (redirected to new structure) */}
-                  <Route path="/admin/api" element={<AdminUserQuotaManagement />} />
-                  <Route path="/admin/moderators" element={<AdminModeratorsPanel />} />
-                  <Route path="/admin/bug-reports" element={<AdminBugReportsPage />} />
-                  <Route path="/admin/twilio" element={<AdminTwilioPanel />} />
-                  <Route path="/admin/unified-monitoring" element={<MonitoringOverview />} />
-                  <Route path="/admin/unified-monitoring/" element={<MonitoringOverview />} />
-                  <Route path="/admin/api-limits" element={<AdminApiLimitsPanel />} />
-                  <Route path="/admin/email-delivery" element={<AdminEmailDeliveryMonitoring />} />
-                  <Route path="/admin/email-delivery/" element={<AdminEmailDeliveryMonitoring />} />
-                  <Route path="/admin/queue-errors" element={<QueueErrorMonitoringPage />} />
-                  <Route path="/admin/queue-errors/" element={<QueueErrorMonitoringPage />} />
-                  <Route path="/admin/automated-recovery" element={<AutomatedRecoveryPage />} />
-                  <Route path="/admin/automated-recovery/" element={<AutomatedRecoveryPage />} />
-                  <Route path="/admin/system-alerts" element={<SystemAlertsPage />} />
-                  <Route path="/admin/system-alerts/" element={<SystemAlertsPage />} />
-                  <Route path="/admin/enhanced-analytics" element={<EnhancedAnalyticsPage />} />
-                  <Route path="/admin/enhanced-analytics/" element={<EnhancedAnalyticsPage />} />
-                  <Route path="/admin/test-debug" element={<AdminTestDebugTools />} />
-                  <Route path="/admin/test-debug/" element={<AdminTestDebugTools />} />
+                  <Route path="/admin/tools/" element={<ToolsOverview />} />
                   
                   {/* Catch-all route for 404 pages */}
                   <Route path="*" element={<NotFound />} />

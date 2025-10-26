@@ -56,10 +56,9 @@ export const API_ENDPOINTS = {
   DELETE_USER: '/api/admin/delete-user',
   SYSTEM_STATUS: '/api/system/status',
   
-  // Debug endpoints
-        DETAILED_FETCH_LOGS: '/api/admin/detailed-fetch-logs',
-  EMAIL_DIAGNOSIS: '/api/debug/email-diagnosis',
-  TEST_NEGATIVE_EMAIL: '/api/debug/test-negative-email',
+  // Admin endpoints
+  DETAILED_FETCH_LOGS: '/api/admin/logs/detailed',
+  ALERTS_ACTIVE: '/api/admin/alerts/active',
   
   // User endpoints
   USER_QUEUE_HISTORY: '/api/user/queue-history',

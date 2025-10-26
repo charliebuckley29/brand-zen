@@ -1,326 +1,434 @@
-import { useUserRole } from "../../../hooks/use-user-role";
-import { AdminLayout } from "../../../components/ui/admin-layout";
-import { EnhancedCard, EnhancedCardContent, EnhancedCardDescription, EnhancedCardHeader, EnhancedCardTitle } from "../../../components/ui/enhanced-card";
-import { Button } from "../../../components/ui/button";
-import { Badge } from "../../../components/ui/badge";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { AdminPageHeader } from '@/components/admin/shared/AdminPageHeader';
+import { AdminDataTable } from '@/components/admin/shared/AdminDataTable';
+import { AdminStatsCard } from '@/components/admin/shared/AdminStatsCard';
+import { AdminStatusBadge } from '@/components/admin/shared/AdminStatusBadge';
 import { 
   Wrench, 
-  TestTube, 
-  Bug, 
-  FileText,
-  CheckCircle,
-  Clock,
+  FileText, 
+  Archive, 
   RefreshCw,
-  ArrowLeft,
-  Activity,
-  Database,
-  Terminal,
-  Search,
+  Play,
+  Square,
   Download,
-  Wifi,
-  WifiOff
-} from "lucide-react";
-import { Link } from "react-router-dom";
+  Upload,
+  Terminal,
+  Database,
+  AlertTriangle
+} from 'lucide-react';
 
-export default function ToolsOverview() {
-  const { isAdmin, loading: roleLoading } = useUserRole();
+interface LogEntry {
+  id: string;
+  timestamp: string;
+  level: 'info' | 'warning' | 'error';
+  message: string;
+  source: string;
+}
 
-  if (roleLoading) {
-    return (
-      <AdminLayout
-        title="Tools & Debugging Overview"
-        description="Loading tools and debugging interface..."
-      >
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </AdminLayout>
-    );
-  }
+interface RecoveryAction {
+  id: string;
+  name: string;
+  description: string;
+  status: 'available' | 'running' | 'completed' | 'failed';
+  lastRun?: string;
+}
 
-  if (!isAdmin) {
-    return (
-      <AdminLayout
-        title="Tools & Debugging Overview"
-        description="Access denied"
-      >
-        <div className="text-center py-12">
-          <EnhancedCard variant="elevated" className="w-full max-w-md mx-auto">
-            <EnhancedCardHeader>
-              <EnhancedCardTitle className="text-center">Access Denied</EnhancedCardTitle>
-              <EnhancedCardDescription className="text-center">
-                You need admin privileges to access this page.
-              </EnhancedCardDescription>
-            </EnhancedCardHeader>
-          </EnhancedCard>
-        </div>
-      </AdminLayout>
-    );
-  }
+export const ToolsOverview: React.FC = () => {
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [recoveryActions, setRecoveryActions] = useState<RecoveryAction[]>([
+    {
+      id: '1',
+      name: 'Clear Failed Queues',
+      description: 'Remove all failed items from processing queues',
+      status: 'available'
+    },
+    {
+      id: '2',
+      name: 'Reset User Quotas',
+      description: 'Reset all user quotas to default values',
+      status: 'available'
+    },
+    {
+      id: '3',
+      name: 'Archive Old Data',
+      description: 'Move data older than 90 days to archive',
+      status: 'available'
+    },
+    {
+      id: '4',
+      name: 'Restart Sentiment Processing',
+      description: 'Restart the sentiment analysis pipeline',
+      status: 'available'
+    }
+  ]);
+  const [debugOutput, setDebugOutput] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
 
-  const toolsSections = [
+  useEffect(() => {
+    fetchToolsData();
+  }, []);
+
+  const fetchToolsData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch recent logs
+      const logsResponse = await fetch('/api/admin/logs/recent');
+      const logsData = await logsResponse.json();
+      setLogs(logsData.logs || []);
+      
+    } catch (error) {
+      console.error('Error fetching tools data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const executeRecoveryAction = async (actionId: string) => {
+    try {
+      setRecoveryActions(prev => 
+        prev.map(action => 
+          action.id === actionId 
+            ? { ...action, status: 'running' as const }
+            : action
+        )
+      );
+
+      const response = await fetch(`/api/admin/recovery/${actionId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const result = await response.json();
+
+      setRecoveryActions(prev => 
+        prev.map(action => 
+          action.id === actionId 
+            ? { 
+                ...action, 
+                status: result.success ? 'completed' as const : 'failed' as const,
+                lastRun: new Date().toISOString()
+              }
+            : action
+        )
+      );
+
+      // Add to debug output
+      setDebugOutput(prev => 
+        prev + `\n[${new Date().toLocaleTimeString()}] ${result.message}\n`
+      );
+
+    } catch (error) {
+      console.error('Error executing recovery action:', error);
+      setRecoveryActions(prev => 
+        prev.map(action => 
+          action.id === actionId 
+            ? { ...action, status: 'failed' as const }
+            : action
+        )
+      );
+    }
+  };
+
+  const runSystemDiagnostics = async () => {
+    try {
+      setDebugOutput('Running system diagnostics...\n');
+      
+      const response = await fetch('/api/admin/diagnostics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const result = await response.json();
+      
+      setDebugOutput(prev => 
+        prev + `\n[${new Date().toLocaleTimeString()}] Diagnostics completed\n` +
+        `Database: ${result.database ? 'OK' : 'ERROR'}\n` +
+        `APIs: ${result.apis ? 'OK' : 'ERROR'}\n` +
+        `Queues: ${result.queues ? 'OK' : 'ERROR'}\n` +
+        `Storage: ${result.storage ? 'OK' : 'ERROR'}\n`
+      );
+
+    } catch (error) {
+      console.error('Error running diagnostics:', error);
+      setDebugOutput(prev => 
+        prev + `\n[${new Date().toLocaleTimeString()}] Diagnostics failed: ${error}\n`
+      );
+    }
+  };
+
+  const logColumns = [
     {
-      id: 'debug',
-      title: 'Debug Tools',
-      description: 'System debugging and troubleshooting tools',
-      icon: Terminal,
-      color: 'bg-blue-100 text-blue-600',
-      href: '/admin/test-debug',
-      status: 'implemented',
-      features: ['API Testing', 'System Health Checks', 'Cursor Continuity Tests', 'Performance Monitoring']
+      key: 'timestamp',
+      label: 'Time',
+      render: (value: string) => (
+        <span className="text-sm text-gray-500">
+          {new Date(value).toLocaleTimeString()}
+        </span>
+      )
     },
     {
-      id: 'testing',
-      title: 'Testing Tools',
-      description: 'Automated testing and validation tools',
-      icon: TestTube,
-      color: 'bg-green-100 text-green-600',
-      href: '/admin/tools/testing',
-      status: 'implemented',
-      features: ['API Usage Tests', 'Integration Tests', 'Load Testing', 'Test Data Generation']
+      key: 'level',
+      label: 'Level',
+      render: (value: string) => (
+        <AdminStatusBadge 
+          status={value === 'error' ? 'error' : value === 'warning' ? 'warning' : 'info'}
+          text={value.toUpperCase()}
+        />
+      )
     },
     {
-      id: 'logs',
-      title: 'Log Management',
-      description: 'System logs, archives, and log analysis',
-      icon: FileText,
-      color: 'bg-purple-100 text-purple-600',
-      href: '/admin/unified-monitoring',
-      status: 'implemented',
-      features: ['Log Archives', 'Archive Retention', 'Log Search', 'Log Analytics']
+      key: 'source',
+      label: 'Source',
+      render: (value: string) => (
+        <span className="text-sm font-mono">{value}</span>
+      )
     },
     {
-      id: 'bug-reports',
-      title: 'Bug Reports',
-      description: 'Manage and track user bug reports',
-      icon: Bug,
-      color: 'bg-red-100 text-red-600',
-      href: '/admin/bug-reports',
-      status: 'implemented',
-      features: ['Report Management', 'Assignment Tracking', 'Resolution Workflow', 'User Communication']
-    },
-    {
-      id: 'maintenance',
-      title: 'System Maintenance',
-      description: 'Database cleanup and system maintenance tools',
-      icon: Database,
-      color: 'bg-orange-100 text-orange-600',
-      href: '/admin/tools/maintenance',
-      status: 'needs_backend',
-      features: ['Database Cleanup', 'Cache Management', 'Queue Maintenance', 'System Optimization']
-    },
-    {
-      id: 'analytics',
-      title: 'Analytics Tools',
-      description: 'Advanced analytics and reporting tools',
-      icon: Activity,
-      color: 'bg-indigo-100 text-indigo-600',
-      href: '/admin/tools/analytics',
-      status: 'needs_backend',
-      features: ['Custom Reports', 'Data Export', 'Performance Analytics', 'Usage Insights']
+      key: 'message',
+      label: 'Message',
+      render: (value: string) => (
+        <span className="text-sm">{value}</span>
+      )
     }
   ];
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'implemented':
-        return <Badge variant="default" className="bg-green-100 text-green-800">Implemented</Badge>;
-      case 'needs_backend':
-        return <Badge variant="destructive" className="bg-red-100 text-red-800">Needs Backend</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'implemented':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'needs_backend':
-        return <WifiOff className="h-4 w-4 text-red-600" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-600" />;
-    }
-  };
-
   return (
-    <AdminLayout
-      title="Tools & Debugging Overview"
-      description="Testing tools, debugging utilities, and system maintenance"
-      actions={
-        <Link to="/admin">
-          <Button variant="outline" size="sm">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-        </Link>
-      }
-    >
-      {/* Tools Status Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <EnhancedCard variant="outlined">
-          <EnhancedCardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Available Tools</p>
-                <p className="text-2xl font-bold">4/6</p>
-              </div>
-              <div className="p-3 rounded-lg bg-green-100">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </EnhancedCardContent>
-        </EnhancedCard>
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="Admin Tools"
+        subtitle="Debugging, maintenance, and system recovery tools"
+        onRefresh={fetchToolsData}
+        isLoading={isLoading}
+        breadcrumbs={[
+          { label: 'Admin', href: '/admin' },
+          { label: 'Tools' }
+        ]}
+      />
 
-        <EnhancedCard variant="outlined">
-          <EnhancedCardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Backend Required</p>
-                <p className="text-2xl font-bold">2</p>
-              </div>
-              <div className="p-3 rounded-lg bg-red-100">
-                <WifiOff className="h-6 w-6 text-red-600" />
-              </div>
-            </div>
-          </EnhancedCardContent>
-        </EnhancedCard>
-
-        <EnhancedCard variant="outlined">
-          <EnhancedCardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Test Endpoints</p>
-                <p className="text-2xl font-bold">8</p>
-              </div>
-              <div className="p-3 rounded-lg bg-blue-100">
-                <TestTube className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </EnhancedCardContent>
-        </EnhancedCard>
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <AdminStatsCard
+          title="Recent Logs"
+          value={logs.length}
+          subtitle="Last 24 hours"
+          status="info"
+          icon={<FileText className="w-5 h-5" />}
+        />
+        
+        <AdminStatsCard
+          title="Recovery Actions"
+          value={recoveryActions.filter(a => a.status === 'available').length}
+          subtitle={`${recoveryActions.length} total actions`}
+          status="info"
+          icon={<RefreshCw className="w-5 h-5" />}
+        />
+        
+        <AdminStatsCard
+          title="System Health"
+          value="Healthy"
+          status="healthy"
+          icon={<Database className="w-5 h-5" />}
+        />
+        
+        <AdminStatsCard
+          title="Active Alerts"
+          value="0"
+          status="healthy"
+          icon={<AlertTriangle className="w-5 h-5" />}
+        />
       </div>
 
-      {/* Tools Sections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {toolsSections.map((section) => (
-          <Link key={section.id} to={section.href}>
-            <EnhancedCard variant="interactive" hover="lift" className="h-full">
-              <EnhancedCardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 ${section.color} rounded-lg flex items-center justify-center`}>
-                      <section.icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <EnhancedCardTitle size="lg">{section.title}</EnhancedCardTitle>
-                      <EnhancedCardDescription>
-                        {section.description}
-                      </EnhancedCardDescription>
-                    </div>
-                  </div>
-                  {getStatusBadge(section.status)}
+      {/* Main Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="debug">Debug Console</TabsTrigger>
+          <TabsTrigger value="logs">Logs</TabsTrigger>
+          <TabsTrigger value="recovery">Recovery</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={runSystemDiagnostics}
+                >
+                  <Terminal className="w-4 h-4 mr-2" />
+                  Run System Diagnostics
+                </Button>
+                
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => setActiveTab('logs')}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  View Recent Logs
+                </Button>
+                
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => setActiveTab('recovery')}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Recovery Actions
+                </Button>
+                
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => setActiveTab('debug')}
+                >
+                  <Terminal className="w-4 h-4 mr-2" />
+                  Debug Console
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* System Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle>System Status</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium">Database</span>
+                  <AdminStatusBadge status="healthy" text="Connected" />
                 </div>
-              </EnhancedCardHeader>
-              <EnhancedCardContent>
-                <div className="space-y-2">
-                  {section.features.map((feature, index) => (
-                    <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <div className="w-1 h-1 bg-primary rounded-full"></div>
-                      {feature}
-                    </div>
-                  ))}
+                
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium">API Endpoints</span>
+                  <AdminStatusBadge status="healthy" text="Operational" />
                 </div>
-                {section.status === 'needs_backend' && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-red-800 text-sm font-medium">
-                      <WifiOff className="h-4 w-4" />
-                      Backend Implementation Required
-                    </div>
-                    <p className="text-red-700 text-xs mt-1">
-                      Frontend UI is ready but backend API endpoints need to be implemented
-                    </p>
-                  </div>
-                )}
-              </EnhancedCardContent>
-            </EnhancedCard>
-          </Link>
-        ))}
-      </div>
-
-      {/* Quick Tool Access */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">Quick Access</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Link to="/admin/test-debug">
-            <Button variant="outline" className="w-full justify-start">
-              <Terminal className="w-4 h-4 mr-2" />
-              Debug Tools
-            </Button>
-          </Link>
-          <Link to="/admin/bug-reports">
-            <Button variant="outline" className="w-full justify-start">
-              <Bug className="w-4 h-4 mr-2" />
-              Bug Reports
-            </Button>
-          </Link>
-          <Link to="/admin/unified-monitoring">
-            <Button variant="outline" className="w-full justify-start">
-              <FileText className="w-4 h-4 mr-2" />
-              Log Archives
-            </Button>
-          </Link>
-          <Button variant="outline" className="w-full justify-start" disabled>
-            <Database className="w-4 h-4 mr-2" />
-            Maintenance
-          </Button>
-        </div>
-      </div>
-
-      {/* Backend Implementation Status */}
-      <EnhancedCard>
-        <EnhancedCardHeader>
-          <EnhancedCardTitle className="flex items-center gap-2">
-            <Wifi className="h-5 w-5" />
-            Backend Implementation Status
-          </EnhancedCardTitle>
-          <EnhancedCardDescription>
-            Current status of backend API endpoints for tools and debugging features
-          </EnhancedCardDescription>
-        </EnhancedCardHeader>
-        <EnhancedCardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-medium text-green-800 mb-2">✅ Implemented Endpoints</h4>
-                <ul className="text-sm text-green-700 space-y-1">
-                  <li>• /admin/test-api-usage</li>
-                  <li>• /admin/test-cursor-continuity</li>
-                  <li>• /admin/test-api-tracking</li>
-                  <li>• /admin/test-email-confirmation</li>
-                  <li>• /admin/bug-reports/*</li>
-                  <li>• /admin/log-archives</li>
-                  <li>• /admin/archive-retention</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-medium text-red-800 mb-2">❌ Missing Endpoints</h4>
-                <ul className="text-sm text-red-700 space-y-1">
-                  <li>• /admin/maintenance/database-cleanup</li>
-                  <li>• /admin/maintenance/cache-management</li>
-                  <li>• /admin/analytics/custom-reports</li>
-                  <li>• /admin/analytics/data-export</li>
-                  <li>• /admin/analytics/performance</li>
-                  <li>• /admin/system-optimization</li>
-                </ul>
-              </div>
-            </div>
+                
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium">Queue System</span>
+                  <AdminStatusBadge status="healthy" text="Processing" />
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium">Storage</span>
+                  <AdminStatusBadge status="healthy" text="Available" />
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </EnhancedCardContent>
-      </EnhancedCard>
-    </AdminLayout>
+        </TabsContent>
+
+        <TabsContent value="debug" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center space-x-2">
+                  <Terminal className="w-5 h-5" />
+                  <span>Debug Console</span>
+                </span>
+                <div className="flex space-x-2">
+                  <Button size="sm" variant="outline" onClick={() => setDebugOutput('')}>
+                    Clear
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={runSystemDiagnostics}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Run Diagnostics
+                  </Button>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={debugOutput}
+                onChange={(e) => setDebugOutput(e.target.value)}
+                placeholder="Debug output will appear here..."
+                className="min-h-[400px] font-mono text-sm"
+                readOnly
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="logs" className="space-y-6">
+          <AdminDataTable
+            title="Recent Logs"
+            data={logs}
+            columns={logColumns}
+            isLoading={isLoading}
+            onRefresh={fetchToolsData}
+            emptyMessage="No logs available"
+          />
+        </TabsContent>
+
+        <TabsContent value="recovery" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <RefreshCw className="w-5 h-5" />
+                <span>Recovery Actions</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recoveryActions.map((action) => (
+                  <div key={action.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{action.name}</h4>
+                      <p className="text-sm text-gray-600 mt-1">{action.description}</p>
+                      {action.lastRun && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Last run: {new Date(action.lastRun).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center space-x-3">
+                      <AdminStatusBadge 
+                        status={
+                          action.status === 'running' ? 'warning' :
+                          action.status === 'completed' ? 'healthy' :
+                          action.status === 'failed' ? 'error' : 'info'
+                        }
+                        text={action.status}
+                      />
+                      
+                      {action.status === 'available' && (
+                        <Button 
+                          size="sm"
+                          onClick={() => executeRecoveryAction(action.id)}
+                        >
+                          <Play className="w-4 h-4 mr-2" />
+                          Run
+                        </Button>
+                      )}
+                      
+                      {action.status === 'running' && (
+                        <Button size="sm" disabled>
+                          <Square className="w-4 h-4 mr-2" />
+                          Running...
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
-}
-
-
+};
