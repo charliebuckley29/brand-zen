@@ -9,20 +9,32 @@ import type { UserType } from "@/hooks/use-user-role";
 interface User {
   id: string;
   email: string;
-  full_name: string;
-  phone_number: string | null;
+  full_name?: string; // Made optional to match ModeratorPanelSimple
+  phone_number?: string | null; // Made optional to match ModeratorPanelSimple
   user_type: UserType;
   created_at: string;
-  fetch_frequency_minutes: number;
+  fetch_frequency_minutes?: number; // Made optional to match ModeratorPanelSimple
   email_confirmed?: boolean;
   email_confirmed_at?: string | null;
   brand_website?: string | null;
   brand_description?: string | null;
   social_media_links?: Record<string, string>;
-  user_status?: 'pending_approval' | 'approved' | 'rejected' | 'suspended';
+  user_status?: 'pending_approval' | 'approved' | 'rejected' | 'suspended'; // Now at top level
   approved_at?: string | null;
   approved_by?: string | null;
   rejection_reason?: string | null;
+  profile?: {
+    full_name?: string;
+    phone_number?: string | null;
+    fetch_frequency_minutes?: number;
+    automation_enabled?: boolean;
+    timezone?: string;
+    created_by_staff?: boolean;
+    notification_preferences?: any;
+    brand_website?: string | null;
+    brand_description?: string | null;
+    social_media_links?: Record<string, string>;
+  };
 }
 
 interface EnhancedUserCardProps {
@@ -146,7 +158,7 @@ export function EnhancedUserCard({
               />
               <EnhancedStatusBadge 
                 type="approval" 
-                status={user.user_status} 
+                status={user.user_status || user.profile?.user_status || 'pending_approval'} 
                 size="sm"
               />
               <EnhancedStatusBadge 

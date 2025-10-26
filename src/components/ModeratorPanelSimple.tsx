@@ -37,7 +37,7 @@ interface User {
   brand_website?: string | null;
   brand_description?: string | null;
   social_media_links?: Record<string, string>;
-  user_status?: 'pending_approval' | 'approved' | 'rejected' | 'suspended';
+  user_status?: 'pending_approval' | 'approved' | 'rejected' | 'suspended'; // Now at top level
   approved_at?: string | null;
   approved_by?: string | null;
   rejection_reason?: string | null;
@@ -47,10 +47,7 @@ interface User {
     fetch_frequency_minutes?: number;
     automation_enabled?: boolean;
     timezone?: string;
-    user_status?: 'pending_approval' | 'approved' | 'rejected' | 'suspended';
-    approved_at?: string | null;
-    approved_by?: string | null;
-    rejection_reason?: string | null;
+    // user_status removed from here - now at top level
     created_by_staff?: boolean;
     notification_preferences?: any;
     brand_website?: string | null;
