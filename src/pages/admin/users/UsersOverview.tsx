@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminPageHeader } from '@/components/admin/shared/AdminPageHeader';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminDataTable } from '@/components/admin/shared/AdminDataTable';
 import { AdminStatsCard } from '@/components/admin/shared/AdminStatsCard';
 import { AdminStatusBadge } from '@/components/admin/shared/AdminStatusBadge';
@@ -190,7 +191,8 @@ const UsersOverview: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <AdminLayout title="User Management">
+      <div className="space-y-6">
       <AdminPageHeader
         title="User Management"
         subtitle="Manage users, roles, and quotas"
@@ -352,7 +354,8 @@ const UsersOverview: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

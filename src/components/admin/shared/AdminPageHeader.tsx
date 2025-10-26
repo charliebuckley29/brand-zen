@@ -48,11 +48,11 @@ export const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
           <div className="flex-1">
             {/* Breadcrumbs */}
             {breadcrumbs.length > 0 && (
-              <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+              <nav className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
                 {breadcrumbs.map((crumb, index) => (
                   <React.Fragment key={index}>
                     {crumb.href ? (
-                      <a href={crumb.href} className="hover:text-gray-700">
+                      <a href={crumb.href} className="hover:text-gray-700 dark:hover:text-gray-300">
                         {crumb.label}
                       </a>
                     ) : (
@@ -66,7 +66,7 @@ export const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
 
             {/* Title and Subtitle */}
             <div className="flex items-center space-x-3">
-              <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
               {status && (
                 <div className="flex items-center space-x-2">
                   <div className={`w-2 h-2 rounded-full ${getStatusColor(status)}`} />
@@ -80,11 +80,11 @@ export const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
             </div>
 
             {subtitle && (
-              <p className="text-gray-600 mt-1">{subtitle}</p>
+              <p className="text-gray-600 dark:text-gray-300 mt-1">{subtitle}</p>
             )}
 
             {lastUpdated && (
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 Last updated: {lastUpdated}
               </p>
             )}

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { AdminPageHeader } from '@/components/admin/shared/AdminPageHeader';
 import { AdminStatsCard } from '@/components/admin/shared/AdminStatsCard';
 import { AdminStatusBadge } from '@/components/admin/shared/AdminStatusBadge';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 import { 
   Users, 
   Activity, 
@@ -90,140 +91,142 @@ const AdminDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <AdminPageHeader
-        title="Admin Dashboard"
-        subtitle="Overview of system status and key metrics"
-        status={stats.systemHealth}
-        statusText={stats.systemHealth === 'healthy' ? 'All Systems Operational' : 'Issues Detected'}
-        onRefresh={fetchDashboardData}
-        isLoading={isLoading}
-        lastUpdated={stats.lastUpdated}
-        breadcrumbs={[{ label: 'Admin' }]}
-      />
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <AdminStatsCard
-          title="Total Users"
-          value={stats.totalUsers}
-          subtitle={`${stats.activeUsers} active`}
-          status="info"
-          icon={<Users className="w-5 h-5" />}
-        />
-        
-        <AdminStatsCard
-          title="System Health"
-          value={stats.systemHealth === 'healthy' ? 'Healthy' : 'Issues'}
+    <AdminLayout title="Admin Dashboard">
+      <div className="space-y-6">
+        <AdminPageHeader
+          title="Admin Dashboard"
+          subtitle="Overview of system status and key metrics"
           status={stats.systemHealth}
-          icon={<Server className="w-5 h-5" />}
+          statusText={stats.systemHealth === 'healthy' ? 'All Systems Operational' : 'Issues Detected'}
+          onRefresh={fetchDashboardData}
+          isLoading={isLoading}
+          lastUpdated={stats.lastUpdated}
+          breadcrumbs={[{ label: 'Admin' }]}
         />
-        
-        <AdminStatsCard
-          title="Queue Status"
-          value={stats.queueStatus === 'processing' ? 'Processing' : 'Idle'}
-          status={stats.queueStatus === 'processing' ? 'healthy' : 'warning'}
-          icon={<Activity className="w-5 h-5" />}
-        />
-        
-        <AdminStatsCard
-          title="Active Alerts"
-          value={stats.alertsCount}
-          status={stats.alertsCount > 0 ? 'warning' : 'healthy'}
-          icon={<AlertTriangle className="w-5 h-5" />}
-        />
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <AdminStatsCard
+            title="Total Users"
+            value={stats.totalUsers}
+            subtitle={`${stats.activeUsers} active`}
+            status="info"
+            icon={<Users className="w-5 h-5" />}
+          />
+          
+          <AdminStatsCard
+            title="System Health"
+            value={stats.systemHealth === 'healthy' ? 'Healthy' : 'Issues'}
+            status={stats.systemHealth}
+            icon={<Server className="w-5 h-5" />}
+          />
+          
+          <AdminStatsCard
+            title="Queue Status"
+            value={stats.queueStatus === 'processing' ? 'Processing' : 'Idle'}
+            status={stats.queueStatus === 'processing' ? 'healthy' : 'warning'}
+            icon={<Activity className="w-5 h-5" />}
+          />
+          
+          <AdminStatsCard
+            title="Active Alerts"
+            value={stats.alertsCount}
+            status={stats.alertsCount > 0 ? 'warning' : 'healthy'}
+            icon={<AlertTriangle className="w-5 h-5" />}
+          />
+        </div>
+
+        {/* System Status Overview */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <CheckCircle className="w-5 h-5" />
+              <span>System Status</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <span className="text-sm font-medium">Database</span>
+                <AdminStatusBadge status={stats.systemHealth} />
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <span className="text-sm font-medium">API Endpoints</span>
+                <AdminStatusBadge 
+                  status={stats.apiStatus === 'operational' ? 'healthy' : 'warning'} 
+                  text={stats.apiStatus}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <span className="text-sm font-medium">Sentiment Processing</span>
+                <AdminStatusBadge 
+                  status={stats.sentimentProcessing === 'active' ? 'healthy' : 'warning'} 
+                  text={stats.sentimentProcessing}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {quickActions.map((action) => (
+                <Button
+                  key={action.label}
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center space-y-2"
+                  onClick={() => window.location.href = action.href}
+                >
+                  <action.icon className="w-6 h-6" />
+                  <span className="text-sm font-medium">{action.label}</span>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <span className="text-sm">System health check completed</span>
+                </div>
+                <span className="text-xs text-gray-500 dark:text-gray-400">2 minutes ago</span>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Activity className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm">Queue processing 15 items</span>
+                </div>
+                <span className="text-xs text-gray-500 dark:text-gray-400">5 minutes ago</span>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <span className="text-sm">New user registered</span>
+                </div>
+                <span className="text-xs text-gray-500 dark:text-gray-400">10 minutes ago</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-
-      {/* System Status Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <CheckCircle className="w-5 h-5" />
-            <span>System Status</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <span className="text-sm font-medium">Database</span>
-              <AdminStatusBadge status={stats.systemHealth} />
-            </div>
-            
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <span className="text-sm font-medium">API Endpoints</span>
-              <AdminStatusBadge 
-                status={stats.apiStatus === 'operational' ? 'healthy' : 'warning'} 
-                text={stats.apiStatus}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <span className="text-sm font-medium">Sentiment Processing</span>
-              <AdminStatusBadge 
-                status={stats.sentimentProcessing === 'active' ? 'healthy' : 'warning'} 
-                text={stats.sentimentProcessing}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {quickActions.map((action) => (
-              <Button
-                key={action.label}
-                variant="outline"
-                className="h-auto p-4 flex flex-col items-center space-y-2"
-                onClick={() => window.location.href = action.href}
-              >
-                <action.icon className="w-6 h-6" />
-                <span className="text-sm font-medium">{action.label}</span>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-sm">System health check completed</span>
-              </div>
-              <span className="text-xs text-gray-500">2 minutes ago</span>
-            </div>
-            
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Activity className="w-4 h-4 text-blue-600" />
-                <span className="text-sm">Queue processing 15 items</span>
-              </div>
-              <span className="text-xs text-gray-500">5 minutes ago</span>
-            </div>
-            
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Users className="w-4 h-4 text-purple-600" />
-                <span className="text-sm">New user registered</span>
-              </div>
-              <span className="text-xs text-gray-500">10 minutes ago</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    </AdminLayout>
   );
 };
 

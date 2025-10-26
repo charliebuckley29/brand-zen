@@ -22,33 +22,33 @@ export const AdminStatusBadge: React.FC<AdminStatusBadgeProps> = ({
       case 'healthy':
       case 'active':
         return {
-          color: 'bg-green-100 text-green-800 border-green-200',
+          color: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200 dark:border-green-700',
           icon: <CheckCircle className="w-3 h-3" />,
           defaultText: 'Healthy'
         };
       case 'warning':
       case 'pending':
         return {
-          color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+          color: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:border-yellow-700',
           icon: <AlertTriangle className="w-3 h-3" />,
           defaultText: 'Warning'
         };
       case 'error':
       case 'inactive':
         return {
-          color: 'bg-red-100 text-red-800 border-red-200',
+          color: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900 dark:text-red-200 dark:border-red-700',
           icon: <XCircle className="w-3 h-3" />,
           defaultText: 'Error'
         };
       case 'info':
         return {
-          color: 'bg-blue-100 text-blue-800 border-blue-200',
+          color: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700',
           icon: <Info className="w-3 h-3" />,
           defaultText: 'Info'
         };
       default:
         return {
-          color: 'bg-gray-100 text-gray-800 border-gray-200',
+          color: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600',
           icon: <Info className="w-3 h-3" />,
           defaultText: 'Unknown'
         };
@@ -96,20 +96,20 @@ export const AdminMetricCard: React.FC<AdminMetricCardProps> = ({
 }) => {
   const getStatusColor = (status?: string) => {
     switch (status) {
-      case 'healthy': return 'border-green-200 bg-green-50';
-      case 'warning': return 'border-yellow-200 bg-yellow-50';
-      case 'error': return 'border-red-200 bg-red-50';
-      case 'info': return 'border-blue-200 bg-blue-50';
-      default: return 'border-gray-200 bg-white';
+      case 'healthy': return 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950';
+      case 'warning': return 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950';
+      case 'error': return 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950';
+      case 'info': return 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950';
+      default: return 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900';
     }
   };
 
   const getTrendColor = (trend?: string) => {
     switch (trend) {
-      case 'up': return 'text-green-600';
-      case 'down': return 'text-red-600';
-      case 'neutral': return 'text-gray-600';
-      default: return 'text-gray-600';
+      case 'up': return 'text-green-600 dark:text-green-400';
+      case 'down': return 'text-red-600 dark:text-red-400';
+      case 'neutral': return 'text-gray-600 dark:text-gray-400';
+      default: return 'text-gray-600 dark:text-gray-400';
     }
   };
 
@@ -119,21 +119,21 @@ export const AdminMetricCard: React.FC<AdminMetricCardProps> = ({
       onClick={onClick}
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600">
+        <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
           {title}
         </CardTitle>
         {icon && (
-          <div className="text-gray-400">
+          <div className="text-gray-400 dark:text-gray-500">
             {icon}
           </div>
         )}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-gray-900 mb-1">
+        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
           {value}
         </div>
         {subtitle && (
-          <p className="text-xs text-gray-500 mb-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
             {subtitle}
           </p>
         )}

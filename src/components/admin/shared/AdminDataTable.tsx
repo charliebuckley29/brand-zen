@@ -117,7 +117,7 @@ export const AdminDataTable: React.FC<AdminDataTableProps> = ({
             <div className="flex items-center space-x-2">
               {searchable && (
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                   <Input
                     placeholder="Search..."
                     value={searchQuery}
@@ -168,10 +168,10 @@ export const AdminDataTable: React.FC<AdminDataTableProps> = ({
       <CardContent>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
           </div>
         ) : filteredData.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             {emptyMessage}
           </div>
         ) : (
@@ -182,8 +182,8 @@ export const AdminDataTable: React.FC<AdminDataTableProps> = ({
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className={`text-left py-3 px-4 font-medium text-gray-600 ${
-                        column.sortable ? 'cursor-pointer hover:bg-gray-50' : ''
+                      className={`text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300 ${
+                        column.sortable ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''
                       }`}
                       style={{ width: column.width }}
                       onClick={() => column.sortable && handleSort(column.key)}
@@ -202,7 +202,7 @@ export const AdminDataTable: React.FC<AdminDataTableProps> = ({
               </thead>
               <tbody>
                 {filteredData.map((row, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-50">
+                  <tr key={index} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
                     {columns.map((column) => (
                       <td key={column.key} className="py-3 px-4">
                         {column.render 
