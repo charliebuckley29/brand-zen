@@ -445,7 +445,7 @@ export default function AdminApiPanel() {
         )}
 
         {activeTab === 'quota-management' && (
-          <AdminQuotaManagerV2 />
+          <AdminQuotaManager />
         )}
     </AdminLayout>
   );

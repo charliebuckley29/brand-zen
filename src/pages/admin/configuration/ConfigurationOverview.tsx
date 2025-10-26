@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { AdminPageHeader } from '@/components/admin/shared/AdminPageHeader';
 import { AdminStatsCard } from '@/components/admin/shared/AdminStatsCard';
 import { AdminStatusBadge } from '@/components/admin/shared/AdminStatusBadge';
+import { AdminQuotaManagerV2 } from '@/components/AdminQuotaManagerV2';
 import { 
   Settings, 
   Mail, 
@@ -379,59 +380,7 @@ const ConfigurationOverview: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="quotas" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="w-5 h-5" />
-                <span>Quota Configuration</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <Label htmlFor="default-quota">Default User Quota</Label>
-                  <Input
-                    id="default-quota"
-                    type="number"
-                    value={config.quotas.defaultUserQuota}
-                    onChange={(e) => 
-                      handleConfigUpdate('quotas', { defaultUserQuota: parseInt(e.target.value) })
-                    }
-                    className="mt-1"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">API calls per day</p>
-                </div>
-                
-                <div>
-                  <Label htmlFor="moderator-quota">Moderator Quota</Label>
-                  <Input
-                    id="moderator-quota"
-                    type="number"
-                    value={config.quotas.moderatorQuota}
-                    onChange={(e) => 
-                      handleConfigUpdate('quotas', { moderatorQuota: parseInt(e.target.value) })
-                    }
-                    className="mt-1"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">API calls per day</p>
-                </div>
-                
-                <div>
-                  <Label htmlFor="admin-quota">Admin Quota</Label>
-                  <Input
-                    id="admin-quota"
-                    type="number"
-                    value={config.quotas.adminQuota}
-                    onChange={(e) => 
-                      handleConfigUpdate('quotas', { adminQuota: parseInt(e.target.value) })
-                    }
-                    className="mt-1"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">API calls per day</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <AdminQuotaManagerV2 />
         </TabsContent>
 
         <TabsContent value="cron" className="space-y-6">

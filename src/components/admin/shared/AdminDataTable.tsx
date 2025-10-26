@@ -85,7 +85,7 @@ export const AdminDataTable: React.FC<AdminDataTableProps> = ({
 
     // Apply column filters
     Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
+      if (value && value !== 'all') {
         result = result.filter(row => row[key] === value);
       }
     });
@@ -134,7 +134,7 @@ export const AdminDataTable: React.FC<AdminDataTableProps> = ({
                     <SelectValue placeholder="Filter" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
