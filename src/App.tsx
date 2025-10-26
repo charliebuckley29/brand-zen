@@ -26,6 +26,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { TimezoneProvider } from "@/contexts/TimezoneContext";
+import { NavigationProvider } from "@/contexts/NavigationContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { AppErrorBoundary } from "@/components/ErrorBoundaries";
 import { PerformanceMonitor } from "@/store/performanceStore";
 import { logger } from "@/lib/logger";
@@ -102,13 +104,15 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <TimezoneProvider>
-            <TooltipProvider>
-              {/* Global UI components */}
-              <Toaster />
-              <Sonner />
-              
-              {/* Main application routing */}
-              <BrowserRouter>
+            <NotificationProvider>
+              <NavigationProvider>
+                <TooltipProvider>
+                  {/* Global UI components */}
+                  <Toaster />
+                  <Sonner />
+                  
+                  {/* Main application routing */}
+                  <BrowserRouter>
                 <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<Index />} />
@@ -145,11 +149,13 @@ const App = () => {
                 </Routes>
               </BrowserRouter>
               
-              {/* Development-only tools */}
-              {process.env.NODE_ENV === 'development' && (
-                <PerformanceMonitor />
-              )}
-            </TooltipProvider>
+                  {/* Development-only tools */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <PerformanceMonitor />
+                  )}
+                </TooltipProvider>
+              </NavigationProvider>
+            </NotificationProvider>
           </TimezoneProvider>
         </ThemeProvider>
       </QueryClientProvider>

@@ -10,20 +10,8 @@ import { Button } from "@/components/ui/button";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { useUserStatus } from "@/hooks/useUserStatus";
 import { useNotifications } from "@/contexts/NotificationContext";
-import { NotificationProvider } from "@/contexts/NotificationContext";
-import { NavigationProvider } from "@/contexts/NavigationContext";
 
 const Index = () => {
-  return (
-    <NotificationProvider>
-      <NavigationProvider>
-        <IndexContent />
-      </NavigationProvider>
-    </NotificationProvider>
-  );
-};
-
-const IndexContent = () => {
   const [user, setUser] = useState<any>(null);
   const [hasKeywords, setHasKeywords] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
