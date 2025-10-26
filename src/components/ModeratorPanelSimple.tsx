@@ -95,6 +95,9 @@ export function ModeratorPanelSimple() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [deleteReason, setDeleteReason] = useState('');
   const [approvalStatusFilter, setApprovalStatusFilter] = useState<string>('all');
+  const [rejectionDialogOpen, setRejectionDialogOpen] = useState(false);
+  const [userToReject, setUserToReject] = useState<User | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
   const [currentTab, setCurrentTab] = useState<string>('users');
   const [keywordSourceDialogOpen, setKeywordSourceDialogOpen] = useState(false);
   
@@ -105,6 +108,108 @@ export function ModeratorPanelSimple() {
     const userStatus = user.user_status || user.profile?.user_status;
     // Allow editing of non-suspended users (moderators and admins can edit all non-suspended users)
     return userStatus !== 'suspended';
+  };
+
+  // Handle user approval
+  const handleApproveUser = async (userId: string) => {
+    setLoadingStates(prev => ({ ...prev, [`approve_${userId}`]: true }));
+    
+    try {
+      console.log('🔧 [MODERATOR] Approving user:', userId);
+      
+      const response = await apiFetch('/admin/user-approvals', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId,
+          action: 'approve',
+          moderatorId: 'current-user' // TODO: Get actual current user ID
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to approve user');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "User Approved",
+          description: "User has been approved successfully",
+        });
+        
+        // Refresh the data to show updated status
+        fetchData();
+      } else {
+        throw new Error(result.error || 'Failed to approve user');
+      }
+    } catch (error: any) {
+      console.error('❌ [MODERATOR] Error approving user:', error);
+      toast({
+        title: "Approval Failed",
+        description: error.message || "Failed to approve user. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [`approve_${userId}`]: false }));
+    }
+  };
+
+  // Handle user rejection
+  const handleRejectUser = async (userId: string, reason: string) => {
+    setLoadingStates(prev => ({ ...prev, [`reject_${userId}`]: true }));
+    
+    try {
+      console.log('🔧 [MODERATOR] Rejecting user:', userId, 'Reason:', reason);
+      
+      const response = await apiFetch('/admin/user-approvals', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId,
+          action: 'reject',
+          rejectionReason: reason,
+          moderatorId: 'current-user' // TODO: Get actual current user ID
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to reject user');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "User Rejected",
+          description: "User has been rejected successfully",
+        });
+        
+        // Close rejection dialog and refresh data
+        setRejectionDialogOpen(false);
+        setUserToReject(null);
+        setRejectionReason('');
+        fetchData();
+      } else {
+        throw new Error(result.error || 'Failed to reject user');
+      }
+    } catch (error: any) {
+      console.error('❌ [MODERATOR] Error rejecting user:', error);
+      toast({
+        title: "Rejection Failed",
+        description: error.message || "Failed to reject user. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [`reject_${userId}`]: false }));
+    }
+  };
+
+  // Handle rejection dialog open
+  const handleRejectUserClick = (user: User) => {
+    setUserToReject(user);
+    setRejectionDialogOpen(true);
   };
 
   const fetchData = async () => {
@@ -399,6 +504,8 @@ export function ModeratorPanelSimple() {
                       key={user.id}
                       user={user}
                       onEdit={handleEdit}
+                      onApprove={() => handleApproveUser(user.id)}
+                      onReject={() => handleRejectUserClick(user)}
                       onConfigureAutomation={() => {
                         setSelectedUser(user);
                         setKeywordSourceDialogOpen(true);
@@ -802,6 +909,59 @@ export function ModeratorPanelSimple() {
                   }}
                 >
                   Delete User
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Rejection Confirmation Dialog */}
+        <Dialog open={rejectionDialogOpen} onOpenChange={setRejectionDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reject User</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to reject {userToReject?.full_name || userToReject?.email}? Please provide a reason for rejection.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="rejectionReason">Reason for rejection</Label>
+                <Textarea
+                  id="rejectionReason"
+                  placeholder="Please provide a reason for rejecting this user..."
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setRejectionDialogOpen(false);
+                    setUserToReject(null);
+                    setRejectionReason('');
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (userToReject && rejectionReason.trim()) {
+                      handleRejectUser(userToReject.id, rejectionReason.trim());
+                    } else {
+                      toast({
+                        title: "Reason Required",
+                        description: "Please provide a reason for rejection",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  disabled={loadingStates[`reject_${userToReject?.id}`] || !rejectionReason.trim()}
+                >
+                  {loadingStates[`reject_${userToReject?.id}`] ? "Rejecting..." : "Reject User"}
                 </Button>
               </div>
             </div>

@@ -40,6 +40,8 @@ interface User {
 interface EnhancedUserCardProps {
   user: User;
   onEdit: () => void;
+  onApprove: () => void;
+  onReject: () => void;
   onConfigureAutomation: () => void;
   onDelete: () => void;
   onPasswordReset: () => void;
@@ -50,6 +52,7 @@ interface EnhancedUserCardProps {
     deleting: boolean;
     passwordReset: boolean;
     emailResend: boolean;
+    [key: string]: boolean; // Allow dynamic loading states
   };
   canEdit: boolean;
   canDelete: boolean;
@@ -58,6 +61,8 @@ interface EnhancedUserCardProps {
 export function EnhancedUserCard({
   user,
   onEdit,
+  onApprove,
+  onReject,
   onConfigureAutomation,
   onDelete,
   onPasswordReset,
@@ -137,6 +142,8 @@ export function EnhancedUserCard({
                 <UserActionMenu
                   user={user}
                   onEdit={onEdit}
+                  onApprove={onApprove}
+                  onReject={onReject}
                   onDelete={onDelete}
                   onPasswordReset={onPasswordReset}
                   onEmailResend={onEmailResend}

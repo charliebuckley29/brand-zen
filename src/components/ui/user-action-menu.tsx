@@ -21,7 +21,8 @@ import {
   Trash2, 
   Shield, 
   Clock,
-  User
+  User,
+  XCircle
 } from "lucide-react";
 import type { UserType } from "@/hooks/use-user-role";
 
@@ -40,6 +41,8 @@ interface UserActionMenuProps {
     };
   };
   onEdit: () => void;
+  onApprove: () => void;
+  onReject: () => void;
   onDelete: () => void;
   onPasswordReset: () => void;
   onEmailResend: () => void;
@@ -49,6 +52,7 @@ interface UserActionMenuProps {
     deleting: boolean;
     passwordReset: boolean;
     emailResend: boolean;
+    [key: string]: boolean; // Allow dynamic loading states
   };
   canEdit: boolean;
   canDelete: boolean;
@@ -57,6 +61,8 @@ interface UserActionMenuProps {
 export function UserActionMenu({
   user,
   onEdit,
+  onApprove,
+  onReject,
   onDelete,
   onPasswordReset,
   onEmailResend,
@@ -83,8 +89,8 @@ export function UserActionMenu({
       return {
         icon: Shield,
         label: "Approve",
-        action: onEdit,
-        loading: false,
+        action: onApprove,
+        loading: loadingStates[`approve_${user.id}`] || false,
         variant: "default" as const
       };
     }
@@ -139,6 +145,20 @@ export function UserActionMenu({
               <Mail className="h-4 w-4 mr-2" />
               {loadingStates.emailResend ? "Sending..." : "Resend Email"}
             </DropdownMenuItem>
+          )}
+          
+          {/* Approval Actions */}
+          {user.user_status === 'pending_approval' && (
+            <>
+              <DropdownMenuItem onClick={onApprove} disabled={loadingStates[`approve_${user.id}`]}>
+                <Shield className="h-4 w-4 mr-2" />
+                {loadingStates[`approve_${user.id}`] ? "Approving..." : "Approve User"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onReject} disabled={loadingStates[`reject_${user.id}`]}>
+                <XCircle className="h-4 w-4 mr-2" />
+                {loadingStates[`reject_${user.id}`] ? "Rejecting..." : "Reject User"}
+              </DropdownMenuItem>
+            </>
           )}
           
           {/* Password Reset */}
