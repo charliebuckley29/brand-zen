@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Navigation } from '@/components/Navigation';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Home, ArrowLeft } from 'lucide-react';
+import { Menu, X, ArrowLeft, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLocation } from 'react-router-dom';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onBack
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const location = useLocation();
 
   const handleBackToApp = () => {
     window.location.href = '/';
@@ -38,34 +40,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
             
-            {showBackButton && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onBack || handleBackToApp}
-                className="flex items-center space-x-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to App</span>
-              </Button>
-            )}
             
             {title && (
               <h1 className="text-lg font-semibold text-foreground">{title}</h1>
             )}
           </div>
           
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleBackToApp}
-              className="flex items-center space-x-2"
-            >
-              <Home className="w-4 h-4" />
-              <span className="hidden sm:inline">Main App</span>
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -77,7 +57,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         )}>
           <div className="flex flex-col h-full pt-16">
             <div className="flex-1 overflow-y-auto">
-              <Navigation />
+              <AdminSidebar currentPath={location.pathname} />
             </div>
           </div>
         </div>
