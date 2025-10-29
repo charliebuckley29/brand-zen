@@ -50,55 +50,36 @@ export function useUserStatus() {
           return;
         }
 
-        // Get user keywords to check for RSS URL - try new API first, fallback to old
-        let hasRssUrl = false;
+        // Fetch keywords for other purposes (optional - can be used by other components)
+        // Note: RSS URL checking removed - approval happens automatically when moderator adds RSS URL
         let keywords = null;
 
         try {
-              const { apiFetch } = await import('@/lib/api');
-              const keywordsResponse = await apiFetch(`/admin/keywords-management?user_id=${user.id}`);
+          const { apiFetch } = await import('@/lib/api');
+          const keywordsResponse = await apiFetch(`/admin/keywords-management?user_id=${user.id}`);
 
           if (keywordsResponse.ok) {
             const keywordsResult = await keywordsResponse.json();
             if (keywordsResult.success && keywordsResult.data) {
               keywords = keywordsResult.data;
-              hasRssUrl = keywordsResult.data.some((k: any) => k.google_alert_rss_url && k.google_alert_rss_url.trim() !== '');
             }
           }
-        } catch (newApiError) {
-          console.log("New API endpoint not available, falling back to old endpoint");
+        } catch (error) {
+          console.log("Keywords API not available");
         }
 
-        // Fallback to old direct Supabase query
-        if (keywords === null) {
-          const { data: keywordsData, error: keywordsError } = await supabase
-            .from('keywords')
-            .select('*')
-            .eq('user_id', user.id);
-
-          if (!keywordsError && keywordsData) {
-            keywords = keywordsData;
-            hasRssUrl = keywordsData.some((k: any) => k.google_alert_rss_url && k.google_alert_rss_url.trim() !== '');
-          }
-        }
-
-        // Determine user status based on profile status and RSS URL
-        let status: UserStatus = 'approved'; // Default to approved
+        // Determine user status based ONLY on profile status
+        // RSS URL checking removed - approval happens automatically when moderator adds RSS URL
+        let status: UserStatus = profile.user_status as UserStatus;
         
-        if (profile.user_status === 'pending_approval') {
-          status = 'pending_approval';
-        } else if (profile.user_status === 'rejected') {
-          status = 'rejected';
-        } else if (profile.user_status === 'suspended') {
-          status = 'suspended';
-        } else if (profile.user_status === 'approved') {
-          // User is approved - check if they have RSS URL for full access
-          status = hasRssUrl ? 'approved' : 'pending_approval';
+        // Validate status value
+        if (!['pending_approval', 'approved', 'rejected', 'suspended'].includes(status)) {
+          status = 'error';
         }
 
         setUserStatus({
           status,
-          hasRssUrl,
+          hasRssUrl: false, // No longer used for access control, but keep for backward compatibility
           profile,
           keywords: keywords || []
         });

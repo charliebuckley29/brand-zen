@@ -20,21 +20,12 @@ export function PendingApproval({ userStatus }: PendingApprovalProps) {
 
   const getStatusMessage = () => {
     if (userStatus.status === 'pending_approval') {
-      if (userStatus.profile?.user_status === 'pending_approval') {
-        return {
-          title: "Account Pending Approval",
-          description: "Your account is being reviewed by our team. You'll be notified once it's approved.",
-          icon: Clock,
-          color: "text-yellow-600"
-        };
-      } else if (userStatus.profile?.user_status === 'approved' && !userStatus.hasRssUrl) {
-        return {
-          title: "Account Approved - RSS Setup Required",
-          description: "Your account has been approved, but your Google RSS URL needs to be configured by a moderator.",
-          icon: CheckCircle,
-          color: "text-blue-600"
-        };
-      }
+      return {
+        title: "Account Pending Approval",
+        description: "Your account is being reviewed by our team. A moderator will set up your Google RSS URL and approve your account.",
+        icon: Clock,
+        color: "text-yellow-600"
+      };
     } else if (userStatus.status === 'rejected') {
       return {
         title: "Account Rejected",
@@ -82,18 +73,12 @@ export function PendingApproval({ userStatus }: PendingApprovalProps) {
             <AlertDescription>
               <strong>What happens next?</strong>
               <ul className="mt-2 space-y-1 text-sm">
-                {userStatus.status === 'pending_approval' && userStatus.profile?.user_status === 'pending_approval' && (
+                {userStatus.status === 'pending_approval' && (
                   <>
                     <li>• A moderator will review your account</li>
                     <li>• They will set up your Google RSS URL</li>
+                    <li>• Your account will be automatically approved when the RSS URL is configured</li>
                     <li>• You'll receive an email notification when ready</li>
-                  </>
-                )}
-                {userStatus.status === 'pending_approval' && userStatus.profile?.user_status === 'approved' && !userStatus.hasRssUrl && (
-                  <>
-                    <li>• Your account has been approved</li>
-                    <li>• A moderator is setting up your Google RSS URL</li>
-                    <li>• You'll be notified when setup is complete</li>
                   </>
                 )}
                 {(userStatus.status === 'rejected' || userStatus.status === 'suspended') && (
@@ -108,7 +93,7 @@ export function PendingApproval({ userStatus }: PendingApprovalProps) {
           
           <div className="text-center space-y-2">
             <p className="text-sm text-muted-foreground">
-              You cannot access the dashboard until your account is fully approved and configured.
+              You cannot access the dashboard until your account is approved.
             </p>
             <Button 
               variant="outline" 
